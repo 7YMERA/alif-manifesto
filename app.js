@@ -39,14 +39,26 @@
   });
 
   const PHASE_META = [
-    { id: 'opening', year: '2026', label: 'Behind the Wheel' },
-    { id: 'frustration', year: '2026', label: 'RapidKL 750 Jam' },
-    { id: 'highways-reimagined', year: '2026', label: 'Greening the Concrete' },
-    { id: 'phase-1', year: '2026–2027', label: 'Exiting the Car' },
-    { id: 'phase-2', year: '2028–2029', label: 'Riding Bus 750 & Rail' },
-    { id: 'phase-3', year: '2030–2031', label: 'Weekend Cycling' },
-    { id: 'phase-4', year: '2036', label: '2036 · Public Office' }
+    { id: 'opening', year: '2026', label: 'Morning Congestion' },
+    { id: 'frustration', year: '2026', label: 'Bus 750 Stuck in Jam' },
+    { id: 'highways-reimagined', year: '2026', label: 'Keep & Green Concrete' },
+    { id: 'phase-1', year: '2026–2027', label: 'Year 1 · Foundation' },
+    { id: 'phase-2', year: '2028–2029', label: 'Year 3 · Buses & Rail' },
+    { id: 'phase-3', year: '2030–2031', label: 'Year 5 · Influence' },
+    { id: 'phase-4', year: '2036', label: '2036 · City Showcase' },
+    { id: 'city-showcase', year: '2036', label: 'Kuala Lumpur 2036' }
   ];
+
+  // Smooth anchor link navigation without CSS scroll-behavior fighting wheel input
+  document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
+    anchor.addEventListener('click', function (e) {
+      const targetId = anchor.getAttribute('href').slice(1);
+      const targetEl = document.getElementById(targetId);
+      if (!targetEl) return;
+      e.preventDefault();
+      targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
 
   // =========================================================================
   // 1. Theme (Light / Dark) & 3D Lighting (Day / Golden Hour)
