@@ -1,5 +1,5 @@
 /* ==========================================================================
-   ALIF MANIFESTO — Scroll Orchestration, Auto-Cruise, Street Simulator & UI
+   ALIF MANIFESTO — Scroll Orchestration, Gate, Auto-Cruise & Back-to-Top
    ========================================================================== */
 
 (function () {
@@ -11,6 +11,7 @@
   const themeBtn = document.getElementById('theme-toggle');
   const lightBtn = document.getElementById('light-toggle');
   const cruiseBtn = document.getElementById('cruise-toggle');
+  const backToTopBtn = document.getElementById('back-to-top');
   const hudYear = document.getElementById('hud-year');
   const hudPhase = document.getElementById('hud-phase');
   const hudFill = document.getElementById('hud-meter-fill');
@@ -20,7 +21,10 @@
   const chapters = Array.from(document.querySelectorAll('.chapter'));
   const storyCards = Array.from(document.querySelectorAll('.story-card'));
 
-  // Click-to-Open Entrance Gate
+  // =========================================================================
+  // 1. Click-to-Open Entrance Gate
+  // =========================================================================
+
   function openGate() {
     if (!gate || gate.classList.contains('is-open')) return;
     gate.classList.add('is-open');
@@ -44,12 +48,12 @@
     { id: 'highways-reimagined', year: '2026', label: 'Keep & Green Concrete' },
     { id: 'phase-1', year: '2026–2027', label: 'Year 1 · Foundation' },
     { id: 'phase-2', year: '2028–2029', label: 'Year 3 · Buses & Rail' },
-    { id: 'phase-3', year: '2030–2031', label: 'Year 5 · Influence' },
-    { id: 'phase-4', year: '2036', label: '2036 · City Showcase' },
+    { id: 'phase-3', year: '2030–2031', label: 'Year 5 · Shared Spaces' },
+    { id: 'phase-4', year: '2036', label: '2036 · Charter' },
     { id: 'city-showcase', year: '2036', label: 'Kuala Lumpur 2036' }
   ];
 
-  // Smooth anchor link navigation without CSS scroll-behavior fighting wheel input
+  // Smooth anchor link navigation
   document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
     anchor.addEventListener('click', function (e) {
       const targetId = anchor.getAttribute('href').slice(1);
@@ -60,8 +64,15 @@
     });
   });
 
+  // Floating Back-to-Top button
+  if (backToTopBtn) {
+    backToTopBtn.addEventListener('click', function () {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+
   // =========================================================================
-  // 1. Theme (Light / Dark) & 3D Lighting (Day / Golden Hour)
+  // 2. Theme (Light / Dark) & 3D Lighting (Day / Golden Hour)
   // =========================================================================
 
   function setTheme(theme) {
@@ -108,10 +119,8 @@
   }
 
   // =========================================================================
-  // 2. Scroll Progress -> 3D Scene, Progress Hairline & Kinetic Year Watermark
+  // 3. Scroll Progress -> 3D Scene, Hairline, Year Watermark & Back-to-Top
   // =========================================================================
-
-  let currentPreviewMode = null;
 
   function updateScroll() {
     const scrollTop = window.scrollY || window.pageYOffset || 0;
@@ -120,10 +129,6 @@
 
     if (window.ManifestoScene) {
       window.ManifestoScene.setScrollProgress(progress);
-      if (currentPreviewMode && progress > 0.34) {
-        currentPreviewMode = null;
-        window.ManifestoScene.setPreviewMode(null);
-      }
     }
 
     const pct = (progress * 100).toFixed(2) + '%';
@@ -131,8 +136,11 @@
     if (progressBar) progressBar.style.width = pct;
 
     if (yearBackdrop) {
-      const interpolatedYear = Math.round(2026 + progress * 10);
-      yearBackdrop.textContent = String(interpolatedYear);
+      yearBackdrop.textContent = String(Math.round(2026 + progress * 10));
+    }
+
+    if (backToTopBtn) {
+      backToTopBtn.classList.toggle('is-shown', progress > 0.14);
     }
   }
 
@@ -141,7 +149,7 @@
   updateScroll();
 
   // =========================================================================
-  // 3. Auto-Cruise 3D Timeline Glide
+  // 4. Auto-Cruise 3D Timeline Glide
   // =========================================================================
 
   let cruising = false;
@@ -166,7 +174,7 @@
       stopCruise();
       return;
     }
-    window.scrollBy(0, 2.2);
+    window.scrollBy(0, 2.3);
     cruiseRaf = requestAnimationFrame(stepCruise);
   }
 
@@ -188,13 +196,12 @@
     });
   }
 
-  // Stop auto-cruise immediately if user takes manual control
   ['wheel', 'touchstart', 'keydown'].forEach(function (evt) {
     window.addEventListener(evt, stopCruise, { passive: true });
   });
 
   // =========================================================================
-  // 4. Chapter Active State & Card Reveal Observer
+  // 5. Chapter Active State & Card Reveal Observer
   // =========================================================================
 
   if ('IntersectionObserver' in window) {
@@ -242,72 +249,6 @@
       card.classList.add('is-visible');
     });
   }
-
-  // =========================================================================
-  // 5. Interactive Street Simulator (Chapter 01: Highway vs Bus & Sidewalk)
-  // =========================================================================
-
-  const simButtons = Array.from(document.querySelectorAll('.sim-btn[data-mode]'));
-  const greenButtons = Array.from(document.querySelectorAll('.green-btn[data-green]'));
-  const simCapacity = document.getElementById('sim-capacity');
-  const simSidewalk = document.getElementById('sim-sidewalk');
-  const simSpeed = document.getElementById('sim-speed');
-  const simCaption = document.getElementById('sim-caption');
-
-  const SIM_DATA = {
-    highway: {
-      capacity: '40 min',
-      sidewalk: '2.22 min/km',
-      speed: 'Shared Jam',
-      caption:
-        'Today: Even if you put a RapidKL 750 bus on the road every single second, sharing the Federal Highway jam with private cars traps every bus in the same gridlock — while KKR still proposes adding more highways.'
-    },
-    transit: {
-      capacity: '22 min',
-      sidewalk: '1.22 min/km',
-      speed: 'Enforced Lane',
-      caption:
-        '2036 vision: Give RapidKL 750 a physically enforced, dedicated bus lane along the Federal Highway corridor plus shaded kaki lima at every stop — cutting 18 km from 40 min down to ~22 min and beating private cars every morning.'
-    }
-  };
-
-  simButtons.forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      const mode = btn.getAttribute('data-mode');
-      const data = SIM_DATA[mode];
-      if (!data) return;
-
-      simButtons.forEach(function (b) {
-        const active = b === btn;
-        b.classList.toggle('is-active', active);
-        b.setAttribute('aria-pressed', String(active));
-      });
-
-      if (simCapacity) simCapacity.textContent = data.capacity;
-      if (simSidewalk) simSidewalk.textContent = data.sidewalk;
-      if (simSpeed) simSpeed.textContent = data.speed;
-      if (simCaption) simCaption.textContent = data.caption;
-
-      currentPreviewMode = mode;
-      if (window.ManifestoScene) {
-        window.ManifestoScene.setPreviewMode(mode);
-      }
-    });
-  });
-
-  greenButtons.forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      const mode = btn.getAttribute('data-green');
-      greenButtons.forEach(function (b) {
-        const active = b === btn;
-        b.classList.toggle('is-active', active);
-        b.setAttribute('aria-pressed', String(active));
-      });
-      if (window.ManifestoScene) {
-        window.ManifestoScene.setGreenOverpass(mode);
-      }
-    });
-  });
 
   // =========================================================================
   // 6. "Witness This Timeline" Interactive Stamp
