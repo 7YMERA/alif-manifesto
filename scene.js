@@ -552,42 +552,118 @@
     crossCars.push(cCar);
   }
 
-  // RapidKL Red & Blue Bus Factory
-  const busWhiteMat = new THREE.MeshStandardMaterial({ color: 0xf7f8fa, roughness: 0.32, metalness: 0.14 });
+  // RapidKL Red & Blue Bus Factory (with detailed rear face for Click-the-Bus Opening!)
+  const busWhiteMat = new THREE.MeshStandardMaterial({ color: 0xf7f8fa, roughness: 0.30, metalness: 0.14 });
   const rapidBlueMat = new THREE.MeshStandardMaterial({ color: 0x0047ab, roughness: 0.36, metalness: 0.18 });
   const rapidRedMat = new THREE.MeshStandardMaterial({ color: 0xd92332, roughness: 0.38, metalness: 0.15 });
   const busGlassMat = new THREE.MeshStandardMaterial({ color: 0x162433, roughness: 0.18, metalness: 0.58 });
   const busLedMat = new THREE.MeshBasicMaterial({ color: 0xffcc4d });
+  const busBumperMat = new THREE.MeshStandardMaterial({ color: 0x222933, roughness: 0.72 });
+  const busRearTailMat = new THREE.MeshBasicMaterial({ color: 0xff2b38 });
 
-  function makeRapidKLBus() {
+  // Crisp glowing LED matrix canvas texture for the rear "750" route display
+  function makeRouteSignTexture() {
+    const c = document.createElement('canvas');
+    c.width = 512;
+    c.height = 128;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#0e141c';
+    ctx.fillRect(0, 0, 512, 128);
+    ctx.fillStyle = '#ffbf3f';
+    ctx.font = '800 72px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('750  KL SENTRAL', 256, 66);
+    const tex = new THREE.CanvasTexture(c);
+    tex.anisotropy = 4;
+    return tex;
+  }
+
+  function makePlateTexture() {
+    const c = document.createElement('canvas');
+    c.width = 256;
+    c.height = 64;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#11161d';
+    ctx.fillRect(0, 0, 256, 64);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(4, 4, 248, 56);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 34px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('W 750 MY', 128, 34);
+    return new THREE.CanvasTexture(c);
+  }
+
+  const routeSignMat = new THREE.MeshBasicMaterial({ map: makeRouteSignTexture() });
+  const plateMat = new THREE.MeshBasicMaterial({ map: makePlateTexture() });
+
+  function makeRapidKLBus(detailedRear) {
     const bus = new THREE.Group();
-    const hull = new THREE.Mesh(new THREE.BoxGeometry(2.45, 2.48, 10.6), busWhiteMat);
-    hull.position.y = 1.5;
+    const hull = new THREE.Mesh(new THREE.BoxGeometry(2.52, 2.58, 10.6), busWhiteMat);
+    hull.position.y = 1.54;
     hull.castShadow = true;
     bus.add(hull);
 
-    const blueBand = new THREE.Mesh(new THREE.BoxGeometry(2.51, 0.56, 10.64), rapidBlueMat);
+    // Roof AC pod
+    const acPod = new THREE.Mesh(new THREE.BoxGeometry(1.75, 0.28, 5.2), busWhiteMat);
+    acPod.position.set(0, 2.94, 0);
+    bus.add(acPod);
+
+    const blueBand = new THREE.Mesh(new THREE.BoxGeometry(2.58, 0.58, 10.64), rapidBlueMat);
     blueBand.position.y = 0.72;
     bus.add(blueBand);
 
-    const redStripe = new THREE.Mesh(new THREE.BoxGeometry(2.53, 0.24, 10.66), rapidRedMat);
-    redStripe.position.y = 1.12;
+    const redStripe = new THREE.Mesh(new THREE.BoxGeometry(2.60, 0.24, 10.66), rapidRedMat);
+    redStripe.position.y = 1.14;
     bus.add(redStripe);
 
-    const glass = new THREE.Mesh(new THREE.BoxGeometry(2.49, 0.88, 9.6), busGlassMat);
-    glass.position.y = 1.92;
+    const glass = new THREE.Mesh(new THREE.BoxGeometry(2.56, 0.88, 9.6), busGlassMat);
+    glass.position.y = 1.98;
     bus.add(glass);
 
     const ledF = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.24, 0.12), busLedMat);
-    ledF.position.set(0, 2.46, -5.32);
-    const ledR = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.22, 0.12), busLedMat);
-    ledR.position.set(0, 2.46, 5.32);
-    bus.add(ledF, ledR);
+    ledF.position.set(0, 2.52, -5.32);
+    bus.add(ledF);
+
+    if (detailedRear) {
+      // Rear window frame
+      const rearWin = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.88, 0.1), busGlassMat);
+      rearWin.position.set(0, 1.98, 5.31);
+      bus.add(rearWin);
+
+      // Glowing "750 KL SENTRAL" rear LED matrix sign
+      const rearSign = new THREE.Mesh(new THREE.PlaneGeometry(1.85, 0.42), routeSignMat);
+      rearSign.position.set(0, 2.52, 5.36);
+      bus.add(rearSign);
+
+      // Rear bumper + dual glowing red brake/tail lights + license plate
+      const bumper = new THREE.Mesh(new THREE.BoxGeometry(2.58, 0.34, 0.24), busBumperMat);
+      bumper.position.set(0, 0.44, 5.34);
+      bus.add(bumper);
+
+      [-0.96, 0.96].forEach(function (tx) {
+        const tail = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.24, 0.12), busRearTailMat);
+        tail.position.set(tx, 0.86, 5.34);
+        bus.add(tail);
+      });
+
+      const plate = new THREE.Mesh(new THREE.PlaneGeometry(0.72, 0.19), plateMat);
+      plate.position.set(0, 0.76, 5.36);
+      bus.add(plate);
+    } else {
+      const ledR = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.22, 0.12), busLedMat);
+      ledR.position.set(0, 2.50, 5.32);
+      bus.add(ledR);
+    }
+
     return bus;
   }
 
-  const rapidBus750 = makeRapidKLBus();
-  rapidBus750.position.set(-2.4, 0.08, -8);
+  const rapidBus750 = makeRapidKLBus(true);
+  rapidBus750.position.set(0, 0.08, 48.5);
   world.add(rapidBus750);
 
   const extraBuses = [];
@@ -1253,9 +1329,49 @@
 
   let scrollProgress = 0;
   let smoothScroll = 0;
-  let compareRatio = null; // null during scroll; 0..1 when user scrubs End-of-Scroll Before/After slider
+  let compareRatio = null;
   let lightingMode = 'day';
   let isDark = false;
+
+  // Interactive "Click the Back of the Bus" Opening State
+  let introState = 'waiting'; // 'waiting' | 'departing' | 'active'
+  let introT = 0;
+  const raycaster = new THREE.Raycaster();
+  const ndc = new THREE.Vector2();
+  const introCamPos = new THREE.Vector3(0, 1.92, 57.6);
+  const introCamLook = new THREE.Vector3(0, 1.82, 44.0);
+
+  function triggerBusDeparture() {
+    if (introState !== 'waiting') return;
+    introState = 'departing';
+    canvas.style.cursor = 'default';
+    if (typeof window.onBusIntroStart === 'function') {
+      window.onBusIntroStart();
+    }
+  }
+
+  window.addEventListener('pointermove', function (e) {
+    if (introState !== 'waiting') return;
+    ndc.x = (e.clientX / window.innerWidth) * 2 - 1;
+    ndc.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(ndc, camera);
+    const hits = raycaster.intersectObject(rapidBus750, true);
+    document.body.style.cursor = hits.length > 0 ? 'pointer' : 'default';
+  }, { passive: true });
+
+  window.addEventListener('click', function (e) {
+    if (introState !== 'waiting') return;
+    // Ignore clicks on topbar links or buttons
+    if (e.target && e.target.closest && e.target.closest('header, nav, button, a')) return;
+    ndc.x = (e.clientX / window.innerWidth) * 2 - 1;
+    ndc.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(ndc, camera);
+    const hits = raycaster.intersectObject(rapidBus750, true);
+    if (hits.length > 0) {
+      document.body.style.cursor = 'default';
+      triggerBusDeparture();
+    }
+  });
 
   window.ManifestoScene = {
     setScrollProgress: function (p) {
@@ -1264,6 +1380,7 @@
     setCompareRatio: function (val) {
       compareRatio = val === null ? null : clamp(val, 0, 1);
     },
+    triggerBusDeparture: triggerBusDeparture,
     setLighting: function (mode) {
       lightingMode = mode;
     },
@@ -1439,11 +1556,26 @@
       crossCars[c].visible = crossVis > 0.03;
     }
 
-    // 7. Hero RapidKL 750 Bus: Stuck in Jam Early -> Glides Freely Down Bus Lane!
-    if (morphFactor < 0.25) {
+    // 7. Hero RapidKL 750 Bus: Opening Wait -> Pulls Forward Into Ugly Jam -> Glides Free in 2036!
+    if (introState === 'waiting') {
+      rapidBus750.position.set(0, 0.08 + Math.sin(elapsed * 4.5) * 0.012, 48.5);
+      busRearTailMat.color.setHex(0xff2b38);
+    } else if (introState === 'departing') {
+      introT = Math.min(1, introT + dt / 1.75);
+      const ease = introT * introT * (3 - 2 * introT);
+      rapidBus750.position.set(lerp(0, -2.4, smoothstep(0.15, 0.85, ease)), 0.08, lerp(48.5, -7.5, ease));
+      busRearTailMat.color.setHex(introT < 0.7 ? 0xaa1c24 : 0xff2b38);
+      if (introT >= 1) {
+        introState = 'active';
+      }
+    } else if (morphFactor < 0.25) {
+      rapidBus750.position.x = lerp(rapidBus750.position.x, -2.4, 0.08);
       rapidBus750.position.z = lerp(rapidBus750.position.z, -7.5 + Math.sin(elapsed * 0.8) * 0.6, 0.06);
+      busRearTailMat.color.setHex(0xff2b38);
     } else {
+      rapidBus750.position.x = lerp(rapidBus750.position.x, -2.4, 0.08);
       rapidBus750.position.z -= lerp(2.5, 15.5, morphFactor) * dt * speedMult;
+      busRearTailMat.color.setHex(0xaa1c24);
       if (rapidBus750.position.z < -290) rapidBus750.position.z = 60;
     }
 
@@ -1458,18 +1590,27 @@
       }
     }
 
-    // 8. Silky Camera Flight Through City & Landmarks + Grand Bottom Panoramic Orbit
+    // 8. Camera: Behind Bus Rear (Waiting) -> Smooth Pan Into Ugly Highway (Departing) -> Scroll Flight!
     camPosCurve.getPointAt(s, tmpPos);
     camLookCurve.getPointAt(s, tmpLook);
 
-    if (s > 0.90 && !reducedMotion) {
-      const orbitBlend = smoothstep(0.90, 1.0, s);
-      tmpPos.x += Math.sin(elapsed * 0.20) * 24 * orbitBlend;
-      tmpPos.y += Math.cos(elapsed * 0.16) * 2.2 * orbitBlend;
+    if (introState === 'waiting') {
+      camera.position.copy(introCamPos);
+      camera.lookAt(introCamLook);
+    } else if (introState === 'departing') {
+      const panEase = smoothstep(0.12, 1.0, introT);
+      camera.position.copy(introCamPos).lerp(tmpPos, panEase);
+      const lookNow = introCamLook.clone().lerp(tmpLook, panEase);
+      camera.lookAt(lookNow);
+    } else {
+      if (s > 0.90 && !reducedMotion) {
+        const orbitBlend = smoothstep(0.90, 1.0, s);
+        tmpPos.x += Math.sin(elapsed * 0.20) * 24 * orbitBlend;
+        tmpPos.y += Math.cos(elapsed * 0.16) * 2.2 * orbitBlend;
+      }
+      camera.position.copy(tmpPos);
+      camera.lookAt(tmpLook);
     }
-
-    camera.position.copy(tmpPos);
-    camera.lookAt(tmpLook);
 
     // 9. Sky Dome, Exhaust Haze -> Clear Sky Transition, Stars & Landmark Night Glow
     const pal = isDark ? PALETTES.dark : (lightingMode === 'golden' ? PALETTES.golden : PALETTES.day);

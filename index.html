@@ -19,22 +19,16 @@
 <body class="is-gated">
   <a class="skip-link" href="#main-content">Skip to manifesto</a>
 
-  <!-- Click-to-Open Entrance Gate -->
-  <div class="opening-gate" id="opening-gate" role="dialog" aria-modal="true" aria-labelledby="gate-title">
-    <div class="gate-card">
-      <div class="gate-mark" aria-hidden="true">AN</div>
-      <div class="gate-eyebrow">Muhammad Alif Najmi · 2026–2036 Civic Manifesto</div>
-      <h2 class="gate-title" id="gate-title">A country built for <em>people</em>, not just highways.</h2>
-      <p class="gate-sub">
-        Glide through a jammed Klang Valley morning where even RapidKL 750 is trapped in car congestion —
-        then scroll forward as the city blooms into enforced bus lanes, railways, colorful shops, and safe shared spaces.
-      </p>
-      <button class="gate-enter-btn" id="gate-enter-btn" type="button">
-        <span>Enter the Showcase</span>
-        <span aria-hidden="true">&rarr;</span>
-      </button>
-      <div class="gate-hint">Interactive 3D · Shah Alam &rarr; Kuala Lumpur · 2026–2036</div>
+  <!-- Unique 3D Opening: Click the Back of the RapidKL 750 Bus (No Modal Box!) -->
+  <div class="bus-intro-overlay" id="bus-intro-overlay" aria-live="polite">
+    <div class="bus-intro-top">
+      <span class="bus-intro-eyebrow">Muhammad Alif Najmi · 2026–2036 Civic Manifesto</span>
     </div>
+    <button class="bus-intro-pill" id="bus-intro-trigger" type="button" aria-label="Click the RapidKL 750 bus to begin the journey">
+      <span class="bus-intro-route">750</span>
+      <span>Click the back of the bus to begin the morning commute</span>
+      <span aria-hidden="true">&rarr;</span>
+    </button>
   </div>
 
   <!-- Fixed Full-Viewport 3D Malaysian Metropolis & Map-Accurate KL Canvas -->
@@ -44,20 +38,26 @@
   <!-- Oversized Kinetic Year Watermark (Ticks 2026 -> 2036 on Scroll) -->
   <div class="year-backdrop" id="year-backdrop" aria-hidden="true">2026</div>
 
-  <!-- Top Navigation Bar (KakiLima & Portfolio on Top!) -->
+  <!-- Top Navigation Bar (GitHub Avatar + KakiLima & Portfolio Logos!) -->
   <header class="topbar">
     <div class="topbar-inner">
       <a class="brand" href="#opening" aria-label="Alif Manifesto home">
-        <span class="brand-mark" aria-hidden="true">AN</span>
+        <img class="brand-avatar" src="./assets/icons/github-avatar.png" alt="Muhammad Alif Najmi GitHub logo" width="36" height="36">
         <span class="brand-text">
           <span class="brand-name">Alif Najmi</span>
           <span class="brand-sub">Civic Manifesto · 2026–2036</span>
         </span>
       </a>
 
-      <nav class="topbar-nav" aria-label="External links">
-        <a class="top-link" href="https://kakilima-iota.vercel.app" target="_blank" rel="noopener">KakiLima</a>
-        <a class="top-link" href="https://7ymera.github.io" target="_blank" rel="noopener">Portfolio</a>
+      <nav class="topbar-nav" aria-label="Projects">
+        <a class="top-link" href="https://kakilima-iota.vercel.app" target="_blank" rel="noopener">
+          <img class="nav-logo" src="./assets/icons/kakilima-logo.svg" alt="" width="22" height="22">
+          <span>KakiLima</span>
+        </a>
+        <a class="top-link" href="https://7ymera.github.io" target="_blank" rel="noopener">
+          <img class="nav-logo" src="./assets/icons/portfolio-logo.png" alt="" width="22" height="22">
+          <span>Portfolio</span>
+        </a>
       </nav>
 
       <div class="topbar-controls">

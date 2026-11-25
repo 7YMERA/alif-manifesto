@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" rx="15" fill="#0E7C59"/>
+  <!-- Curving shaded kaki lima sidewalk -->
+  <path d="M16 52 L28 24 L38 24 L48 52 Z" fill="#F4EFE6"/>
+  <path d="M31.5 27 L32.5 27 L34 49 L30 49 Z" fill="#0E7C59" opacity="0.22"/>
+  <!-- Arching tropical shade canopy leaf -->
+  <path d="M14 29 C18 14, 34 10, 50 16 C44 25, 32 29, 14 29 Z" fill="#34C293"/>
+  <path d="M16 28 C25 22, 36 18, 47 17" stroke="#0B4F39" stroke-width="2.2" stroke-linecap="round"/>
+  <!-- Walking sun/signal dot -->
+  <circle cx="48" cy="45" r="5" fill="#D92332"/>
+</svg>

@@ -6,8 +6,8 @@
   'use strict';
 
   const root = document.documentElement;
-  const gate = document.getElementById('opening-gate');
-  const gateBtn = document.getElementById('gate-enter-btn');
+  const busOverlay = document.getElementById('bus-intro-overlay');
+  const busTrigger = document.getElementById('bus-intro-trigger');
   const themeBtn = document.getElementById('theme-toggle');
   const lightBtn = document.getElementById('light-toggle');
   const cruiseBtn = document.getElementById('cruise-toggle');
@@ -22,23 +22,32 @@
   const storyCards = Array.from(document.querySelectorAll('.story-card'));
 
   // =========================================================================
-  // 1. Click-to-Open Entrance Gate
+  // 1. Click-the-Back-of-the-Bus 3D Opening
   // =========================================================================
 
-  function openGate() {
-    if (!gate || gate.classList.contains('is-open')) return;
-    gate.classList.add('is-open');
-    document.body.classList.remove('is-gated');
-    window.scrollTo({ top: 0, behavior: 'auto' });
+  window.onBusIntroStart = function () {
+    if (busOverlay) busOverlay.classList.add('is-hidden');
+    setTimeout(function () {
+      document.body.classList.remove('is-gated');
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }, 950);
+  };
+
+  function startFromBus() {
+    if (window.ManifestoScene && window.ManifestoScene.triggerBusDeparture) {
+      window.ManifestoScene.triggerBusDeparture();
+    } else {
+      window.onBusIntroStart();
+    }
   }
 
-  if (gateBtn) {
-    gateBtn.addEventListener('click', openGate);
+  if (busTrigger) {
+    busTrigger.addEventListener('click', startFromBus);
   }
   window.addEventListener('keydown', function (e) {
     if (document.body.classList.contains('is-gated') && (e.key === 'Enter' || e.key === ' ')) {
       e.preventDefault();
-      openGate();
+      startFromBus();
     }
   });
 
