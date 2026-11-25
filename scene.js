@@ -507,6 +507,106 @@
   }
 
   // =========================================================================
+  // 4B. Malaysian Elevated Railway Viaduct, Station Canopy & 4-Car MRT/LRT Train
+  // =========================================================================
+
+  const railGroup = new THREE.Group();
+  const railViaductMat = new THREE.MeshStandardMaterial({ color: 0xc9cfd4, roughness: 0.72 });
+  const railTrimMat = new THREE.MeshStandardMaterial({ color: 0x1d4e78, roughness: 0.45 });
+  const railSteelMat = new THREE.MeshStandardMaterial({ color: 0x566068, roughness: 0.35, metalness: 0.75 });
+
+  // Elevated sleek box-girder viaduct along the right corridor (x = 17.5)
+  const viaductBeam = new THREE.Mesh(new THREE.BoxGeometry(5.6, 1.25, 260), railViaductMat);
+  viaductBeam.position.set(17.5, 8.2, -45);
+  viaductBeam.castShadow = true;
+  railGroup.add(viaductBeam);
+
+  // Architectural cobalt/emerald transit trim along viaduct fascia
+  const viaductTrim = new THREE.Mesh(new THREE.BoxGeometry(5.76, 0.28, 260), railTrimMat);
+  viaductTrim.position.set(17.5, 8.75, -45);
+  railGroup.add(viaductTrim);
+
+  // Dual steel rails
+  [-1.1, 1.1].forEach(function (rx) {
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 260), railSteelMat);
+    rail.position.set(17.5 + rx, 8.92, -45);
+    railGroup.add(rail);
+  });
+
+  // Slender sculpted viaduct piers
+  const railPierGeo = new THREE.BoxGeometry(1.5, 8.2, 1.8);
+  for (let z = 42; z >= -130; z -= 26) {
+    const pier = new THREE.Mesh(railPierGeo, railViaductMat);
+    pier.position.set(17.5, 4.1, z);
+    pier.castShadow = true;
+    railGroup.add(pier);
+  }
+
+  // Modern Elevated Rail Station Canopy (connecting rail -> bus -> kaki lima)
+  const stationCanopy = new THREE.Group();
+  const stationRoof = new THREE.Mesh(new THREE.BoxGeometry(8.8, 0.28, 28), railTrimMat);
+  stationRoof.position.set(17.5, 13.6, -24);
+  stationRoof.castShadow = true;
+  stationCanopy.add(stationRoof);
+
+  const stationDeck = new THREE.Mesh(new THREE.BoxGeometry(8.4, 0.4, 28), railViaductMat);
+  stationDeck.position.set(17.5, 8.6, -24);
+  stationCanopy.add(stationDeck);
+
+  [-3.8, 3.8].forEach(function (sx) {
+    [-11, 0, 11].forEach(function (sz) {
+      const col = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 5.0, 8), railSteelMat);
+      col.position.set(17.5 + sx, 11.1, -24 + sz);
+      stationCanopy.add(col);
+    });
+  });
+  railGroup.add(stationCanopy);
+
+  // Sleek 4-Car Malaysian MRT/LRT Electric Train
+  const train = new THREE.Group();
+  const trainHullMat = new THREE.MeshStandardMaterial({ color: 0xf4f6f8, roughness: 0.28, metalness: 0.22 });
+  const trainLiveryMat = new THREE.MeshStandardMaterial({ color: 0x1d4e78, roughness: 0.35, metalness: 0.2 });
+  const trainAccentMat = new THREE.MeshStandardMaterial({ color: 0x0e7c59, roughness: 0.4 });
+  const trainWindowMat = new THREE.MeshBasicMaterial({ color: 0xffe9ba });
+  const trainHeadMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+  for (let carIdx = 0; carIdx < 4; carIdx++) {
+    const coach = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.BoxGeometry(2.75, 2.75, 11.4), trainHullMat);
+    body.position.y = 1.45;
+    body.castShadow = true;
+    coach.add(body);
+
+    const livery = new THREE.Mesh(new THREE.BoxGeometry(2.82, 0.65, 11.44), trainLiveryMat);
+    livery.position.y = 0.72;
+    coach.add(livery);
+
+    const accent = new THREE.Mesh(new THREE.BoxGeometry(2.84, 0.22, 11.46), trainAccentMat);
+    accent.position.y = 1.12;
+    coach.add(accent);
+
+    const winBand = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.85, 10.2), trainWindowMat);
+    winBand.position.y = 1.92;
+    coach.add(winBand);
+
+    if (carIdx === 0) {
+      const headLight = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.24, 0.14), trainHeadMat);
+      headLight.position.set(0, 0.9, 5.75);
+      coach.add(headLight);
+    }
+
+    coach.position.z = -carIdx * 12.1;
+    train.add(coach);
+  }
+
+  train.position.set(17.5, 9.0, -70);
+  railGroup.add(train);
+
+  railGroup.position.y = -18;
+  railGroup.visible = false;
+  world.add(railGroup);
+
+  // =========================================================================
   // 5. Real 3D Kuala Lumpur Landmarks (from Alif's 7YMERA Portfolio!)
   // =========================================================================
 
@@ -633,14 +733,6 @@
   let greenOverride = null; // null | 'bare' | 'green'
   let lightingMode = 'day';
   let isDark = false;
-  let pointerX = 0;
-  let pointerY = 0;
-
-  window.addEventListener('pointermove', function (e) {
-    if (reducedMotion) return;
-    pointerX = (e.clientX / window.innerWidth - 0.5) * 2;
-    pointerY = (e.clientY / window.innerHeight - 0.5) * 2;
-  }, { passive: true });
 
   function applyPalette() {
     const target = isDark ? PALETTES.dark : (lightingMode === 'golden' ? PALETTES.golden : PALETTES.day);
@@ -811,7 +903,16 @@
       }
     }
 
-    // 8. Smooth Catmull-Rom Drone Camera + Dynamic FOV Momentum + Pointer Parallax
+    // 7B. Elevated Railway Viaduct rises & 4-Car MRT/LRT Electric Train glides along track
+    const railLift = smoothstep(0.24, 0.72, morphFactor);
+    railGroup.visible = railLift > 0.02;
+    if (railGroup.visible) {
+      railGroup.position.y = lerp(-16, 0, railLift);
+      train.position.z += 22 * dt * speedMult;
+      if (train.position.z > 105) train.position.z = -155;
+    }
+
+    // 8. Smooth Catmull-Rom Drone Camera + Dynamic FOV Momentum (Strictly Scroll-Driven)
     camPosCurve.getPointAt(clamp(smoothScroll, 0, 1), tmpPos);
     camLookCurve.getPointAt(clamp(smoothScroll, 0, 1), tmpLook);
 
@@ -821,11 +922,7 @@
       camera.updateProjectionMatrix();
     }
 
-    camera.position.set(
-      tmpPos.x + pointerX * 1.9,
-      tmpPos.y - pointerY * 1.0,
-      tmpPos.z
-    );
+    camera.position.copy(tmpPos);
     camera.lookAt(tmpLook);
 
     // Subtle cinema roll when scrolling fast
