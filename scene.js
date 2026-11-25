@@ -622,10 +622,10 @@
     ctx.fillStyle = '#0e141c';
     ctx.fillRect(0, 0, 512, 128);
     ctx.fillStyle = '#ffbf3f';
-    ctx.font = '800 72px "JetBrains Mono", monospace';
+    ctx.font = '800 50px "JetBrains Mono", monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('750  KL SENTRAL', 256, 66);
+    ctx.fillText('750 · KL SENTRAL', 256, 66, 456);
     const tex = new THREE.CanvasTexture(c);
     tex.anisotropy = 4;
     return tex;
@@ -1588,7 +1588,8 @@
       if (train.position.z > 110) train.position.z = -310;
     }
 
-    // 6. Ground Traffic Stream & Intersection Jam
+    // 6. Ground Traffic Stream & Intersection Jam (pause ground cars while waiting behind bus)
+    const groundCarSpeedMult = introState === 'waiting' ? 0 : speedMult;
     for (let i = 0; i < cars.length; i++) {
       const car = cars[i];
       const carVis = car.userData.keepInTransit ? 1 : clamp(1 - morphFactor * 1.42, 0.001, 1);
@@ -1596,7 +1597,7 @@
       car.visible = carVis > 0.03;
       if (car.visible) {
         const spd = lerp(car.userData.speed * 0.45, car.userData.speed * 2.5, morphFactor);
-        car.position.z += car.userData.dir * spd * dt * speedMult;
+        car.position.z += car.userData.dir * spd * dt * groundCarSpeedMult;
         if (car.position.z < -280) car.position.z = 62;
         if (car.position.z > 62) car.position.z = -280;
       }
@@ -1608,9 +1609,9 @@
       crossCars[c].visible = crossVis > 0.03;
     }
 
-    // 7. Hero RapidKL 750 Bus: Opening Wait -> Pulls Forward Into Ugly Jam -> Glides Free in 2036!
+    // 7. Hero RapidKL 750 Bus: Rock-Still Waiting -> Pulls Forward Into Ugly Jam -> Glides Free!
     if (introState === 'waiting') {
-      rapidBus750.position.set(0, 0.08 + Math.sin(elapsed * 4.5) * 0.012, 48.5);
+      rapidBus750.position.set(0, 0.08, 48.5);
       busRearTailMat.color.setHex(0xff2b38);
     } else if (introState === 'departing') {
       introT = Math.min(1, introT + dt / 1.75);
