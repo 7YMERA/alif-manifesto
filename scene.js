@@ -354,8 +354,8 @@
   });
 
   // =========================================================================
-  // 4. Existing Concrete Highway Overpass — UTILIZED WITH CARS ON TOP!
-  //    (Zero early greenery pop-in; blooms cleanly only after Chapter 02!)
+  // 4. Existing Concrete Highway Overpass — UTILIZED WITH CARS/TRUCKS ON TOP
+  //    AND DECORATED WITH TROPICAL FLOWERS & GREENERY!
   // =========================================================================
 
   const highwayGroup = new THREE.Group();
@@ -363,60 +363,91 @@
   const hwyRoadMat = new THREE.MeshStandardMaterial({ color: 0x2b313a, roughness: 0.88 });
   const warmParkLightMat = new THREE.MeshBasicMaterial({ color: 0xffe4a8 });
 
-  const deck = new THREE.Mesh(new THREE.BoxGeometry(14, 1.4, 380), concreteMat);
-  deck.position.set(-16.0, 9.8, -110);
+  const HWY_Y = 7.6; // Clear sightline to traffic on top!
+  const deck = new THREE.Mesh(new THREE.BoxGeometry(14, 1.2, 380), concreteMat);
+  deck.position.set(-16.0, HWY_Y, -110);
   deck.castShadow = true;
   highwayGroup.add(deck);
 
-  // Asphalt roadway + guardrails on top of the highway deck
-  const hwyTopAsphalt = new THREE.Mesh(new THREE.PlaneGeometry(12.2, 378), hwyRoadMat);
+  const hwyTopAsphalt = new THREE.Mesh(new THREE.PlaneGeometry(12.6, 378), hwyRoadMat);
   hwyTopAsphalt.rotation.x = -Math.PI / 2;
-  hwyTopAsphalt.position.set(-16.0, 10.52, -110);
+  hwyTopAsphalt.position.set(-16.0, HWY_Y + 0.62, -110);
   highwayGroup.add(hwyTopAsphalt);
 
+  // Low sleek barrier rails so vehicles on top are clearly visible
   [-22.6, -9.4].forEach(function (gx) {
-    const rail = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.85, 378), concreteMat);
-    rail.position.set(gx, 10.9, -110);
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.48, 378), concreteMat);
+    rail.position.set(gx, HWY_Y + 0.84, -110);
     highwayGroup.add(rail);
   });
 
-  const pillarGeo = new THREE.BoxGeometry(2.2, 9.8, 2.2);
+  // Highway center dashed line on top
+  const hwyDashMat = new THREE.MeshBasicMaterial({ color: 0xe8edf2 });
+  for (let z = 72; z >= -290; z -= 8) {
+    const hd = new THREE.Mesh(new THREE.PlaneGeometry(0.18, 3.0), hwyDashMat);
+    hd.rotation.x = -Math.PI / 2;
+    hd.position.set(-16.0, HWY_Y + 0.64, z);
+    highwayGroup.add(hd);
+  }
+
+  const pillarGeo = new THREE.BoxGeometry(2.2, HWY_Y, 2.2);
   const vineWrapMat = new THREE.MeshStandardMaterial({ color: 0x247346, roughness: 0.85 });
   const vineBrightMat = new THREE.MeshStandardMaterial({ color: 0x35915b, roughness: 0.82 });
   const planterBoxMat = new THREE.MeshStandardMaterial({ color: 0x4b555e, roughness: 0.8 });
 
+  // Vibrant Malaysian Tropical Flower Materials (Hibiscus Red, Golden Allamanda, Coral Ixora, White Frangipani)
+  const flowerMats = [
+    new THREE.MeshStandardMaterial({ color: 0xe83845, roughness: 0.55 }),
+    new THREE.MeshStandardMaterial({ color: 0xf5b82e, roughness: 0.55 }),
+    new THREE.MeshStandardMaterial({ color: 0xf26d35, roughness: 0.55 }),
+    new THREE.MeshStandardMaterial({ color: 0xfff4d9, roughness: 0.55 })
+  ];
+  const flowerGeo = new THREE.DodecahedronGeometry(0.36, 0);
+
   const overpassGreenery = [];
-  const pillarGreeneryGeo = new THREE.BoxGeometry(2.58, 7.8, 2.58);
+  const pillarGreeneryGeo = new THREE.BoxGeometry(2.58, HWY_Y - 1.2, 2.58);
 
   for (let z = 48; z >= -285; z -= 24) {
     if (crossZList.some(function (cz) { return Math.abs(z - cz) < 10; })) continue;
     const pillar = new THREE.Mesh(pillarGeo, concreteMat);
-    pillar.position.set(-16.0, 4.9, z);
+    pillar.position.set(-16.0, HWY_Y / 2, z);
     pillar.castShadow = true;
     highwayGroup.add(pillar);
 
     const wrap = new THREE.Group();
     const mossSleeve = new THREE.Mesh(pillarGreeneryGeo, vineWrapMat);
-    mossSleeve.position.y = 4.2;
+    mossSleeve.position.y = (HWY_Y - 1.2) / 2 + 0.4;
     wrap.add(mossSleeve);
 
+    // Foliage clusters + colorful tropical flowers climbing each pillar
     for (let k = 0; k < 4; k++) {
+      const angle = (k * Math.PI) / 2 + 0.4;
       const puff = new THREE.Mesh(
-        new THREE.DodecahedronGeometry(0.95 + (k % 2) * 0.25, 1),
+        new THREE.DodecahedronGeometry(0.92 + (k % 2) * 0.22, 1),
         k % 2 === 0 ? vineBrightMat : vineWrapMat
       );
-      const angle = (k * Math.PI) / 2 + 0.4;
-      puff.position.set(Math.cos(angle) * 1.25, 2.0 + k * 1.85, Math.sin(angle) * 1.25);
+      puff.position.set(Math.cos(angle) * 1.25, 1.6 + k * 1.45, Math.sin(angle) * 1.25);
       wrap.add(puff);
+
+      const blossom = new THREE.Mesh(flowerGeo, flowerMats[(k + Math.abs(z)) % flowerMats.length]);
+      blossom.position.set(Math.cos(angle) * 1.58, 1.7 + k * 1.45, Math.sin(angle) * 1.58);
+      wrap.add(blossom);
     }
 
+    // Under-highway flower bed at pillar base
     const baseShrub = new THREE.Mesh(new THREE.DodecahedronGeometry(1.5, 1), vineBrightMat);
     baseShrub.scale.set(1.3, 0.55, 1.3);
     baseShrub.position.set(1.6, 0.55, 0);
     wrap.add(baseShrub);
 
+    for (let f = 0; f < 3; f++) {
+      const fl = new THREE.Mesh(flowerGeo, flowerMats[(f + Math.abs(z)) % flowerMats.length]);
+      fl.position.set(1.1 + f * 0.55, 0.92, (f - 1) * 0.55);
+      wrap.add(fl);
+    }
+
     const underLight = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.12, 0.35), warmParkLightMat);
-    underLight.position.set(0, 9.0, 0);
+    underLight.position.set(0, HWY_Y - 0.65, 0);
     wrap.add(underLight);
 
     wrap.position.set(-16.0, 0.15, z);
@@ -426,23 +457,31 @@
     overpassGreenery.push(wrap);
   }
 
+  // Deck-Edge Planter Boxes with Lush Hedges, Hanging Vines & Blooming Flower Clusters!
   [-9.05, -22.95].forEach(function (edgeX) {
     const edgeGroup = new THREE.Group();
-    const planter = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.72, 370), planterBoxMat);
-    planter.position.set(0, 10.55, -110);
+    const planter = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.68, 370), planterBoxMat);
+    planter.position.set(0, HWY_Y + 0.52, -110);
     edgeGroup.add(planter);
 
-    const hedge = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.85, 370), vineWrapMat);
-    hedge.position.set(0, 11.15, -110);
+    const hedge = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.72, 370), vineWrapMat);
+    hedge.position.set(0, HWY_Y + 1.02, -110);
     edgeGroup.add(hedge);
 
-    for (let z = 65; z >= -285; z -= 12) {
+    for (let z = 65; z >= -285; z -= 8) {
+      const isRightEdge = edgeX > -16.0;
       const drape = new THREE.Mesh(
-        new THREE.BoxGeometry(0.32, 1.45 + ((Math.abs(z) % 3) * 0.4), 3.6),
-        z % 24 === 0 ? vineBrightMat : vineWrapMat
+        new THREE.BoxGeometry(0.32, 1.35 + ((Math.abs(z) % 3) * 0.35), 3.2),
+        z % 16 === 0 ? vineBrightMat : vineWrapMat
       );
-      drape.position.set(edgeX > -16.0 ? 0.32 : -0.32, 9.95, z);
+      drape.position.set(isRightEdge ? 0.34 : -0.34, HWY_Y + 0.05, z);
       edgeGroup.add(drape);
+
+      // Vibrant flower blooms perched along the highway planter hedge!
+      const bloom = new THREE.Mesh(flowerGeo, flowerMats[Math.abs(z) % flowerMats.length]);
+      bloom.scale.setScalar(1.15);
+      bloom.position.set(isRightEdge ? 0.32 : -0.32, HWY_Y + 1.42, z);
+      edgeGroup.add(bloom);
     }
 
     edgeGroup.position.set(edgeX, 0, 0);
@@ -452,39 +491,52 @@
     overpassGreenery.push(edgeGroup);
   });
 
-  // REAL CARS DRIVING ON TOP OF THE ELEVATED HIGHWAY DECK!
-  const carColors = [0x4c5866, 0x7a8591, 0x353e48, 0xa8b1ba, 0x6e4742, 0x2c4766, 0x99353c];
+  // 34 CLEARLY VISIBLE VEHICLES (Cars, SUVs, Box Trucks & Coaches) DRIVING ON TOP OF THE HIGHWAY!
+  const carColors = [0x4c5866, 0x7a8591, 0x353e48, 0xe6ebf0, 0xd9383a, 0x25589c, 0xe8a838];
   const carBodyGeo = new THREE.BoxGeometry(1.78, 0.72, 3.7);
   const carCabinGeo = new THREE.BoxGeometry(1.48, 0.55, 1.9);
   const tailLightGeo = new THREE.BoxGeometry(1.54, 0.19, 0.1);
   const tailLightMat = new THREE.MeshBasicMaterial({ color: 0xf02e38 });
   const headLightMat = new THREE.MeshBasicMaterial({ color: 0xfff0c4 });
+  const truckCargoMat = new THREE.MeshStandardMaterial({ color: 0xf2f4f7, roughness: 0.45 });
 
   const highwayCars = [];
-  for (let h = 0; h < 22; h++) {
+  for (let h = 0; h < 34; h++) {
     const dir = h % 2 === 0 ? -1 : 1;
+    const isTruck = h % 5 === 0;
     const hCar = new THREE.Group();
     const bMat = new THREE.MeshStandardMaterial({
       color: carColors[h % carColors.length],
-      roughness: 0.4,
+      roughness: 0.38,
       metalness: 0.25
     });
-    const body = new THREE.Mesh(carBodyGeo, bMat);
-    body.position.y = 0.52;
-    hCar.add(body);
-    const cabin = new THREE.Mesh(carCabinGeo, bMat);
-    cabin.position.set(0, 1.05, dir < 0 ? 0.15 : -0.15);
-    hCar.add(cabin);
-    const tail = new THREE.Mesh(tailLightGeo, tailLightMat);
-    tail.position.set(0, 0.58, dir < 0 ? 1.86 : -1.86);
-    hCar.add(tail);
-    const head = new THREE.Mesh(tailLightGeo, headLightMat);
-    head.position.set(0, 0.56, dir < 0 ? -1.86 : 1.86);
-    hCar.add(head);
 
-    const laneX = dir < 0 ? -13.2 - (h % 2) * 2.2 : -18.8 + (h % 2) * 2.2;
-    hCar.position.set(laneX, 10.52, 65 - h * 16.5);
-    hCar.userData = { dir: dir, speed: 12 + (h % 4) * 2.2 };
+    if (isTruck) {
+      // Tall white box truck — unmistakable on the highway deck!
+      const cargo = new THREE.Mesh(new THREE.BoxGeometry(2.15, 2.25, 5.2), truckCargoMat);
+      cargo.position.set(0, 1.48, dir < 0 ? 0.5 : -0.5);
+      hCar.add(cargo);
+      const cab = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.65, 1.7), bMat);
+      cab.position.set(0, 1.15, dir < 0 ? -2.9 : 2.9);
+      hCar.add(cab);
+    } else {
+      const body = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.85, 4.0), bMat);
+      body.position.y = 0.6;
+      hCar.add(body);
+      const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.68, 2.15), bMat);
+      cabin.position.set(0, 1.24, dir < 0 ? 0.15 : -0.15);
+      hCar.add(cabin);
+      const tail = new THREE.Mesh(tailLightGeo, tailLightMat);
+      tail.position.set(0, 0.68, dir < 0 ? 2.02 : -2.02);
+      hCar.add(tail);
+      const head = new THREE.Mesh(tailLightGeo, headLightMat);
+      head.position.set(0, 0.66, dir < 0 ? -2.02 : 2.02);
+      hCar.add(head);
+    }
+
+    const laneX = dir < 0 ? -12.6 - (h % 2) * 2.5 : -19.4 + (h % 2) * 2.5;
+    hCar.position.set(laneX, HWY_Y + 0.64, 70 - h * 10.6);
+    hCar.userData = { dir: dir, speed: isTruck ? 10.5 : 14.5 + (h % 4) * 2.0 };
     highwayGroup.add(hCar);
     highwayCars.push(hCar);
   }
@@ -1307,8 +1359,8 @@
 
   const camPosCurve = new THREE.CatmullRomCurve3([
     new THREE.Vector3(1.0, 5.2, 54),      // 0.00 Moving with morning jam (zero greenery yet!)
-    new THREE.Vector3(3.4, 5.4, 14),      // 0.15 Congested intersection + RapidKL 750 stuck
-    new THREE.Vector3(-4.2, 7.2, -16),    // 0.30 Passing bare-to-green highway with cars driving on top!
+    new THREE.Vector3(3.4, 5.6, 14),      // 0.15 Congested intersection + RapidKL 750 stuck
+    new THREE.Vector3(-2.5, 11.4, -14),   // 0.30 Peeking right over the active highway deck (cars/trucks on top + flowers below!)
     new THREE.Vector3(4.5, 6.8, -68),     // 0.45 RapidKL bus lanes, prominent bus stops & colorful shophouses
     new THREE.Vector3(6.2, 8.2, -118),    // 0.60 Community Park + 3D Basketball Court + LRT Train overhead!
     new THREE.Vector3(-4.5, 11.5, -172),  // 0.74 Weaving right between Merdeka 118, KL Sentral Hub & TRX!
@@ -1319,7 +1371,7 @@
   const camLookCurve = new THREE.CatmullRomCurve3([
     new THREE.Vector3(-1.2, 2.2, -16),    // 0.00
     new THREE.Vector3(-2.4, 2.0, -22),    // 0.15
-    new THREE.Vector3(-14.0, 7.0, -44),   // 0.30
+    new THREE.Vector3(-15.5, 8.0, -48),   // 0.30 Looking directly at highway deck cars/trucks + blooming flowers!
     new THREE.Vector3(4.0, 5.5, -140),    // 0.45
     new THREE.Vector3(18.0, 4.0, -130),   // 0.60 Looking over Basketball Court & Park -> LRT Station
     new THREE.Vector3(8.0, 22.0, -245),   // 0.74 Framing Merdeka 118, TRX & KLCC ahead
