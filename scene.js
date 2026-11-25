@@ -230,10 +230,23 @@
   const roadMat = new THREE.MeshStandardMaterial({ color: 0x2b313a, roughness: 0.88 });
   const sideRoadMat = new THREE.MeshStandardMaterial({ color: 0x353c45, roughness: 0.9 });
 
-  const mainRoad = new THREE.Mesh(new THREE.BoxGeometry(18, 0.18, 440), roadMat);
-  mainRoad.position.set(0, 0, -130);
+  // Main boulevard stops cleanly at z = -255 and joins a curved KLCC Perimeter Ring Road!
+  const mainRoad = new THREE.Mesh(new THREE.BoxGeometry(18, 0.18, 340), roadMat);
+  mainRoad.position.set(0, 0, -85);
   mainRoad.receiveShadow = true;
   world.add(mainRoad);
+
+  // Curved KLCC Perimeter Ring Road & Landscaped Park Loop around Petronas Twin Towers (18, -295)
+  const ringRoad = new THREE.Mesh(new THREE.RingGeometry(30, 41, 48), roadMat);
+  ringRoad.rotation.x = -Math.PI / 2;
+  ringRoad.position.set(18, 0.08, -295);
+  ringRoad.receiveShadow = true;
+  world.add(ringRoad);
+
+  const ringConnector = new THREE.Mesh(new THREE.BoxGeometry(16, 0.16, 26), roadMat);
+  ringConnector.position.set(6, 0, -258);
+  ringConnector.rotation.y = -0.32;
+  world.add(ringConnector);
 
   // 4 Major Cross-Streets weaving through the metropolis & downtown KL
   const crossZList = [-18, -84, -150, -220];
@@ -246,8 +259,8 @@
 
   // Parallel Neighborhood Avenues
   [-48, 48].forEach(function (ax) {
-    const ave = new THREE.Mesh(new THREE.BoxGeometry(9, 0.14, 380), sideRoadMat);
-    ave.position.set(ax, -0.02, -120);
+    const ave = new THREE.Mesh(new THREE.BoxGeometry(9, 0.14, 320), sideRoadMat);
+    ave.position.set(ax, -0.02, -90);
     ave.receiveShadow = true;
     world.add(ave);
   });
@@ -547,40 +560,46 @@
   // 5. Ground Traffic Stream, Intersection Jam & RapidKL Red/Blue Buses
   // =========================================================================
 
+  // Non-overlapping jammed cars (4 lanes x 12 rows = 48 cars, zero clipping!)
   const cars = [];
   const carLanes = [-6.4, -2.4, 2.4, 6.4];
-  for (let i = 0; i < 48; i++) {
-    const laneIdx = i % 4;
-    const dir = laneIdx < 2 ? -1 : 1;
-    const car = new THREE.Group();
-    const bMat = new THREE.MeshStandardMaterial({
-      color: carColors[i % carColors.length],
-      roughness: 0.42,
-      metalness: 0.25
-    });
-    const body = new THREE.Mesh(carBodyGeo, bMat);
-    body.position.y = 0.52;
-    body.castShadow = true;
-    car.add(body);
+  for (let row = 0; row < 12; row++) {
+    for (let laneIdx = 0; laneIdx < 4; laneIdx++) {
+      const zStart = 55 - row * 6.8 - (laneIdx % 2) * 1.6;
+      // Leave clean space for rapidBus750 at (-2.4, 48.5) AND keep intersection box clear of clipping
+      if (laneIdx === 1 && zStart > 39 && zStart < 58) continue;
+      if (Math.abs(zStart - -18) < 5.2) continue;
 
-    const cabin = new THREE.Mesh(carCabinGeo, bMat);
-    cabin.position.set(0, 1.05, dir < 0 ? 0.15 : -0.15);
-    car.add(cabin);
+      const dir = laneIdx < 2 ? -1 : 1;
+      const car = new THREE.Group();
+      const idx = row * 4 + laneIdx;
+      const bMat = new THREE.MeshStandardMaterial({
+        color: carColors[idx % carColors.length],
+        roughness: 0.42,
+        metalness: 0.25
+      });
+      const body = new THREE.Mesh(carBodyGeo, bMat);
+      body.position.y = 0.52;
+      body.castShadow = true;
+      car.add(body);
 
-    const tail = new THREE.Mesh(tailLightGeo, tailLightMat);
-    tail.position.set(0, 0.58, dir < 0 ? 1.86 : -1.86);
-    car.add(tail);
+      const cabin = new THREE.Mesh(carCabinGeo, bMat);
+      cabin.position.set(0, 1.05, dir < 0 ? 0.15 : -0.15);
+      car.add(cabin);
 
-    let zStart = 44 - i * 5.8;
-    if (laneIdx === 1 && zStart < -2 && zStart > -17) zStart -= 16;
-    car.position.set(carLanes[laneIdx], 0.08, zStart);
-    car.userData = {
-      dir: dir,
-      speed: 1.6 + (i % 4) * 0.35,
-      keepInTransit: i < 6 && (laneIdx === 0 || laneIdx === 3)
-    };
-    world.add(car);
-    cars.push(car);
+      const tail = new THREE.Mesh(tailLightGeo, tailLightMat);
+      tail.position.set(0, 0.58, dir < 0 ? 1.86 : -1.86);
+      car.add(tail);
+
+      car.position.set(carLanes[laneIdx], 0.08, zStart);
+      car.userData = {
+        dir: dir,
+        speed: 1.8 + (idx % 4) * 0.35,
+        keepInTransit: row < 2 && (laneIdx === 0 || laneIdx === 3)
+      };
+      world.add(car);
+      cars.push(car);
+    }
   }
 
   const crossCars = [];
@@ -715,7 +734,7 @@
   }
 
   const rapidBus750 = makeRapidKLBus(true);
-  rapidBus750.position.set(0, 0.08, 48.5);
+  rapidBus750.position.set(-2.4, 0.08, 48.5);
   world.add(rapidBus750);
 
   const extraBuses = [];
@@ -969,28 +988,50 @@
   const railViaductMat = new THREE.MeshStandardMaterial({ color: 0xcbd2d9, roughness: 0.72 });
   const railSteelMat = new THREE.MeshStandardMaterial({ color: 0x4b5660, roughness: 0.35, metalness: 0.75 });
 
-  const viaductBeam = new THREE.Mesh(new THREE.BoxGeometry(5.8, 1.25, 420), railViaductMat);
-  viaductBeam.position.set(17.8, 8.4, -130);
+  // Elevated LRT viaduct ends cleanly at z = -196 (well before KLCC!) and dives underground into a tunnel portal!
+  const viaductBeam = new THREE.Mesh(new THREE.BoxGeometry(5.8, 1.25, 256), railViaductMat);
+  viaductBeam.position.set(17.8, 8.4, -68);
   viaductBeam.castShadow = true;
   railGroup.add(viaductBeam);
 
-  const viaductTrim = new THREE.Mesh(new THREE.BoxGeometry(5.96, 0.28, 420), rapidBlueMat);
-  viaductTrim.position.set(17.8, 8.95, -130);
+  const viaductTrim = new THREE.Mesh(new THREE.BoxGeometry(5.96, 0.28, 256), rapidBlueMat);
+  viaductTrim.position.set(17.8, 8.95, -68);
   railGroup.add(viaductTrim);
 
   [-1.1, 1.1].forEach(function (rx) {
-    const rail = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 420), railSteelMat);
-    rail.position.set(17.8 + rx, 9.12, -130);
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 256), railSteelMat);
+    rail.position.set(17.8 + rx, 9.12, -68);
     railGroup.add(rail);
   });
 
   const railPierGeo = new THREE.BoxGeometry(1.5, 8.4, 1.8);
-  for (let z = 48; z >= -320; z -= 26) {
+  for (let z = 48; z >= -196; z -= 26) {
     if (crossZList.some(function (cz) { return Math.abs(z - cz) < 10; })) continue;
     const pier = new THREE.Mesh(railPierGeo, railViaductMat);
     pier.position.set(17.8, 4.2, z);
     railGroup.add(pier);
   }
+
+  // Downward LRT/MRT Ramp & Underground Tunnel Portal (z = -196 -> -236, diving smoothly under KLCC!)
+  const tunnelRamp = new THREE.Mesh(new THREE.BoxGeometry(5.8, 1.25, 42), railViaductMat);
+  tunnelRamp.position.set(17.8, 4.2, -216);
+  tunnelRamp.rotation.x = 0.21;
+  railGroup.add(tunnelRamp);
+
+  const tunnelPortal = new THREE.Group();
+  const portalArch = new THREE.Mesh(new THREE.BoxGeometry(7.2, 5.2, 6.0), railViaductMat);
+  portalArch.position.set(17.8, 2.6, -236);
+  tunnelPortal.add(portalArch);
+  const portalStripe = new THREE.Mesh(new THREE.BoxGeometry(7.4, 0.45, 6.2), rapidBlueMat);
+  portalStripe.position.set(17.8, 5.05, -236);
+  tunnelPortal.add(portalStripe);
+  const portalDark = new THREE.Mesh(
+    new THREE.BoxGeometry(5.2, 3.8, 6.2),
+    new THREE.MeshBasicMaterial({ color: 0x090d14 })
+  );
+  portalDark.position.set(17.8, 1.9, -235.8);
+  tunnelPortal.add(portalDark);
+  railGroup.add(tunnelPortal);
 
   // Solid-Column Elevated LRT/MRT Stations + KL Sentral-Style Grand Concourse at z = -176!
   [-52, -176].forEach(function (sz, idx) {
@@ -1354,29 +1395,29 @@
   loadPortfolioModel('./assets/city/exchange106.json', 72, 0, -198, 0.22, LANDMARK_MATERIALS.trx);
 
   // =========================================================================
-  // 10. Long Scenic Fly-Through: Jam -> Green Highway -> Parks/Court -> Through KL Landmarks!
+  // 10. Smooth, Straight-Axis Architectural Camera Glide (ZERO Sharp Angles!)
   // =========================================================================
 
   const camPosCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(1.0, 5.2, 54),      // 0.00 Moving with morning jam (zero greenery yet!)
-    new THREE.Vector3(3.4, 5.6, 14),      // 0.15 Congested intersection + RapidKL 750 stuck
-    new THREE.Vector3(-2.5, 11.4, -14),   // 0.30 Peeking right over the active highway deck (cars/trucks on top + flowers below!)
-    new THREE.Vector3(4.5, 6.8, -68),     // 0.45 RapidKL bus lanes, prominent bus stops & colorful shophouses
-    new THREE.Vector3(6.2, 8.2, -118),    // 0.60 Community Park + 3D Basketball Court + LRT Train overhead!
-    new THREE.Vector3(-4.5, 11.5, -172),  // 0.74 Weaving right between Merdeka 118, KL Sentral Hub & TRX!
-    new THREE.Vector3(12.0, 18.0, -228),  // 0.86 Flying past Menara KL on Bukit Nanas toward glowing KLCC!
-    new THREE.Vector3(0, 38, -22)         // 1.00 Grand panoramic showcase of the entire pretty KL metropolis!
+    new THREE.Vector3(-0.6, 7.2, 66.0),   // 0.00 Pulled-back view of horrible motionless jam + original KL skyline
+    new THREE.Vector3(0.4, 7.8, 18.0),    // 0.16 Smooth forward glide over jammed corridor & intersection
+    new THREE.Vector3(-0.8, 10.6, -24.0), // 0.32 Gentle rise seeing active highway traffic on top + blooming flowers
+    new THREE.Vector3(1.2, 9.2, -74.0),   // 0.48 RapidKL blue bus lanes, bus stops & colorful shophouses
+    new THREE.Vector3(2.2, 10.2, -124.0), // 0.64 Community park, 3D basketball court & elevated LRT station
+    new THREE.Vector3(0.5, 13.5, -178.0), // 0.78 KL Sentral hub & LRT diving underground before KLCC!
+    new THREE.Vector3(1.5, 22.0, -135.0), // 0.90 Smooth gentle pull-back revealing all 4 KL landmarks
+    new THREE.Vector3(0.0, 34.0, -30.0)   // 1.00 Grand panoramic showcase of the entire KL metropolis
   ]);
 
   const camLookCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(-1.2, 2.2, -16),    // 0.00
-    new THREE.Vector3(-2.4, 2.0, -22),    // 0.15
-    new THREE.Vector3(-15.5, 8.0, -48),   // 0.30 Looking directly at highway deck cars/trucks + blooming flowers!
-    new THREE.Vector3(4.0, 5.5, -140),    // 0.45
-    new THREE.Vector3(18.0, 4.0, -130),   // 0.60 Looking over Basketball Court & Park -> LRT Station
-    new THREE.Vector3(8.0, 22.0, -245),   // 0.74 Framing Merdeka 118, TRX & KLCC ahead
-    new THREE.Vector3(14.0, 26.0, -295),  // 0.86 Close-up admiration of KLCC & Menara KL
-    new THREE.Vector3(6.0, 18.0, -255)    // 1.00 Full panoramic KL skyline showcase
+    new THREE.Vector3(-1.0, 3.2, -25.0),  // 0.00 Looking straight down the jam toward hazy KL skyline
+    new THREE.Vector3(-1.2, 3.0, -50.0),  // 0.16
+    new THREE.Vector3(-4.0, 6.5, -90.0),  // 0.32 Gentle sightline across highway & boulevard (no sharp snap!)
+    new THREE.Vector3(1.0, 6.5, -165.0),  // 0.48
+    new THREE.Vector3(4.0, 7.5, -205.0),  // 0.64
+    new THREE.Vector3(4.0, 14.0, -265.0), // 0.78
+    new THREE.Vector3(4.0, 18.0, -265.0), // 0.90
+    new THREE.Vector3(4.0, 18.0, -265.0)  // 1.00
   ]);
 
   let scrollProgress = 0;
@@ -1385,13 +1426,14 @@
   let lightingMode = 'day';
   let isDark = false;
 
-  // Interactive "Click the Back of the Bus" Opening State
+  // Interactive "Press to Go" Opening: Zoom-In -> Slow Pull-Back (Bus Stays Stuck!)
   let introState = 'waiting'; // 'waiting' | 'departing' | 'active'
   let introT = 0;
   const raycaster = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
-  const introCamPos = new THREE.Vector3(0, 1.92, 57.6);
-  const introCamLook = new THREE.Vector3(0, 1.82, 44.0);
+  const introCamPos = new THREE.Vector3(-2.4, 1.92, 57.4);
+  const introZoomPos = new THREE.Vector3(-2.4, 1.88, 55.2);
+  const introCamLook = new THREE.Vector3(-2.4, 1.82, 44.0);
 
   function triggerBusDeparture() {
     if (introState !== 'waiting') return;
@@ -1413,7 +1455,6 @@
 
   window.addEventListener('click', function (e) {
     if (introState !== 'waiting') return;
-    // Ignore clicks on topbar links or buttons
     if (e.target && e.target.closest && e.target.closest('header, nav, button, a')) return;
     ndc.x = (e.clientX / window.innerWidth) * 2 - 1;
     ndc.y = -(e.clientY / window.innerHeight) * 2 + 1;
@@ -1448,7 +1489,7 @@
   });
 
   // =========================================================================
-  // 11. Silky-Smooth Animation Loop: Ugliness (0) -> Shared Spaces (1)
+  // 11. Silky-Smooth Animation Loop: Frozen Ugly Jam -> Vibrant Shared Spaces
   // =========================================================================
 
   let morphFactor = 0;
@@ -1457,6 +1498,8 @@
   let lastTime = performance.now();
   const tmpPos = new THREE.Vector3();
   const tmpLook = new THREE.Vector3();
+  const tmpIntroPos = new THREE.Vector3();
+  const tmpIntroLook = new THREE.Vector3();
 
   const uglySidewalkCol = new THREE.Color(0x88857e);
   const prettySidewalkCol = new THREE.Color(0xe0d4be);
@@ -1481,8 +1524,6 @@
     const s = clamp(smoothScroll, 0, 1);
     const speedMult = reducedMotion ? 0 : 1;
 
-    // Natural scroll progression (ugly concrete & jam -> greened & vibrant shared spaces)
-    // Overridden ONLY when user drags the End-of-Scroll Before/After slider!
     const targetGreen = compareRatio !== null ? compareRatio : smoothstep(0.35, 0.56, s);
     const targetMorph = compareRatio !== null ? compareRatio : smoothstep(0.37, 0.74, s);
     const targetPretty = compareRatio !== null ? compareRatio : smoothstep(0.32, 0.70, s);
@@ -1491,15 +1532,15 @@
     morphFactor = lerp(morphFactor, targetMorph, damp);
     prettyFactor = lerp(prettyFactor, targetPretty, damp);
 
-    // 1. Existing highway stays utilized with cars driving smoothly on top!
+    // 1. Existing highway stays utilized with cars & trucks driving smoothly on top!
     for (let h = 0; h < highwayCars.length; h++) {
       const hc = highwayCars[h];
       hc.position.z += hc.userData.dir * hc.userData.speed * dt * speedMult;
-      if (hc.position.z < -290) hc.position.z = 75;
-      if (hc.position.z > 75) hc.position.z = -290;
+      if (hc.position.z < -260) hc.position.z = 75;
+      if (hc.position.z > 75) hc.position.z = -260;
     }
 
-    // Highway greenery blooms ONLY after scrolling past the intersection!
+    // Highway greenery & flowers bloom ONLY after scrolling past the intersection!
     for (let g = 0; g < overpassGreenery.length; g++) {
       const item = overpassGreenery[g];
       const gs = Math.max(0.001, greenFactor);
@@ -1510,7 +1551,7 @@
       }
     }
 
-    // 2. Full Ugliness -> Vibrant Malaysian Color Progression (Sidewalks, Shophouses, Towers!)
+    // 2. Full Ugliness -> Vibrant Malaysian Color Progression
     sidewalkMat.color.copy(uglySidewalkCol).lerp(prettySidewalkCol, prettyFactor);
     roofTileMat.color.copy(uglyRoofCol).lerp(prettyRoofCol, prettyFactor);
     warmShopGlassMat.color.copy(uglyShopWinCol).lerp(prettyShopWinCol, prettyFactor);
@@ -1579,27 +1620,31 @@
       }
     }
 
-    // 5. Solid-Column LRT/MRT Viaduct, KL Sentral Hub & Gliding 4-Car Train
+    // 5. Elevated LRT/MRT Viaduct & Train Diving Cleanly Underground Before KLCC!
     const railLift = smoothstep(0.20, 0.66, morphFactor);
     railGroup.visible = railLift > 0.02;
     if (railGroup.visible) {
       railGroup.position.y = lerp(-16, 0, railLift);
-      train.position.z += 25 * dt * speedMult;
-      if (train.position.z > 110) train.position.z = -310;
+      train.position.z -= 22 * dt * speedMult; // Heads north toward tunnel portal!
+      if (train.position.z < -236) train.position.z = 78;
+      // Smoothly dive down the tunnel ramp between z = -196 and z = -236!
+      const diveT = smoothstep(-196, -234, train.position.z);
+      train.position.y = lerp(9.2, 0.8, diveT);
+      train.rotation.x = diveT * 0.20;
     }
 
-    // 6. Ground Traffic Stream & Intersection Jam (pause ground cars while waiting behind bus)
-    const groundCarSpeedMult = introState === 'waiting' ? 0 : speedMult;
+    // 6. Ground Traffic: DEAD STILL Horrible Jam Until Congestion Clears on Scroll!
+    const trafficFlow = smoothstep(0.18, 0.65, morphFactor);
     for (let i = 0; i < cars.length; i++) {
       const car = cars[i];
       const carVis = car.userData.keepInTransit ? 1 : clamp(1 - morphFactor * 1.42, 0.001, 1);
       car.scale.setScalar(carVis);
       car.visible = carVis > 0.03;
-      if (car.visible) {
-        const spd = lerp(car.userData.speed * 0.45, car.userData.speed * 2.5, morphFactor);
-        car.position.z += car.userData.dir * spd * dt * groundCarSpeedMult;
-        if (car.position.z < -280) car.position.z = 62;
-        if (car.position.z > 62) car.position.z = -280;
+      if (car.visible && trafficFlow > 0.02) {
+        const spd = car.userData.speed * 2.6 * trafficFlow;
+        car.position.z += car.userData.dir * spd * dt * speedMult;
+        if (car.position.z < -245) car.position.z = 58;
+        if (car.position.z > 58) car.position.z = -245;
       }
     }
 
@@ -1609,27 +1654,21 @@
       crossCars[c].visible = crossVis > 0.03;
     }
 
-    // 7. Hero RapidKL 750 Bus: Rock-Still Waiting -> Pulls Forward Into Ugly Jam -> Glides Free!
-    if (introState === 'waiting') {
-      rapidBus750.position.set(0, 0.08, 48.5);
-      busRearTailMat.color.setHex(0xff2b38);
-    } else if (introState === 'departing') {
-      introT = Math.min(1, introT + dt / 1.75);
-      const ease = introT * introT * (3 - 2 * introT);
-      rapidBus750.position.set(lerp(0, -2.4, smoothstep(0.15, 0.85, ease)), 0.08, lerp(48.5, -7.5, ease));
-      busRearTailMat.color.setHex(introT < 0.7 ? 0xaa1c24 : 0xff2b38);
-      if (introT >= 1) {
-        introState = 'active';
-      }
-    } else if (morphFactor < 0.25) {
-      rapidBus750.position.x = lerp(rapidBus750.position.x, -2.4, 0.08);
-      rapidBus750.position.z = lerp(rapidBus750.position.z, -7.5 + Math.sin(elapsed * 0.8) * 0.6, 0.06);
+    // 7. Hero RapidKL 750 Bus: STAYS STUCK IN PLACE When You Press Go! Only Moves Once Bus Lane Clears!
+    if (introState === 'departing') {
+      introT = Math.min(1, introT + dt / 2.2);
+      if (introT >= 1) introState = 'active';
+    }
+
+    if (morphFactor < 0.22) {
+      // Stuck dead still in the horrible morning jam — cannot move!
+      rapidBus750.position.set(-2.4, 0.08, 48.5);
       busRearTailMat.color.setHex(0xff2b38);
     } else {
-      rapidBus750.position.x = lerp(rapidBus750.position.x, -2.4, 0.08);
-      rapidBus750.position.z -= lerp(2.5, 15.5, morphFactor) * dt * speedMult;
+      rapidBus750.position.x = -2.4;
+      rapidBus750.position.z -= lerp(2.5, 16.0, morphFactor) * dt * speedMult;
       busRearTailMat.color.setHex(0xaa1c24);
-      if (rapidBus750.position.z < -290) rapidBus750.position.z = 60;
+      if (rapidBus750.position.z < -248) rapidBus750.position.z = 58;
     }
 
     const extraBusScale = smoothstep(0.22, 0.62, morphFactor);
@@ -1638,12 +1677,12 @@
       extraBuses[b].visible = extraBusScale > 0.04;
       if (extraBuses[b].visible) {
         extraBuses[b].position.z += extraBuses[b].userData.dir * extraBuses[b].userData.speed * dt * speedMult;
-        if (extraBuses[b].position.z > 68) extraBuses[b].position.z = -290;
-        if (extraBuses[b].position.z < -290) extraBuses[b].position.z = 68;
+        if (extraBuses[b].position.z > 64) extraBuses[b].position.z = -245;
+        if (extraBuses[b].position.z < -245) extraBuses[b].position.z = 64;
       }
     }
 
-    // 8. Camera: Behind Bus Rear (Waiting) -> Smooth Pan Into Ugly Highway (Departing) -> Scroll Flight!
+    // 8. Camera: Behind Bus -> Zoom-In then Slow Pull-Back to Jam & Original Skyline -> Smooth Scroll Glide!
     camPosCurve.getPointAt(s, tmpPos);
     camLookCurve.getPointAt(s, tmpLook);
 
@@ -1651,15 +1690,25 @@
       camera.position.copy(introCamPos);
       camera.lookAt(introCamLook);
     } else if (introState === 'departing') {
-      const panEase = smoothstep(0.12, 1.0, introT);
-      camera.position.copy(introCamPos).lerp(tmpPos, panEase);
-      const lookNow = introCamLook.clone().lerp(tmpLook, panEase);
-      camera.lookAt(lookNow);
+      if (introT < 0.28) {
+        // Subtle zoom-in on the stuck 750 bus first!
+        const zt = smoothstep(0, 0.28, introT);
+        tmpIntroPos.copy(introCamPos).lerp(introZoomPos, zt);
+        camera.position.copy(tmpIntroPos);
+        camera.lookAt(introCamLook);
+      } else {
+        // Smoothly pull back & rise to reveal the horrible motionless jam + original KL skyline!
+        const pt = smoothstep(0.28, 1.0, introT);
+        tmpIntroPos.copy(introZoomPos).lerp(tmpPos, pt);
+        tmpIntroLook.copy(introCamLook).lerp(tmpLook, pt);
+        camera.position.copy(tmpIntroPos);
+        camera.lookAt(tmpIntroLook);
+      }
     } else {
       if (s > 0.90 && !reducedMotion) {
         const orbitBlend = smoothstep(0.90, 1.0, s);
-        tmpPos.x += Math.sin(elapsed * 0.20) * 24 * orbitBlend;
-        tmpPos.y += Math.cos(elapsed * 0.16) * 2.2 * orbitBlend;
+        tmpPos.x += Math.sin(elapsed * 0.20) * 20 * orbitBlend;
+        tmpPos.y += Math.cos(elapsed * 0.16) * 1.8 * orbitBlend;
       }
       camera.position.copy(tmpPos);
       camera.lookAt(tmpLook);
