@@ -1,8 +1,11 @@
 /* ==========================================================================
-   ALIF MANIFESTO — Sprawling Colorful Malaysian Metropolis & Map-Accurate KL
-   Real GPS-proportioned KL landmarks (KLCC, Menara KL, Merdeka 118, TRX),
-   colorful Malaysian shophouses, homes, towers, prominent RapidKL bus stops,
-   shared plazas with strolling walkers, elevated LRT & RapidKL 750 corridor.
+   ALIF MANIFESTO — Full Malaysian Metropolitan City & Landmark Fly-Through
+   - Cars driving on the existing highway deck (utilized, not destroyed!)
+   - Delayed highway greenery (zero early pop-in!)
+   - Solid-column LRT stations + KL Sentral-style integrated transit hub
+   - Real 3D Community Parks & Basketball Courts logically planned beside homes
+   - Accurately colored KLCC, Menara KL (on green Bukit Nanas), Merdeka 118 & TRX
+   - Long scroll flight weaving right through the city and all 4 KL landmarks!
    ========================================================================== */
 
 (function () {
@@ -37,22 +40,21 @@
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.06;
+  renderer.toneMappingExposure = 1.08;
 
   const scene = new THREE.Scene();
 
-  // Palettes (Zero magenta/pink — crisp Malaysian daylight, golden hour, starry navy)
   const PALETTES = {
     day: {
-      skyTop: new THREE.Color(0x5e97d1),
+      skyTop: new THREE.Color(0x5a94cf),
       skyMid: new THREE.Color(0xc8def2),
       skyHorizon: new THREE.Color(0xebe6dc),
       fog: new THREE.Color(0xe6e3da),
       sun: new THREE.Color(0xfff7e8),
-      sunInt: 1.42,
+      sunInt: 1.44,
       hemiSky: new THREE.Color(0xe8f2fc),
       hemiGround: new THREE.Color(0xc5bfb0),
-      hemiInt: 0.88
+      hemiInt: 0.90
     },
     golden: {
       skyTop: new THREE.Color(0x366090),
@@ -60,7 +62,7 @@
       skyHorizon: new THREE.Color(0xf5cfa0),
       fog: new THREE.Color(0xe6c59c),
       sun: new THREE.Color(0xffb259),
-      sunInt: 1.60,
+      sunInt: 1.62,
       hemiSky: new THREE.Color(0xffdeb0),
       hemiGround: new THREE.Color(0x886c52),
       hemiInt: 0.78
@@ -71,30 +73,30 @@
       skyHorizon: new THREE.Color(0x16263d),
       fog: new THREE.Color(0x0d1726),
       sun: new THREE.Color(0x8fb8de),
-      sunInt: 0.88,
+      sunInt: 0.90,
       hemiSky: new THREE.Color(0x233b59),
       hemiGround: new THREE.Color(0x0a111c),
-      hemiInt: 0.70
+      hemiInt: 0.72
     }
   };
 
   scene.background = PALETTES.day.fog.clone();
-  scene.fog = new THREE.FogExp2(PALETTES.day.fog.getHex(), 0.0028);
+  scene.fog = new THREE.FogExp2(PALETTES.day.fog.getHex(), 0.0024);
 
-  const camera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 0.5, 1800);
-  camera.position.set(1.2, 5.4, 56);
+  const camera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 0.5, 1900);
+  camera.position.set(1.0, 5.2, 56);
 
-  const hemiLight = new THREE.HemisphereLight(0xe8f2fc, 0xc5bfb0, 0.88);
+  const hemiLight = new THREE.HemisphereLight(0xe8f2fc, 0xc5bfb0, 0.90);
   scene.add(hemiLight);
 
-  const sunLight = new THREE.DirectionalLight(0xfff7e8, 1.42);
-  sunLight.position.set(70, 96, 52);
+  const sunLight = new THREE.DirectionalLight(0xfff7e8, 1.44);
+  sunLight.position.set(75, 105, 55);
   sunLight.castShadow = true;
   sunLight.shadow.mapSize.width = 1024;
   sunLight.shadow.mapSize.height = 1024;
   sunLight.shadow.camera.near = 10;
-  sunLight.shadow.camera.far = 340;
-  const d = 100;
+  sunLight.shadow.camera.far = 420;
+  const d = 120;
   sunLight.shadow.camera.left = -d;
   sunLight.shadow.camera.right = d;
   sunLight.shadow.camera.top = d;
@@ -119,7 +121,7 @@
   }
 
   // =========================================================================
-  // 1. Portfolio Sky Dome & 900 Twinkling 3D Stars
+  // 1. Sky Dome & 900 Twinkling 3D Stars
   // =========================================================================
 
   const skyUniforms = {
@@ -144,14 +146,14 @@
       '  gl_FragColor = vec4(col, 1.0);' +
       '}'
   });
-  scene.add(new THREE.Mesh(new THREE.SphereGeometry(1250, 32, 20), skyMat));
+  scene.add(new THREE.Mesh(new THREE.SphereGeometry(1400, 32, 20), skyMat));
 
   const starCount = window.innerWidth <= 820 ? 450 : 900;
   const starPositions = new Float32Array(starCount * 3);
   for (let i = 0; i < starCount; i++) {
     const a = Math.random() * Math.PI * 2;
     const elev = Math.acos(1 - Math.random() * 0.88);
-    const r = 1080;
+    const r = 1200;
     starPositions[i * 3] = Math.sin(elev) * Math.cos(a) * r;
     starPositions[i * 3 + 1] = Math.cos(elev) * r * 0.78 + 60;
     starPositions[i * 3 + 2] = Math.sin(elev) * Math.sin(a) * r;
@@ -189,22 +191,22 @@
   const facadeDayTex = wrapTex(texLoader.load('./assets/city/facade_glass.jpg'), 2, 3);
   const facadeNightTex = wrapTex(texLoader.load('./assets/city/facade_night.jpg'), 2, 3);
 
-  const terrGeo = new THREE.PlaneGeometry(1600, 1600, 88, 88);
+  const terrGeo = new THREE.PlaneGeometry(1800, 1800, 92, 92);
   terrGeo.rotateX(-Math.PI / 2);
   const tPos = terrGeo.attributes.position;
   for (let i = 0; i < tPos.count; i++) {
     const vx = tPos.getX(i);
     const vz = tPos.getZ(i);
-    const dist = Math.hypot(vx, vz + 120);
+    const dist = Math.hypot(vx, vz + 160);
     let y = -0.15;
-    if (dist > 340) {
-      const k = smoothstep(340, 720, dist);
-      const ang = Math.atan2(vz + 120, vx);
+    if (dist > 400) {
+      const k = smoothstep(400, 820, dist);
+      const ang = Math.atan2(vz + 160, vx);
       const ridge =
-        Math.sin(ang * 3 + 0.6) * 24 +
+        Math.sin(ang * 3 + 0.6) * 26 +
         Math.cos(ang * 5 - 1.1) * 16 +
-        Math.sin(vx * 0.011 + vz * 0.009) * 18;
-      y += (46 + ridge) * k;
+        Math.sin(vx * 0.01 + vz * 0.008) * 18;
+      y += (48 + ridge) * k;
     }
     tPos.setY(i, y);
   }
@@ -222,36 +224,35 @@
   world.add(terrain);
 
   // =========================================================================
-  // 3. Sprawling Metropolitan Road Grid, Stretching Bus Lanes & Shared Plazas
+  // 3. Long Stretching Boulevard (z = +80 -> -340) Through the Entire City!
   // =========================================================================
 
   const roadMat = new THREE.MeshStandardMaterial({ color: 0x2b313a, roughness: 0.88 });
   const sideRoadMat = new THREE.MeshStandardMaterial({ color: 0x353c45, roughness: 0.9 });
 
-  // Long stretching main RapidKL avenue (z = +80 to -260)
-  const mainRoad = new THREE.Mesh(new THREE.BoxGeometry(18, 0.18, 360), roadMat);
-  mainRoad.position.set(0, 0, -90);
+  const mainRoad = new THREE.Mesh(new THREE.BoxGeometry(18, 0.18, 440), roadMat);
+  mainRoad.position.set(0, 0, -130);
   mainRoad.receiveShadow = true;
   world.add(mainRoad);
 
-  // 3 Major Cross-Streets connecting neighborhoods across the metropolis
-  const crossZList = [-18, -84, -150];
+  // 4 Major Cross-Streets weaving through the metropolis & downtown KL
+  const crossZList = [-18, -84, -150, -220];
   crossZList.forEach(function (cz) {
-    const cr = new THREE.Mesh(new THREE.BoxGeometry(260, 0.17, 14), roadMat);
+    const cr = new THREE.Mesh(new THREE.BoxGeometry(300, 0.17, 14), roadMat);
     cr.position.set(0, -0.01, cz);
     cr.receiveShadow = true;
     world.add(cr);
   });
 
-  // Parallel Neighborhood Avenues (x = -46 and x = +46) for real metropolitan scale
-  [-46, 46].forEach(function (ax) {
-    const ave = new THREE.Mesh(new THREE.BoxGeometry(9, 0.14, 300), sideRoadMat);
-    ave.position.set(ax, -0.02, -85);
+  // Parallel Neighborhood Avenues
+  [-48, 48].forEach(function (ax) {
+    const ave = new THREE.Mesh(new THREE.BoxGeometry(9, 0.14, 380), sideRoadMat);
+    ave.position.set(ax, -0.02, -120);
     ave.receiveShadow = true;
     world.add(ave);
   });
 
-  // Traffic lights at the first busy intersection (z = -18)
+  // Traffic lights at first intersection (z = -18)
   const poleMat = new THREE.MeshStandardMaterial({ color: 0x222c36, roughness: 0.5 });
   const redSignalMat = new THREE.MeshBasicMaterial({ color: 0xf0323e });
   const greenSignalMat = new THREE.MeshBasicMaterial({ color: 0x1ecb7c });
@@ -277,11 +278,11 @@
     world.add(tl);
   });
 
-  // Lane dashes stretching along the whole route
+  // Lane dashes stretching all the way to KLCC
   const dashMat = new THREE.MeshBasicMaterial({ color: 0xe3e7eb, transparent: true, opacity: 0.78 });
   const dashGeo = new THREE.PlaneGeometry(0.18, 2.8);
   [-4.5, 0, 4.5].forEach(function (xPos) {
-    for (let z = 72; z >= -240; z -= 7.5) {
+    for (let z = 72; z >= -320; z -= 7.5) {
       if (crossZList.some(function (cz) { return Math.abs(z - cz) < 8.5; })) continue;
       const dash = new THREE.Mesh(dashGeo, dashMat);
       dash.rotation.x = -Math.PI / 2;
@@ -290,19 +291,19 @@
     }
   });
 
-  // Stretching Dedicated RapidKL Cobalt-Blue Bus Lanes (grow forward as you scroll!)
+  // Dedicated RapidKL Cobalt-Blue Bus Lanes
   const busLaneMat = new THREE.MeshStandardMaterial({
     color: 0x0047ab,
     roughness: 0.65,
     transparent: true,
     opacity: 0
   });
-  const busLaneL = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 340), busLaneMat);
+  const busLaneL = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 420), busLaneMat);
   busLaneL.rotation.x = -Math.PI / 2;
-  busLaneL.position.set(-2.4, 0.11, -90);
-  const busLaneR = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 340), busLaneMat);
+  busLaneL.position.set(-2.4, 0.11, -130);
+  const busLaneR = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 420), busLaneMat);
   busLaneR.rotation.x = -Math.PI / 2;
-  busLaneR.position.set(2.4, 0.11, -90);
+  busLaneR.position.set(2.4, 0.11, -130);
   world.add(busLaneL, busLaneR);
 
   // Protected RapidKL Crimson-Red Cycling Lanes
@@ -312,24 +313,23 @@
     transparent: true,
     opacity: 0
   });
-  const bikeLaneL = new THREE.Mesh(new THREE.PlaneGeometry(1.75, 340), bikeLaneMat);
+  const bikeLaneL = new THREE.Mesh(new THREE.PlaneGeometry(1.75, 420), bikeLaneMat);
   bikeLaneL.rotation.x = -Math.PI / 2;
-  bikeLaneL.position.set(-7.25, 0.115, -90);
-  const bikeLaneR = new THREE.Mesh(new THREE.PlaneGeometry(1.75, 340), bikeLaneMat);
+  bikeLaneL.position.set(-7.25, 0.115, -130);
+  const bikeLaneR = new THREE.Mesh(new THREE.PlaneGeometry(1.75, 420), bikeLaneMat);
   bikeLaneR.rotation.x = -Math.PI / 2;
-  bikeLaneR.position.set(7.25, 0.115, -90);
+  bikeLaneR.position.set(7.25, 0.115, -130);
   world.add(bikeLaneL, bikeLaneR);
 
-  // Wide Warm Sandstone Kaki Lima Sidewalks & Shared Plazas (split cleanly at cross-streets)
+  // Wide Warm Sandstone Kaki Lima Sidewalks
   const sidewalkMat = new THREE.MeshStandardMaterial({ color: 0xd6cbb8, roughness: 0.82 });
-  const plazaTileMat = new THREE.MeshStandardMaterial({ color: 0xe3d6be, roughness: 0.78 });
-  const blockSpans = [
-    [35, 92],   // z = +81 .. -11
-    [-51, 52],  // z = -25 .. -77
-    [-117, 52], // z = -91 .. -143
-    [-198, 82]  // z = -157 .. -239
-  ];
-  blockSpans.forEach(function (sp) {
+  [
+    [35, 92],
+    [-51, 52],
+    [-117, 52],
+    [-185, 56],
+    [-280, 106]
+  ].forEach(function (sp) {
     [-12.6, 12.6].forEach(function (sx) {
       const sw = new THREE.Mesh(new THREE.BoxGeometry(7.2, 0.34, sp[1]), sidewalkMat);
       sw.position.set(sx, 0.12, sp[0]);
@@ -338,50 +338,14 @@
     });
   });
 
-  // Shared Community Pocket Plazas beside the kaki lima (safe spaces for families & kids!)
-  const sharedPlazas = [];
-  const benchMat = new THREE.MeshStandardMaterial({ color: 0x8d5b34, roughness: 0.8 });
-  const warmParkLightMat = new THREE.MeshBasicMaterial({ color: 0xffe4a8 });
-  [
-    [22.5, -51],
-    [-22.5, -117],
-    [22.5, -182]
-  ].forEach(function (pos) {
-    const plaza = new THREE.Group();
-    const pad = new THREE.Mesh(new THREE.BoxGeometry(12, 0.28, 22), plazaTileMat);
-    pad.position.y = 0.1;
-    pad.receiveShadow = true;
-    plaza.add(pad);
-
-    // Park benches & warm lanterns
-    [-6, 0, 6].forEach(function (bz) {
-      const bench = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.48, 2.8), benchMat);
-      bench.position.set(pos[0] > 0 ? -3.2 : 3.2, 0.45, bz);
-      plaza.add(bench);
-    });
-    [-7, 7].forEach(function (lz) {
-      const pPole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.11, 3.8, 6), poleMat);
-      pPole.position.set(0, 1.9, lz);
-      plaza.add(pPole);
-      const globe = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 10), warmParkLightMat);
-      globe.position.set(0, 3.9, lz);
-      plaza.add(globe);
-    });
-
-    plaza.position.set(pos[0], 0, pos[1]);
-    plaza.scale.setScalar(0.001);
-    world.add(plaza);
-    sharedPlazas.push(plaza);
-  });
-
-  // Raised Safe Zebra Crossings at all 3 cross-streets
+  // Raised Safe Zebra Crossings at all 4 cross-streets
   const zebraMat = new THREE.MeshStandardMaterial({
     color: 0xf8f6f2,
     roughness: 0.58,
     transparent: true,
     opacity: 0
   });
-  [-10, -26, -76, -92, -142, -158].forEach(function (zPos) {
+  [-10, -26, -76, -92, -142, -158, -212, -228].forEach(function (zPos) {
     for (let x = -7.2; x <= 7.2; x += 1.45) {
       const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.08, 3.0), zebraMat);
       stripe.position.set(x, 0.12, zPos);
@@ -390,15 +354,31 @@
   });
 
   // =========================================================================
-  // 4. Existing Concrete Highway Overpass (Bare Early -> Blooms Green!)
+  // 4. Existing Concrete Highway Overpass — UTILIZED WITH CARS ON TOP!
+  //    (Zero early greenery pop-in; blooms cleanly only after Chapter 02!)
   // =========================================================================
 
   const highwayGroup = new THREE.Group();
   const concreteMat = new THREE.MeshStandardMaterial({ color: 0x7b828a, roughness: 0.92 });
-  const deck = new THREE.Mesh(new THREE.BoxGeometry(14, 1.4, 330), concreteMat);
-  deck.position.set(-16.0, 9.8, -85);
+  const hwyRoadMat = new THREE.MeshStandardMaterial({ color: 0x2b313a, roughness: 0.88 });
+  const warmParkLightMat = new THREE.MeshBasicMaterial({ color: 0xffe4a8 });
+
+  const deck = new THREE.Mesh(new THREE.BoxGeometry(14, 1.4, 380), concreteMat);
+  deck.position.set(-16.0, 9.8, -110);
   deck.castShadow = true;
   highwayGroup.add(deck);
+
+  // Asphalt roadway + guardrails on top of the highway deck
+  const hwyTopAsphalt = new THREE.Mesh(new THREE.PlaneGeometry(12.2, 378), hwyRoadMat);
+  hwyTopAsphalt.rotation.x = -Math.PI / 2;
+  hwyTopAsphalt.position.set(-16.0, 10.52, -110);
+  highwayGroup.add(hwyTopAsphalt);
+
+  [-22.6, -9.4].forEach(function (gx) {
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.85, 378), concreteMat);
+    rail.position.set(gx, 10.9, -110);
+    highwayGroup.add(rail);
+  });
 
   const pillarGeo = new THREE.BoxGeometry(2.2, 9.8, 2.2);
   const vineWrapMat = new THREE.MeshStandardMaterial({ color: 0x247346, roughness: 0.85 });
@@ -408,7 +388,7 @@
   const overpassGreenery = [];
   const pillarGreeneryGeo = new THREE.BoxGeometry(2.58, 7.8, 2.58);
 
-  for (let z = 48; z >= -220; z -= 24) {
+  for (let z = 48; z >= -285; z -= 24) {
     if (crossZList.some(function (cz) { return Math.abs(z - cz) < 10; })) continue;
     const pillar = new THREE.Mesh(pillarGeo, concreteMat);
     pillar.position.set(-16.0, 4.9, z);
@@ -441,21 +421,22 @@
 
     wrap.position.set(-16.0, 0.15, z);
     wrap.scale.setScalar(0.001);
+    wrap.visible = false;
     highwayGroup.add(wrap);
     overpassGreenery.push(wrap);
   }
 
   [-9.05, -22.95].forEach(function (edgeX) {
     const edgeGroup = new THREE.Group();
-    const planter = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.72, 320), planterBoxMat);
-    planter.position.set(0, 10.55, -85);
+    const planter = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.72, 370), planterBoxMat);
+    planter.position.set(0, 10.55, -110);
     edgeGroup.add(planter);
 
-    const hedge = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.85, 320), vineWrapMat);
-    hedge.position.set(0, 11.15, -85);
+    const hedge = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.85, 370), vineWrapMat);
+    hedge.position.set(0, 11.15, -110);
     edgeGroup.add(hedge);
 
-    for (let z = 65; z >= -230; z -= 12) {
+    for (let z = 65; z >= -285; z -= 12) {
       const drape = new THREE.Mesh(
         new THREE.BoxGeometry(0.32, 1.45 + ((Math.abs(z) % 3) * 0.4), 3.6),
         z % 24 === 0 ? vineBrightMat : vineWrapMat
@@ -466,25 +447,57 @@
 
     edgeGroup.position.set(edgeX, 0, 0);
     edgeGroup.scale.set(1, 0.001, 1);
+    edgeGroup.visible = false;
     highwayGroup.add(edgeGroup);
     overpassGreenery.push(edgeGroup);
   });
 
-  world.add(highwayGroup);
-
-  // =========================================================================
-  // 5. Traffic Stream, Intersection Jam & RapidKL Red/Blue Buses
-  // =========================================================================
-
-  const cars = [];
+  // REAL CARS DRIVING ON TOP OF THE ELEVATED HIGHWAY DECK!
   const carColors = [0x4c5866, 0x7a8591, 0x353e48, 0xa8b1ba, 0x6e4742, 0x2c4766, 0x99353c];
   const carBodyGeo = new THREE.BoxGeometry(1.78, 0.72, 3.7);
   const carCabinGeo = new THREE.BoxGeometry(1.48, 0.55, 1.9);
   const tailLightGeo = new THREE.BoxGeometry(1.54, 0.19, 0.1);
   const tailLightMat = new THREE.MeshBasicMaterial({ color: 0xf02e38 });
+  const headLightMat = new THREE.MeshBasicMaterial({ color: 0xfff0c4 });
 
+  const highwayCars = [];
+  for (let h = 0; h < 22; h++) {
+    const dir = h % 2 === 0 ? -1 : 1;
+    const hCar = new THREE.Group();
+    const bMat = new THREE.MeshStandardMaterial({
+      color: carColors[h % carColors.length],
+      roughness: 0.4,
+      metalness: 0.25
+    });
+    const body = new THREE.Mesh(carBodyGeo, bMat);
+    body.position.y = 0.52;
+    hCar.add(body);
+    const cabin = new THREE.Mesh(carCabinGeo, bMat);
+    cabin.position.set(0, 1.05, dir < 0 ? 0.15 : -0.15);
+    hCar.add(cabin);
+    const tail = new THREE.Mesh(tailLightGeo, tailLightMat);
+    tail.position.set(0, 0.58, dir < 0 ? 1.86 : -1.86);
+    hCar.add(tail);
+    const head = new THREE.Mesh(tailLightGeo, headLightMat);
+    head.position.set(0, 0.56, dir < 0 ? -1.86 : 1.86);
+    hCar.add(head);
+
+    const laneX = dir < 0 ? -13.2 - (h % 2) * 2.2 : -18.8 + (h % 2) * 2.2;
+    hCar.position.set(laneX, 10.52, 65 - h * 16.5);
+    hCar.userData = { dir: dir, speed: 12 + (h % 4) * 2.2 };
+    highwayGroup.add(hCar);
+    highwayCars.push(hCar);
+  }
+
+  world.add(highwayGroup);
+
+  // =========================================================================
+  // 5. Ground Traffic Stream, Intersection Jam & RapidKL Red/Blue Buses
+  // =========================================================================
+
+  const cars = [];
   const carLanes = [-6.4, -2.4, 2.4, 6.4];
-  for (let i = 0; i < 44; i++) {
+  for (let i = 0; i < 48; i++) {
     const laneIdx = i % 4;
     const dir = laneIdx < 2 ? -1 : 1;
     const car = new THREE.Group();
@@ -506,7 +519,7 @@
     tail.position.set(0, 0.58, dir < 0 ? 1.86 : -1.86);
     car.add(tail);
 
-    let zStart = 44 - i * 5.2;
+    let zStart = 44 - i * 5.8;
     if (laneIdx === 1 && zStart < -2 && zStart > -17) zStart -= 16;
     car.position.set(carLanes[laneIdx], 0.08, zStart);
     car.userData = {
@@ -518,7 +531,6 @@
     cars.push(car);
   }
 
-  // Cross-street jam cars at intersection z = -18
   const crossCars = [];
   for (let c = 0; c < 10; c++) {
     const cCar = new THREE.Group();
@@ -579,26 +591,122 @@
   world.add(rapidBus750);
 
   const extraBuses = [];
-  for (let b = 0; b < 6; b++) {
+  for (let b = 0; b < 7; b++) {
     const dir = b % 2 === 0 ? -1 : 1;
     const eb = makeRapidKLBus();
-    eb.position.set(dir < 0 ? -2.4 : 2.4, 0.08, -210 + b * 46);
+    eb.position.set(dir < 0 ? -2.4 : 2.4, 0.08, -280 + b * 48);
     eb.scale.setScalar(0.001);
-    eb.userData = { dir: dir, speed: 12.5 + (b % 2) * 1.8 };
+    eb.userData = { dir: dir, speed: 13.0 + (b % 2) * 1.8 };
     world.add(eb);
     extraBuses.push(eb);
   }
 
   // =========================================================================
-  // 6. Prominent RapidKL Bus Stops, Shade Trees & Subtle Strolling Walkers
+  // 6. Logical Community Planning: Parks, 3D Basketball Court & RapidKL Stops!
   // =========================================================================
 
+  const parkFeatures = [];
+  const grassMat = new THREE.MeshStandardMaterial({ color: 0x3b9158, roughness: 0.9 });
+  const courtBlueMat = new THREE.MeshStandardMaterial({ color: 0x1e5799, roughness: 0.72 });
+  const courtRedMat = new THREE.MeshStandardMaterial({ color: 0xc93b3b, roughness: 0.72 });
+  const whiteLineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const benchMat = new THREE.MeshStandardMaterial({ color: 0x8d5b34, roughness: 0.8 });
+
+  // 6A. Community Park + Full 3D Basketball Court at (x = +26, z = -117)!
+  const bballPark = new THREE.Group();
+  const parkLawn = new THREE.Mesh(new THREE.BoxGeometry(24, 0.22, 42), grassMat);
+  parkLawn.position.y = 0.06;
+  parkLawn.receiveShadow = true;
+  bballPark.add(parkLawn);
+
+  // Basketball court slab
+  const courtBase = new THREE.Mesh(new THREE.BoxGeometry(12.5, 0.28, 22), courtBlueMat);
+  courtBase.position.set(0, 0.14, 0);
+  bballPark.add(courtBase);
+
+  // Painted terracotta key zones & center circle
+  [-7.8, 7.8].forEach(function (kz) {
+    const key = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 4.6), courtRedMat);
+    key.rotation.x = -Math.PI / 2;
+    key.position.set(0, 0.295, kz);
+    bballPark.add(key);
+
+    // Basketball hoop + backboard + stanchion
+    const stanchion = new THREE.Mesh(new THREE.BoxGeometry(0.24, 3.4, 0.24), poleMat);
+    stanchion.position.set(0, 1.8, kz > 0 ? 10.6 : -10.6);
+    bballPark.add(stanchion);
+
+    const backboard = new THREE.Mesh(new THREE.BoxGeometry(1.85, 1.15, 0.1), whiteLineMat);
+    backboard.position.set(0, 3.25, kz > 0 ? 10.1 : -10.1);
+    bballPark.add(backboard);
+
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.045, 6, 14), rapidRedMat);
+    rim.rotation.x = Math.PI / 2;
+    rim.position.set(0, 2.9, kz > 0 ? 9.75 : -9.75);
+    bballPark.add(rim);
+  });
+
+  // White court boundary & center line
+  const centerLine = new THREE.Mesh(new THREE.PlaneGeometry(11.6, 0.16), whiteLineMat);
+  centerLine.rotation.x = -Math.PI / 2;
+  centerLine.position.set(0, 0.30, 0);
+  bballPark.add(centerLine);
+
+  const centerRing = new THREE.Mesh(new THREE.RingGeometry(1.6, 1.78, 24), whiteLineMat);
+  centerRing.rotation.x = -Math.PI / 2;
+  centerRing.position.set(0, 0.30, 0);
+  bballPark.add(centerRing);
+
+  // Park benches & warm lanterns around the court
+  [-8, 0, 8].forEach(function (bz) {
+    const bench = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.48, 2.8), benchMat);
+    bench.position.set(-8.2, 0.45, bz);
+    bballPark.add(bench);
+  });
+  [-14, 14].forEach(function (lz) {
+    const lp = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.11, 4.2, 6), poleMat);
+    lp.position.set(-8.5, 2.1, lz);
+    bballPark.add(lp);
+    const gl = new THREE.Mesh(new THREE.SphereGeometry(0.3, 10, 10), warmParkLightMat);
+    gl.position.set(-8.5, 4.3, lz);
+    bballPark.add(gl);
+  });
+
+  bballPark.position.set(27, 0, -117);
+  bballPark.scale.setScalar(0.001);
+  world.add(bballPark);
+  parkFeatures.push(bballPark);
+
+  // 6B. Green Neighborhood Pocket Parks (x = -27, z = -185 & x = +27, z = -185)
+  [
+    [-28, -185],
+    [28, -51]
+  ].forEach(function (pos) {
+    const pk = new THREE.Group();
+    const lawn = new THREE.Mesh(new THREE.BoxGeometry(20, 0.22, 34), grassMat);
+    lawn.position.y = 0.06;
+    pk.add(lawn);
+    const path = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.26, 32), sidewalkMat);
+    path.position.y = 0.08;
+    pk.add(path);
+    [-9, 9].forEach(function (bz) {
+      const bench = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.48, 2.8), benchMat);
+      bench.position.set(3.2, 0.45, bz);
+      pk.add(bench);
+    });
+    pk.position.set(pos[0], 0, pos[1]);
+    pk.scale.setScalar(0.001);
+    world.add(pk);
+    parkFeatures.push(pk);
+  });
+
+  // 6C. Shade Trees along the Stretching Kaki Lima
   const trees = [];
   const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5c4938, roughness: 0.95 });
   const canopyMat1 = new THREE.MeshStandardMaterial({ color: 0x2c7a4e, roughness: 0.82 });
   const canopyMat2 = new THREE.MeshStandardMaterial({ color: 0x3b9460, roughness: 0.85 });
 
-  for (let z = 48; z >= -220; z -= 15) {
+  for (let z = 48; z >= -285; z -= 15) {
     if (crossZList.some(function (cz) { return Math.abs(z - cz) < 10; })) continue;
     [
       [-10.6, z],
@@ -627,7 +735,7 @@
     });
   }
 
-  // Prominent, Unmistakable RapidKL Bus Stops (with Glowing Route Totem + Glass Back + Warm Canopy Light!)
+  // 6D. Prominent RapidKL Bus Stops (with Illuminated Route Totems!)
   const shelters = [];
   const totemSignMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
   const shelterGlassMat = new THREE.MeshStandardMaterial({
@@ -644,12 +752,12 @@
     [-10.2, -108],
     [10.2, -124],
     [-10.2, -176],
-    [10.2, -190]
+    [10.2, -190],
+    [-10.2, -248]
   ].forEach(function (pos) {
     const sh = new THREE.Group();
     const isLeft = pos[0] < 0;
 
-    // Bold RapidKL Blue cantilevered canopy + Red stripe + warm under-light
     const roof = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.26, 8.2), rapidBlueMat);
     roof.position.y = 3.35;
     roof.castShadow = true;
@@ -663,7 +771,6 @@
     glowStrip.position.y = 3.18;
     sh.add(glowStrip);
 
-    // Glass wind-screen back panel + structural posts
     const backX = isLeft ? -1.25 : 1.25;
     const backGlass = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.7, 6.8), shelterGlassMat);
     backGlass.position.set(backX, 1.65, 0);
@@ -675,12 +782,10 @@
       sh.add(post);
     });
 
-    // Warm wooden waiting bench
     const bench = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.48, 5.2), benchMat);
     bench.position.set(isLeft ? -0.65 : 0.65, 0.42, 0);
     sh.add(bench);
 
-    // Tall illuminated RapidKL Bus Stop Totem Sign standing at the curb edge
     const totemPole = new THREE.Mesh(new THREE.BoxGeometry(0.32, 4.2, 0.55), rapidBlueMat);
     totemPole.position.set(isLeft ? 1.1 : -1.1, 2.1, 4.4);
     sh.add(totemPole);
@@ -699,11 +804,11 @@
     shelters.push(sh);
   });
 
-  // Subtle Strolling Architectural Scale Figures on Wide Kaki Lima & Shared Plazas
+  // 6E. Subtle Strolling Walkers on Wide Kaki Lima & Parks
   const walkers = [];
   const walkerPalette = [0x0047ab, 0xd92332, 0x0e7c59, 0xd48a29, 0x3b4d61, 0x8f4c3d];
   const walkerHeadMat = new THREE.MeshStandardMaterial({ color: 0xe6d5c3, roughness: 0.7 });
-  for (let w = 0; w < 22; w++) {
+  for (let w = 0; w < 26; w++) {
     const side = w % 2 === 0 ? -1 : 1;
     const wg = new THREE.Group();
     const wMat = new THREE.MeshStandardMaterial({ color: walkerPalette[w % walkerPalette.length], roughness: 0.75 });
@@ -715,7 +820,7 @@
     wg.add(head);
 
     const wx = side * (11.6 + (w % 3) * 1.1);
-    const wz = -30 - w * 8.5;
+    const wz = -34 - w * 9.5;
     wg.position.set(wx, 0.28, wz);
     wg.scale.setScalar(0.001);
     wg.userData = {
@@ -728,47 +833,83 @@
   }
 
   // =========================================================================
-  // 7. Malaysian Elevated LRT/MRT Viaduct, Station & RapidKL 4-Car Electric Train
+  // 7. Solid-Column LRT/MRT Viaduct, KL Sentral-Style Transit Hub & 4-Car Train!
+  //    (ZERO floating roofs — every canopy sits on full structural columns!)
   // =========================================================================
 
   const railGroup = new THREE.Group();
   const railViaductMat = new THREE.MeshStandardMaterial({ color: 0xcbd2d9, roughness: 0.72 });
-  const railSteelMat = new THREE.MeshStandardMaterial({ color: 0x566068, roughness: 0.35, metalness: 0.75 });
+  const railSteelMat = new THREE.MeshStandardMaterial({ color: 0x4b5660, roughness: 0.35, metalness: 0.75 });
 
-  const viaductBeam = new THREE.Mesh(new THREE.BoxGeometry(5.6, 1.25, 340), railViaductMat);
-  viaductBeam.position.set(17.8, 8.4, -90);
+  const viaductBeam = new THREE.Mesh(new THREE.BoxGeometry(5.8, 1.25, 420), railViaductMat);
+  viaductBeam.position.set(17.8, 8.4, -130);
   viaductBeam.castShadow = true;
   railGroup.add(viaductBeam);
 
-  const viaductTrim = new THREE.Mesh(new THREE.BoxGeometry(5.76, 0.28, 340), rapidBlueMat);
-  viaductTrim.position.set(17.8, 8.95, -90);
+  const viaductTrim = new THREE.Mesh(new THREE.BoxGeometry(5.96, 0.28, 420), rapidBlueMat);
+  viaductTrim.position.set(17.8, 8.95, -130);
   railGroup.add(viaductTrim);
 
   [-1.1, 1.1].forEach(function (rx) {
-    const rail = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 340), railSteelMat);
-    rail.position.set(17.8 + rx, 9.12, -90);
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 420), railSteelMat);
+    rail.position.set(17.8 + rx, 9.12, -130);
     railGroup.add(rail);
   });
 
   const railPierGeo = new THREE.BoxGeometry(1.5, 8.4, 1.8);
-  for (let z = 48; z >= -230; z -= 26) {
+  for (let z = 48; z >= -320; z -= 26) {
     if (crossZList.some(function (cz) { return Math.abs(z - cz) < 10; })) continue;
     const pier = new THREE.Mesh(railPierGeo, railViaductMat);
     pier.position.set(17.8, 4.2, z);
     railGroup.add(pier);
   }
 
-  // Two Elevated LRT/MRT Station Canopies along the stretching corridor
-  [-52, -176].forEach(function (sz) {
-    const stationRoof = new THREE.Mesh(new THREE.BoxGeometry(9.0, 0.3, 28), rapidBlueMat);
-    stationRoof.position.set(17.8, 13.8, sz);
-    railGroup.add(stationRoof);
-    const stationAccent = new THREE.Mesh(new THREE.BoxGeometry(9.1, 0.14, 28.1), rapidRedMat);
-    stationAccent.position.set(17.8, 13.6, sz);
-    railGroup.add(stationAccent);
-    const stationDeck = new THREE.Mesh(new THREE.BoxGeometry(8.4, 0.4, 28), railViaductMat);
-    stationDeck.position.set(17.8, 8.8, sz);
+  // Solid-Column Elevated LRT/MRT Stations + KL Sentral-Style Grand Concourse at z = -176!
+  [-52, -176].forEach(function (sz, idx) {
+    const isHub = idx === 1; // KL Sentral-inspired integrated transit hub!
+    const stLen = isHub ? 38 : 28;
+    const stWid = isHub ? 11.5 : 9.2;
+
+    // Platform deck
+    const stationDeck = new THREE.Mesh(new THREE.BoxGeometry(stWid - 0.6, 0.55, stLen), railViaductMat);
+    stationDeck.position.set(17.8, 8.65, sz);
     railGroup.add(stationDeck);
+
+    // Solid ground-to-platform concourse pier (no floating look!)
+    const concourse = new THREE.Mesh(new THREE.BoxGeometry(stWid - 2.6, 8.4, stLen * 0.52), railViaductMat);
+    concourse.position.set(17.8, 4.2, sz);
+    railGroup.add(concourse);
+
+    // Concourse glass entrance walls
+    const concourseGlass = new THREE.Mesh(new THREE.BoxGeometry(stWid - 2.3, 4.2, stLen * 0.42), shelterGlassMat);
+    concourseGlass.position.set(17.8, 2.3, sz);
+    railGroup.add(concourseGlass);
+
+    // Roof canopy + RapidKL red trim
+    const roofY = isHub ? 14.4 : 13.8;
+    const stationRoof = new THREE.Mesh(new THREE.BoxGeometry(stWid, 0.35, stLen), rapidBlueMat);
+    stationRoof.position.set(17.8, roofY, sz);
+    stationRoof.castShadow = true;
+    railGroup.add(stationRoof);
+
+    const stationAccent = new THREE.Mesh(new THREE.BoxGeometry(stWid + 0.14, 0.16, stLen + 0.14), rapidRedMat);
+    stationAccent.position.set(17.8, roofY - 0.22, sz);
+    railGroup.add(stationAccent);
+
+    // SOLID STEEL COLUMNS connecting platform deck (8.8) -> roof canopy (roofY)!
+    const colH = roofY - 8.7;
+    const colX = stWid / 2 - 0.65;
+    [-colX, colX].forEach(function (cx) {
+      for (let cz = -stLen / 2 + 2.5; cz <= stLen / 2 - 2.5; cz += 6.5) {
+        const col = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.2, colH, 8), railSteelMat);
+        col.position.set(17.8 + cx, 8.7 + colH / 2, sz + cz);
+        railGroup.add(col);
+      }
+      // Side glass wind-screens between columns
+      const sideGlass = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2.4, stLen - 4), shelterGlassMat);
+      sideGlass.position.set(17.8 + cx, 10.1, sz);
+      railGroup.add(sideGlass);
+    });
   });
 
   // 4-Car RapidKL Electric LRT/MRT Train
@@ -792,7 +933,7 @@
     coach.position.z = -carIdx * 12.1;
     train.add(coach);
   }
-  train.position.set(17.8, 9.2, -100);
+  train.position.set(17.8, 9.2, -120);
   railGroup.add(train);
 
   railGroup.position.y = -18;
@@ -800,28 +941,28 @@
   world.add(railGroup);
 
   // =========================================================================
-  // 8. Colorful Malaysian Metropolitan City: Shophouses, Homes & Towers!
+  // 8. Colorful Malaysian Metropolitan City (Shophouses, Homes & Towers)
   // =========================================================================
 
   const skyline = new THREE.Group();
   const roofGardens = [];
   const colorfulTowerMats = [];
 
-  // Authentic Malaysian Shophouse & Kopitiam Heritage Palette (Warm, Vibrant, Lived-In!)
   const shopWallColors = [0xefe2c9, 0xe4c68d, 0xc3d6c4, 0xd89378, 0xb6cde0, 0xf2e8d8];
   const awningColors = [0xd92332, 0x0047ab, 0x0e7c59, 0xd48a29];
   const roofTileMat = new THREE.MeshStandardMaterial({ color: 0xb3523a, roughness: 0.82 });
   const warmShopGlassMat = new THREE.MeshBasicMaterial({ color: 0xffe6b3 });
 
-  // 8A. Street-Level Malaysian Shophouse Rows (2-3 storey with colorful awnings!)
-  for (let i = 0; i < 32; i++) {
+  // 8A. Street-Level Shophouses (respecting parks & KL Sentral hub!)
+  for (let i = 0; i < 36; i++) {
     const side = i % 2 === 0 ? -1 : 1;
-    const bz = 54 - i * 8.6;
+    const bz = 54 - i * 9.2;
     if (crossZList.some(function (cz) { return Math.abs(bz - cz) < 11; })) continue;
-    // Leave clean space for the 3 shared community pocket plazas
-    if (side > 0 && Math.abs(bz - -51) < 13) continue;
-    if (side < 0 && Math.abs(bz - -117) < 13) continue;
-    if (side > 0 && Math.abs(bz - -182) < 13) continue;
+    // Leave clean zoning for our Parks & Basketball Court!
+    if (side > 0 && Math.abs(bz - -51) < 20) continue;
+    if (side > 0 && Math.abs(bz - -117) < 24) continue;
+    if (side < 0 && Math.abs(bz - -185) < 20) continue;
+    if (side > 0 && Math.abs(bz - -176) < 24) continue;
 
     const shop = new THREE.Group();
     const w = 7.4;
@@ -838,12 +979,10 @@
     body.receiveShadow = true;
     shop.add(body);
 
-    // Warm pitched terracotta Malaysian shophouse roof
     const roof = new THREE.Mesh(new THREE.BoxGeometry(w + 0.5, 0.65, dLen + 0.5), roofTileMat);
     roof.position.y = h + 0.3;
     shop.add(roof);
 
-    // Colorful canvas shop awning facing the kaki lima
     const awningMat = new THREE.MeshStandardMaterial({
       color: awningColors[i % awningColors.length],
       roughness: 0.7
@@ -853,32 +992,23 @@
     awning.rotation.z = side < 0 ? -0.25 : 0.25;
     shop.add(awning);
 
-    // Warm glowing kopitiam / shopfront window band
     const win = new THREE.Mesh(new THREE.BoxGeometry(0.14, 1.5, dLen - 1.8), warmShopGlassMat);
     win.position.set(side < 0 ? w / 2 + 0.04 : -w / 2 - 0.04, 1.45, 0);
     shop.add(win);
 
-    shop.position.set(side * 21.5, 0, bz);
+    shop.position.set(side * 22.0, 0, bz);
     skyline.add(shop);
   }
 
-  // 8B. Colorful Multi-Tiered Malaysian Commercial Towers & Residential Homes
-  const towerColorPalette = [
-    0xdccfb8, // Warm Sandstone
-    0xb7d1e3, // Sky Glass Blue
-    0xe6c8a8, // Champagne Peach
-    0xb9d4c7, // Tropical Mint Glass
-    0xd8b4a0, // Terracotta Cream
-    0xc4d4e6  // Crisp Cobalt Tint
-  ];
+  // 8B. Colorful Multi-Tiered Malaysian Towers & Suburban Homes
+  const towerColorPalette = [0xdccfb8, 0xb7d1e3, 0xe6c8a8, 0xb9d4c7, 0xd8b4a0, 0xc4d4e6];
   const podiumColorPalette = [0xc9b99f, 0x9eb2c4, 0xd4b698, 0xa8bfb3];
   const bldgTrimMat = new THREE.MeshStandardMaterial({ color: 0xefeae0, roughness: 0.55 });
 
-  // Outer metropolitan grid rings (x = ±36, ±60, ±86) — sprawling city!
   const ringConfigs = [
-    { xOff: 35, count: 28, stepZ: 9.5, minH: 13, maxH: 28 },
-    { xOff: 62, count: 24, stepZ: 11.5, minH: 9, maxH: 22 },
-    { xOff: 88, count: 18, stepZ: 15.0, minH: 6, maxH: 14 } // Suburban homes & mid-rise condos
+    { xOff: 38, count: 32, stepZ: 10.5, minH: 13, maxH: 28 },
+    { xOff: 66, count: 26, stepZ: 12.5, minH: 9, maxH: 22 },
+    { xOff: 92, count: 20, stepZ: 16.0, minH: 6, maxH: 14 }
   ];
 
   ringConfigs.forEach(function (ring, rIdx) {
@@ -886,11 +1016,15 @@
       const side = i % 2 === 0 ? -1 : 1;
       const bz = 58 - i * ring.stepZ;
       if (crossZList.some(function (cz) { return Math.abs(bz - cz) < 9.5; })) continue;
+      // Keep landmark plots clear!
+      if (Math.hypot(side * ring.xOff - -60, bz - -192) < 26) continue;
+      if (Math.hypot(side * ring.xOff - 72, bz - -198) < 26) continue;
+      if (Math.hypot(side * ring.xOff - -38, bz - -258) < 28) continue;
 
       const h = ring.minH + ((i * 7 + rIdx * 5) % (ring.maxH - ring.minH + 1));
       const w = 7.8 + (i % 3) * 2.4;
       const dLen = 7.8 + (i % 4) * 2.0;
-      const bx = side * (ring.xOff + (i % 3) * 4.2);
+      const bx = side * (ring.xOff + (i % 3) * 4.0);
 
       const tower = new THREE.Group();
       const baseColorHex = towerColorPalette[(i + rIdx) % towerColorPalette.length];
@@ -920,13 +1054,11 @@
       tower.add(shaft);
 
       if (rIdx === 2) {
-        // Warm terracotta pitched roof for residential homes / condos
         const homeRoof = new THREE.Mesh(new THREE.ConeGeometry(w * 0.72, 2.4, 4), roofTileMat);
         homeRoof.rotation.y = Math.PI / 4;
         homeRoof.position.y = podiumH + shaftH + 1.2;
         tower.add(homeRoof);
       } else {
-        // Setback upper tier + cornice + rooftop garden terrace
         const ledge = new THREE.Mesh(new THREE.BoxGeometry(w + 0.5, 0.35, dLen + 0.5), bldgTrimMat);
         ledge.position.y = podiumH + shaftH;
         tower.add(ledge);
@@ -953,35 +1085,107 @@
   });
 
   // =========================================================================
-  // 9. Map-Accurate 3D Kuala Lumpur Landmarks (Real GPS Bearings from SW!)
-  //    KLCC: 3.1579N, 101.7116E  | Menara KL: 3.1528N, 101.7038E
-  //    Merdeka 118: 3.1413N, 101.7007E | Exchange 106 (TRX): 3.1422N, 101.7186E
+  // 9. Accurately Colored, Map-Positioned Real 3D Kuala Lumpur Landmarks!
+  //    Each landmark gets its true-to-life Malaysian architectural palette!
   // =========================================================================
-
-  const landmarkBodyMat = new THREE.MeshStandardMaterial({
-    color: 0xc8d4de,
-    roughness: 0.5,
-    metalness: 0.26,
-    side: THREE.DoubleSide,
-    polygonOffset: true,
-    polygonOffsetFactor: 1,
-    polygonOffsetUnits: 1
-  });
-  const landmarkGlassMat = new THREE.MeshStandardMaterial({
-    color: 0x7ba8cc,
-    roughness: 0.22,
-    metalness: 0.58,
-    emissive: new THREE.Color(0x163454),
-    emissiveIntensity: 0.16,
-    side: THREE.DoubleSide
-  });
 
   const klGroup = new THREE.Group();
   skyline.add(klGroup);
   world.add(skyline);
 
-  const LANDMARK_SCALE = 84 / 444.138;
-  function loadPortfolioModel(url, x, y, z, rotY) {
+  // Lush Green Bukit Nanas Hill beneath Menara KL!
+  const bukitNanas = new THREE.Mesh(
+    new THREE.ConeGeometry(30, 13, 16),
+    new THREE.MeshStandardMaterial({ color: 0x2d7a4a, roughness: 0.92 })
+  );
+  bukitNanas.position.set(-38, 5.5, -258);
+  klGroup.add(bukitNanas);
+
+  const LANDMARK_MATERIALS = {
+    // Petronas Twin Towers: Gleaming brushed stainless steel silver + emerald-sky reflective glass
+    klcc: {
+      body: new THREE.MeshStandardMaterial({
+        color: 0xe3ebf2,
+        roughness: 0.28,
+        metalness: 0.65,
+        side: THREE.DoubleSide,
+        polygonOffset: true,
+        polygonOffsetFactor: 1,
+        polygonOffsetUnits: 1
+      }),
+      glass: new THREE.MeshStandardMaterial({
+        color: 0x6cb5c9,
+        roughness: 0.16,
+        metalness: 0.72,
+        emissive: new THREE.Color(0x1b4c5e),
+        emissiveIntensity: 0.2,
+        side: THREE.DoubleSide
+      })
+    },
+    // Menara KL: Crisp ivory-white concrete shaft + warm gold/champagne pod accents
+    menara: {
+      body: new THREE.MeshStandardMaterial({
+        color: 0xf0ebe0,
+        roughness: 0.6,
+        metalness: 0.12,
+        side: THREE.DoubleSide,
+        polygonOffset: true,
+        polygonOffsetFactor: 1,
+        polygonOffsetUnits: 1
+      }),
+      glass: new THREE.MeshStandardMaterial({
+        color: 0xd4a962,
+        roughness: 0.25,
+        metalness: 0.55,
+        emissive: new THREE.Color(0x4d3812),
+        emissiveIntensity: 0.18,
+        side: THREE.DoubleSide
+      })
+    },
+    // Merdeka 118: Crisp silver-white diamond steel frame + crystalline sky-blue faceted glass
+    merdeka: {
+      body: new THREE.MeshStandardMaterial({
+        color: 0xdde7f0,
+        roughness: 0.32,
+        metalness: 0.55,
+        side: THREE.DoubleSide,
+        polygonOffset: true,
+        polygonOffsetFactor: 1,
+        polygonOffsetUnits: 1
+      }),
+      glass: new THREE.MeshStandardMaterial({
+        color: 0x5c9fd6,
+        roughness: 0.15,
+        metalness: 0.68,
+        emissive: new THREE.Color(0x163d66),
+        emissiveIntensity: 0.22,
+        side: THREE.DoubleSide
+      })
+    },
+    // The Exchange 106 (TRX): Deep royal-cobalt corporate glass + warm champagne-gold crown
+    trx: {
+      body: new THREE.MeshStandardMaterial({
+        color: 0xe3c88d,
+        roughness: 0.35,
+        metalness: 0.5,
+        side: THREE.DoubleSide,
+        polygonOffset: true,
+        polygonOffsetFactor: 1,
+        polygonOffsetUnits: 1
+      }),
+      glass: new THREE.MeshStandardMaterial({
+        color: 0x2c5fa3,
+        roughness: 0.18,
+        metalness: 0.65,
+        emissive: new THREE.Color(0x112a4f),
+        emissiveIntensity: 0.22,
+        side: THREE.DoubleSide
+      })
+    }
+  };
+
+  const LANDMARK_SCALE = 86 / 444.138;
+  function loadPortfolioModel(url, x, y, z, rotY, matPair) {
     fetch(url)
       .then(function (res) {
         if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -991,8 +1195,8 @@
         const pos = b64(d.positions, Float32Array);
         const grp = new THREE.Group();
         [
-          ['body', landmarkBodyMat],
-          ['glass', landmarkGlassMat]
+          ['body', matPair.body],
+          ['glass', matPair.glass]
         ].forEach(function (pair) {
           if (!d[pair[0]]) return;
           const geo = new THREE.BufferGeometry();
@@ -1009,36 +1213,36 @@
       .catch(function () {});
   }
 
-  // Exact GPS-proportioned Kuala Lumpur skyline looking Northeast from Shah Alam / Mid Valley:
-  loadPortfolioModel('./assets/city/klcc.json', 18, 0, -295, 0.12);         // Petronas Twin Towers (N-NE)
-  loadPortfolioModel('./assets/city/menara_kl.json', -38, 10, -258, 0.30);  // Menara KL on Bukit Nanas (SW of KLCC)
-  loadPortfolioModel('./assets/city/merdeka118.json', -62, 0, -192, -0.32); // Merdeka 118 (W-SW, closer to Mid Valley)
-  loadPortfolioModel('./assets/city/exchange106.json', 72, 0, -198, 0.22);  // The Exchange 106 TRX (E-SE of KLCC)
+  // Exact GPS-proportioned Kuala Lumpur landmarks:
+  loadPortfolioModel('./assets/city/klcc.json', 18, 0, -295, 0.12, LANDMARK_MATERIALS.klcc);
+  loadPortfolioModel('./assets/city/menara_kl.json', -38, 10, -258, 0.30, LANDMARK_MATERIALS.menara);
+  loadPortfolioModel('./assets/city/merdeka118.json', -60, 0, -192, -0.32, LANDMARK_MATERIALS.merdeka);
+  loadPortfolioModel('./assets/city/exchange106.json', 72, 0, -198, 0.22, LANDMARK_MATERIALS.trx);
 
   // =========================================================================
-  // 10. Stretching Catmull-Rom Scroll Route + Unobstructed Bottom Showcase
+  // 10. Long Scenic Fly-Through: Jam -> Green Highway -> Parks/Court -> Through KL Landmarks!
   // =========================================================================
 
   const camPosCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(1.0, 5.2, 54),     // 0.00 Moving forward with morning congestion
-    new THREE.Vector3(3.4, 5.4, 14),     // 0.16 Congested intersection + RapidKL 750 stuck!
-    new THREE.Vector3(-4.2, 6.8, -14),   // 0.32 Keep & Green existing concrete highway
-    new THREE.Vector3(4.5, 6.2, -52),    // 0.48 Stretching RapidKL bus lane + prominent bus stop + plaza
-    new THREE.Vector3(-3.8, 6.0, -96),   // 0.64 LRT train gliding overhead + free-flowing buses & walkers
-    new THREE.Vector3(3.2, 7.2, -138),   // 0.78 Deep into the thriving colorful metropolitan corridor
-    new THREE.Vector3(24, 28, -58),      // 0.90 Rising smoothly above the sprawling city
-    new THREE.Vector3(0, 36, 18)         // 1.00 Full-bleed panoramic Kuala Lumpur metropolitan showcase!
+    new THREE.Vector3(1.0, 5.2, 54),      // 0.00 Moving with morning jam (zero greenery yet!)
+    new THREE.Vector3(3.4, 5.4, 14),      // 0.15 Congested intersection + RapidKL 750 stuck
+    new THREE.Vector3(-4.2, 7.2, -16),    // 0.30 Passing bare-to-green highway with cars driving on top!
+    new THREE.Vector3(4.5, 6.8, -68),     // 0.45 RapidKL bus lanes, prominent bus stops & colorful shophouses
+    new THREE.Vector3(6.2, 8.2, -118),    // 0.60 Community Park + 3D Basketball Court + LRT Train overhead!
+    new THREE.Vector3(-4.5, 11.5, -172),  // 0.74 Weaving right between Merdeka 118, KL Sentral Hub & TRX!
+    new THREE.Vector3(12.0, 18.0, -228),  // 0.86 Flying past Menara KL on Bukit Nanas toward glowing KLCC!
+    new THREE.Vector3(0, 38, -22)         // 1.00 Grand panoramic showcase of the entire pretty KL metropolis!
   ]);
 
   const camLookCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(-1.2, 2.2, -16),   // 0.00
-    new THREE.Vector3(-2.4, 2.0, -22),   // 0.16
-    new THREE.Vector3(-14.0, 6.2, -38),  // 0.32
-    new THREE.Vector3(2.0, 5.5, -130),   // 0.48
-    new THREE.Vector3(1.0, 7.0, -180),   // 0.64
-    new THREE.Vector3(0.0, 10.0, -230),  // 0.78
-    new THREE.Vector3(4.0, 16.0, -245),  // 0.90
-    new THREE.Vector3(4.0, 18.0, -255)   // 1.00
+    new THREE.Vector3(-1.2, 2.2, -16),    // 0.00
+    new THREE.Vector3(-2.4, 2.0, -22),    // 0.15
+    new THREE.Vector3(-14.0, 7.0, -44),   // 0.30
+    new THREE.Vector3(4.0, 5.5, -140),    // 0.45
+    new THREE.Vector3(18.0, 4.0, -130),   // 0.60 Looking over Basketball Court & Park -> LRT Station
+    new THREE.Vector3(8.0, 22.0, -245),   // 0.74 Framing Merdeka 118, TRX & KLCC ahead
+    new THREE.Vector3(14.0, 26.0, -295),  // 0.86 Close-up admiration of KLCC & Menara KL
+    new THREE.Vector3(6.0, 18.0, -255)    // 1.00 Full panoramic KL skyline showcase
   ]);
 
   let scrollProgress = 0;
@@ -1065,7 +1269,7 @@
   });
 
   // =========================================================================
-  // 11. Silky-Smooth Animation Loop (100% Scroll-Driven Immersion)
+  // 11. Silky-Smooth Animation Loop (Delayed Greenery — Zero Early Pop-In!)
   // =========================================================================
 
   let morphFactor = 0;
@@ -1085,21 +1289,31 @@
     const s = clamp(smoothScroll, 0, 1);
     const speedMult = reducedMotion ? 0 : 1;
 
-    // Pure scroll-driven transformation (no early spoiler buttons!)
-    morphFactor = lerp(morphFactor, smoothstep(0.34, 0.74, s), damp);
-    greenFactor = lerp(greenFactor, smoothstep(0.28, 0.48, s), damp);
+    // Strictly delayed greenery so Act 1 (0.00 - 0.35) is 100% bare concrete & jam!
+    greenFactor = lerp(greenFactor, smoothstep(0.36, 0.56, s), damp);
+    morphFactor = lerp(morphFactor, smoothstep(0.38, 0.74, s), damp);
 
-    // 1. Existing concrete highway stays standing — greenery blooms naturally as you scroll
+    // 1. Existing highway stays utilized with cars driving smoothly on top!
+    for (let h = 0; h < highwayCars.length; h++) {
+      const hc = highwayCars[h];
+      hc.position.z += hc.userData.dir * hc.userData.speed * dt * speedMult;
+      if (hc.position.z < -290) hc.position.z = 75;
+      if (hc.position.z > 75) hc.position.z = -290;
+    }
+
+    // Highway greenery blooms ONLY after scrolling past the intersection!
     for (let g = 0; g < overpassGreenery.length; g++) {
       const item = overpassGreenery[g];
       const gs = Math.max(0.001, greenFactor);
       item.visible = greenFactor > 0.02;
-      if (g < overpassGreenery.length - 2) item.scale.set(gs, gs, gs);
-      else item.scale.set(1, gs, 1);
+      if (item.visible) {
+        if (g < overpassGreenery.length - 2) item.scale.set(gs, gs, gs);
+        else item.scale.set(1, gs, 1);
+      }
     }
 
-    // 2. Colorful towers switch cleanly to glowing night facades in dark mode + rooftop gardens bloom
-    const bldgPretty = smoothstep(0.30, 0.65, s);
+    // 2. Colorful towers & rooftop gardens
+    const bldgPretty = smoothstep(0.36, 0.68, s);
     for (let m = 0; m < colorfulTowerMats.length; m++) {
       const entry = colorfulTowerMats[m];
       entry.mat.map = isDark ? facadeNightTex : facadeDayTex;
@@ -1112,36 +1326,36 @@
       roofGardens[r].visible = bldgPretty > 0.04;
     }
 
-    // 3. Dedicated RapidKL Bus Lanes, Bike Lanes, Zebra Crossings & Intersection Signals
-    busLaneMat.opacity = smoothstep(0.20, 0.62, morphFactor) * 0.92;
-    bikeLaneMat.opacity = smoothstep(0.38, 0.82, morphFactor) * 0.90;
-    zebraMat.opacity = smoothstep(0.30, 0.75, morphFactor);
+    // 3. Dedicated RapidKL Bus Lanes, Bike Lanes, Zebra Crossings & Signals
+    busLaneMat.opacity = smoothstep(0.18, 0.62, morphFactor) * 0.92;
+    bikeLaneMat.opacity = smoothstep(0.36, 0.80, morphFactor) * 0.90;
+    zebraMat.opacity = smoothstep(0.28, 0.72, morphFactor);
     dashMat.opacity = lerp(0.78, 0.20, morphFactor);
 
-    const sigMat = morphFactor > 0.45 ? greenSignalMat : redSignalMat;
+    const sigMat = morphFactor > 0.42 ? greenSignalMat : redSignalMat;
     for (let k = 0; k < signalHeads.length; k++) {
       signalHeads[k].material = sigMat;
     }
 
-    // 4. Shade Trees, Prominent RapidKL Bus Stops, Shared Plazas & Strolling Walkers
-    const treeGrowth = smoothstep(0.18, 0.76, morphFactor);
+    // 4. Shade Trees, RapidKL Bus Stops, Community Parks & Basketball Court, Strolling Walkers
+    const treeGrowth = smoothstep(0.16, 0.74, morphFactor);
     for (let i = 0; i < trees.length; i++) {
       const tr = trees[i];
       const sc = clamp((treeGrowth - tr.userData.delay) / (1 - tr.userData.delay), 0.001, 1);
       tr.scale.setScalar(sc);
     }
 
-    const shelterGrowth = smoothstep(0.24, 0.66, morphFactor);
+    const shelterGrowth = smoothstep(0.22, 0.64, morphFactor);
     for (let i = 0; i < shelters.length; i++) {
       shelters[i].scale.setScalar(Math.max(0.001, shelterGrowth));
     }
 
-    const plazaGrowth = smoothstep(0.30, 0.72, morphFactor);
-    for (let p = 0; p < sharedPlazas.length; p++) {
-      sharedPlazas[p].scale.setScalar(Math.max(0.001, plazaGrowth));
+    const parkGrowth = smoothstep(0.26, 0.68, morphFactor);
+    for (let p = 0; p < parkFeatures.length; p++) {
+      parkFeatures[p].scale.setScalar(Math.max(0.001, parkGrowth));
     }
 
-    const walkerScale = smoothstep(0.36, 0.78, morphFactor);
+    const walkerScale = smoothstep(0.32, 0.74, morphFactor);
     for (let w = 0; w < walkers.length; w++) {
       const wk = walkers[w];
       wk.scale.setScalar(Math.max(0.001, walkerScale));
@@ -1154,16 +1368,16 @@
       }
     }
 
-    // 5. Elevated LRT/MRT Viaduct & RapidKL 4-Car Electric Train
-    const railLift = smoothstep(0.24, 0.70, morphFactor);
+    // 5. Solid-Column LRT/MRT Viaduct, KL Sentral Hub & Gliding 4-Car Train
+    const railLift = smoothstep(0.20, 0.66, morphFactor);
     railGroup.visible = railLift > 0.02;
     if (railGroup.visible) {
       railGroup.position.y = lerp(-16, 0, railLift);
-      train.position.z += 24 * dt * speedMult;
-      if (train.position.z > 110) train.position.z = -230;
+      train.position.z += 25 * dt * speedMult;
+      if (train.position.z > 110) train.position.z = -310;
     }
 
-    // 6. Traffic Stream Cars & Cross-Street Intersection Jam
+    // 6. Ground Traffic Stream & Intersection Jam
     for (let i = 0; i < cars.length; i++) {
       const car = cars[i];
       const carVis = car.userData.keepInTransit ? 1 : clamp(1 - morphFactor * 1.42, 0.001, 1);
@@ -1172,8 +1386,8 @@
       if (car.visible) {
         const spd = lerp(car.userData.speed * 0.45, car.userData.speed * 2.5, morphFactor);
         car.position.z += car.userData.dir * spd * dt * speedMult;
-        if (car.position.z < -225) car.position.z = 62;
-        if (car.position.z > 62) car.position.z = -225;
+        if (car.position.z < -280) car.position.z = 62;
+        if (car.position.z > 62) car.position.z = -280;
       }
     }
 
@@ -1187,35 +1401,35 @@
     if (morphFactor < 0.25) {
       rapidBus750.position.z = lerp(rapidBus750.position.z, -7.5 + Math.sin(elapsed * 0.8) * 0.6, 0.06);
     } else {
-      rapidBus750.position.z -= lerp(2.5, 15.0, morphFactor) * dt * speedMult;
-      if (rapidBus750.position.z < -230) rapidBus750.position.z = 60;
+      rapidBus750.position.z -= lerp(2.5, 15.5, morphFactor) * dt * speedMult;
+      if (rapidBus750.position.z < -290) rapidBus750.position.z = 60;
     }
 
-    const extraBusScale = smoothstep(0.24, 0.65, morphFactor);
+    const extraBusScale = smoothstep(0.22, 0.62, morphFactor);
     for (let b = 0; b < extraBuses.length; b++) {
       extraBuses[b].scale.setScalar(Math.max(0.001, extraBusScale));
       extraBuses[b].visible = extraBusScale > 0.04;
       if (extraBuses[b].visible) {
         extraBuses[b].position.z += extraBuses[b].userData.dir * extraBuses[b].userData.speed * dt * speedMult;
-        if (extraBuses[b].position.z > 68) extraBuses[b].position.z = -230;
-        if (extraBuses[b].position.z < -230) extraBuses[b].position.z = 68;
+        if (extraBuses[b].position.z > 68) extraBuses[b].position.z = -290;
+        if (extraBuses[b].position.z < -290) extraBuses[b].position.z = 68;
       }
     }
 
-    // 8. Silky Camera Flight + Gentle Panoramic Orbit at Bottom Full-Bleed Showcase
+    // 8. Silky Camera Flight Through City & Landmarks + Grand Bottom Panoramic Orbit
     camPosCurve.getPointAt(s, tmpPos);
     camLookCurve.getPointAt(s, tmpLook);
 
-    if (s > 0.88 && !reducedMotion) {
-      const orbitBlend = smoothstep(0.88, 1.0, s);
-      tmpPos.x += Math.sin(elapsed * 0.20) * 22 * orbitBlend;
-      tmpPos.y += Math.cos(elapsed * 0.16) * 2.0 * orbitBlend;
+    if (s > 0.90 && !reducedMotion) {
+      const orbitBlend = smoothstep(0.90, 1.0, s);
+      tmpPos.x += Math.sin(elapsed * 0.20) * 24 * orbitBlend;
+      tmpPos.y += Math.cos(elapsed * 0.16) * 2.2 * orbitBlend;
     }
 
     camera.position.copy(tmpPos);
     camera.lookAt(tmpLook);
 
-    // 9. Sky Dome, Twinkling Stars & Lighting Palette
+    // 9. Sky Dome, Stars, & Landmark Night Illumination
     const pal = isDark ? PALETTES.dark : (lightingMode === 'golden' ? PALETTES.golden : PALETTES.day);
     skyUniforms.uTop.value.lerp(pal.skyTop, 0.06);
     skyUniforms.uMid.value.lerp(pal.skyMid, 0.06);
@@ -1230,15 +1444,16 @@
 
     starMat.opacity = lerp(starMat.opacity, isDark ? 0.88 : 0.0, 0.06);
     stars.rotation.y = elapsed * 0.004;
-
     groundMat.color.lerp(new THREE.Color(isDark ? 0x223042 : 0xd8d2c3), 0.06);
-    landmarkBodyMat.color.lerp(new THREE.Color(isDark ? 0x354b63 : 0xc8d4de), 0.06);
-    landmarkGlassMat.color.lerp(new THREE.Color(isDark ? 0x4b7ea8 : 0x7ba8cc), 0.06);
-    landmarkGlassMat.emissiveIntensity = lerp(
-      landmarkGlassMat.emissiveIntensity,
-      isDark ? 0.58 : (lightingMode === 'golden' ? 0.28 : 0.16),
-      0.06
-    );
+
+    const lmEmissive = isDark ? 0.65 : (lightingMode === 'golden' ? 0.30 : 0.18);
+    Object.keys(LANDMARK_MATERIALS).forEach(function (key) {
+      LANDMARK_MATERIALS[key].glass.emissiveIntensity = lerp(
+        LANDMARK_MATERIALS[key].glass.emissiveIntensity,
+        lmEmissive,
+        0.06
+      );
+    });
 
     renderer.render(scene, camera);
   }
