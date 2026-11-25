@@ -560,15 +560,15 @@
   // 5. Ground Traffic Stream, Intersection Jam & RapidKL Red/Blue Buses
   // =========================================================================
 
-  // Non-overlapping jammed cars (4 lanes x 12 rows = 48 cars, zero clipping!)
+  // Non-overlapping jammed cars stretching all the way down the boulevard to the horizon!
   const cars = [];
   const carLanes = [-6.4, -2.4, 2.4, 6.4];
-  for (let row = 0; row < 12; row++) {
+  for (let row = 0; row < 38; row++) {
     for (let laneIdx = 0; laneIdx < 4; laneIdx++) {
-      const zStart = 55 - row * 6.8 - (laneIdx % 2) * 1.6;
-      // Leave clean space for rapidBus750 at (-2.4, 48.5) AND keep intersection box clear of clipping
+      const zStart = 55 - row * 7.2 - (laneIdx % 2) * 1.6;
+      // Leave clean space for rapidBus750 at (-2.4, 48.5) AND keep cross-street intersections clear of clipping
       if (laneIdx === 1 && zStart > 39 && zStart < 58) continue;
-      if (Math.abs(zStart - -18) < 5.2) continue;
+      if (crossZList.some(function (cz) { return Math.abs(zStart - cz) < 5.6; })) continue;
 
       const dir = laneIdx < 2 ? -1 : 1;
       const car = new THREE.Group();
@@ -580,7 +580,7 @@
       });
       const body = new THREE.Mesh(carBodyGeo, bMat);
       body.position.y = 0.52;
-      body.castShadow = true;
+      body.castShadow = row < 12;
       car.add(body);
 
       const cabin = new THREE.Mesh(carCabinGeo, bMat);
@@ -595,7 +595,7 @@
       car.userData = {
         dir: dir,
         speed: 1.8 + (idx % 4) * 0.35,
-        keepInTransit: row < 2 && (laneIdx === 0 || laneIdx === 3)
+        keepInTransit: row % 7 === 0 && (laneIdx === 0 || laneIdx === 3)
       };
       world.add(car);
       cars.push(car);
