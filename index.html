@@ -56,6 +56,15 @@
       </nav>
 
       <div class="topbar-controls">
+        <button class="ctrl-btn" id="sound-toggle" type="button" aria-pressed="false" aria-label="Toggle scroll-driven street audio">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+          </svg>
+          <span>Sound Off</span>
+        </button>
+
         <button class="ctrl-btn" id="cruise-toggle" type="button" aria-pressed="false" aria-label="Auto-cruise through the 3D showcase">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <polygon points="5 3 19 12 5 21 5 3"></polygon>
@@ -207,7 +216,8 @@
           <p>
             What has already been built stays — look up top, cars and trucks still move on the highway.
             We simply <strong>stop building new urban mega-highways</strong>, and wrap existing grey concrete in
-            tropical vines and vibrant Malaysian flowers to cool and beautify the street.
+            tropical vines, trees, and vibrant Malaysian flowers that cool the street and naturally
+            <strong>absorb and disperse harsh traffic noise</strong>.
           </p>
         </article>
       </div>
@@ -305,8 +315,9 @@
           </div>
           <h2 id="p3-title"><mark class="hl hl--green">Shared spaces</mark> where communities grow, explore, and feel safe.</h2>
           <p>
-            When streets are pretty, shaded, and lined with shops, homes, and pocket plazas, walking 1 km stops feeling
-            like a chore. Parents can take kids out safely, neighbors meet daily, and local businesses thrive.
+            When streets are shaded with trees, flowers, shops, and pocket plazas — and fewer private cars roar past
+            because people ride buses and trains — the entire city becomes noticeably <strong>quieter, calmer, and
+            safer</strong>. Walking 1 km stops feeling like a chore, and parents can take kids out daily.
           </p>
 
           <blockquote class="pullquote">
@@ -413,6 +424,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
   <script src="./scene.js"></script>
+  <script src="./audio.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>

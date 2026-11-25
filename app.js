@@ -8,6 +8,7 @@
   const root = document.documentElement;
   const busOverlay = document.getElementById('bus-intro-overlay');
   const busTrigger = document.getElementById('bus-intro-trigger');
+  const soundBtn = document.getElementById('sound-toggle');
   const themeBtn = document.getElementById('theme-toggle');
   const lightBtn = document.getElementById('light-toggle');
   const cruiseBtn = document.getElementById('cruise-toggle');
@@ -21,12 +22,30 @@
   const chapters = Array.from(document.querySelectorAll('.chapter'));
   const storyCards = Array.from(document.querySelectorAll('.story-card'));
 
+  function syncSoundBtn(on) {
+    if (!soundBtn) return;
+    soundBtn.setAttribute('aria-pressed', String(!!on));
+    const label = soundBtn.querySelector('span');
+    if (label) label.textContent = on ? 'Sound On' : 'Sound Off';
+  }
+
+  if (soundBtn) {
+    soundBtn.addEventListener('click', function () {
+      if (!window.ManifestoAudio) return;
+      syncSoundBtn(window.ManifestoAudio.toggle());
+    });
+  }
+
   // =========================================================================
   // 1. Click-the-Back-of-the-Bus 3D Opening
   // =========================================================================
 
   window.onBusIntroStart = function () {
     if (busOverlay) busOverlay.classList.add('is-hidden');
+    if (window.ManifestoAudio) {
+      syncSoundBtn(window.ManifestoAudio.start());
+      window.ManifestoAudio.setProgress(0);
+    }
     setTimeout(function () {
       document.body.classList.remove('is-gated');
       window.scrollTo({ top: 0, behavior: 'auto' });
@@ -144,6 +163,9 @@
     if (window.ManifestoScene && window.ManifestoScene.setCompareRatio) {
       window.ManifestoScene.setCompareRatio(ratio);
     }
+    if (window.ManifestoAudio) {
+      window.ManifestoAudio.setProgress(ratio);
+    }
   }
 
   if (compareSlider) {
@@ -175,6 +197,7 @@
         window.ManifestoScene.setScrollProgress(0);
         if (window.ManifestoScene.setCompareRatio) window.ManifestoScene.setCompareRatio(null);
       }
+      if (window.ManifestoAudio) window.ManifestoAudio.setProgress(0);
       if (hudFill) hudFill.style.width = '0%';
       if (progressBar) progressBar.style.width = '0%';
       if (yearBackdrop) yearBackdrop.textContent = '2026';
@@ -192,6 +215,11 @@
       if (progress < 0.84 && window.ManifestoScene.setCompareRatio) {
         window.ManifestoScene.setCompareRatio(null);
       }
+    }
+
+    if (window.ManifestoAudio && progress < 0.88) {
+      const audioPretty = Math.max(0, Math.min(1, (progress - 0.34) / 0.38));
+      window.ManifestoAudio.setProgress(audioPretty);
     }
 
     const pct = (progress * 100).toFixed(2) + '%';
