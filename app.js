@@ -20,7 +20,7 @@
   const yearBackdrop = document.getElementById('year-backdrop');
   const railLinks = Array.from(document.querySelectorAll('.rail-link'));
   const chapters = Array.from(document.querySelectorAll('.chapter'));
-  const storyCards = Array.from(document.querySelectorAll('.story-card'));
+  const storyCards = Array.from(document.querySelectorAll('.story-card, .rail-flow'));
 
   function syncSoundBtn(on) {
     if (!soundBtn) return;
