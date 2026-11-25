@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Alif Najmi · 10-Year Civic Manifesto (2026–2036)</title>
-  <meta name="description" content="Muhammad Alif Najmi's interactive 3D 10-year roadmap (2026–2036) from Business Analyst at axrail.ai to Malaysian public office: fighting for dignified sidewalks, enforced bus lanes, cycling, and people-first cities.">
+  <meta name="description" content="Muhammad Alif Najmi's interactive 3D 10-year roadmap (2026–2036): follow one Malaysian commuter from stuck in a car jam to riding RapidKL 750, railways, and bicycles.">
   <meta property="og:title" content="Alif Najmi · A Country Built for People, Not Just Highways">
-  <meta property="og:description" content="An interactive 3D 10-year civic manifesto (2026–2036): 2026–2027 Foundation, 2028–2029 Master's & Bus NGOs, 2030–2031 Policy Influence, 2036 Public Office.">
+  <meta property="og:description" content="Click to enter an interactive 3D journey from car-centric congestion to buses, railways, bicycles, and Malaysian public office in 2036.">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="en_MY">
   <meta name="theme-color" content="#f3efe6">
@@ -16,10 +16,28 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap">
   <link rel="stylesheet" href="./styles.css">
 </head>
-<body>
+<body class="is-gated">
   <a class="skip-link" href="#main-content">Skip to manifesto</a>
 
-  <!-- Fixed Full-Viewport 3D Malaysian Street & Real KL Landmarks Canvas -->
+  <!-- Click-to-Open Entrance Gate (Portfolio-Style Opening) -->
+  <div class="opening-gate" id="opening-gate" role="dialog" aria-modal="true" aria-labelledby="gate-title">
+    <div class="gate-card">
+      <div class="gate-mark" aria-hidden="true">AN</div>
+      <div class="gate-eyebrow">Muhammad Alif Najmi · 2026–2036 Civic Manifesto</div>
+      <h2 class="gate-title" id="gate-title">A country built for <em>people</em>, not just highways.</h2>
+      <p class="gate-sub">
+        Start behind the wheel in a morning Selangor jam. Scroll forward as the city cools with greenery,
+        step out of the car, ride RapidKL 750 past the congestion, and cycle free on the weekends.
+      </p>
+      <button class="gate-enter-btn" id="gate-enter-btn" type="button">
+        <span>Enter the Journey</span>
+        <span aria-hidden="true">&rarr;</span>
+      </button>
+      <div class="gate-hint">Interactive 3D · Shah Alam &rarr; Kuala Lumpur · 10-Year Roadmap</div>
+    </div>
+  </div>
+
+  <!-- Fixed Full-Viewport 3D Commuter & KL Landmarks Canvas -->
   <canvas id="scene-canvas" aria-hidden="true"></canvas>
   <div class="scene-scrim" aria-hidden="true"></div>
 
@@ -38,14 +56,14 @@
       </a>
 
       <div class="topbar-controls">
-        <button class="ctrl-btn" id="cruise-toggle" type="button" aria-pressed="false" aria-label="Auto-cruise through the 3D timeline">
+        <button class="ctrl-btn" id="cruise-toggle" type="button" aria-pressed="false" aria-label="Auto-cruise through the 3D journey">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <polygon points="5 3 19 12 5 21 5 3"></polygon>
           </svg>
           <span>Auto-Cruise</span>
         </button>
 
-        <button class="ctrl-btn" id="light-toggle" type="button" aria-pressed="false" aria-label="Toggle golden hour lighting in 3D scene">
+        <button class="ctrl-btn" id="light-toggle" type="button" aria-pressed="false" aria-label="Toggle golden hour lighting">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="12" cy="12" r="4"></circle>
             <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
@@ -68,15 +86,25 @@
     <div class="scroll-progress-bar" id="scroll-progress-bar"></div>
   </div>
 
-  <!-- Chapter Scroll Rail (Year-Driven) -->
-  <nav class="chapter-rail" aria-label="Manifesto timeline">
+  <!-- Live Commuter Perspective HUD (Top-Right) -->
+  <aside class="scene-hud" aria-label="Commuter perspective status">
+    <span class="hud-year" id="hud-year">2026</span>
+    <span class="hud-divider" aria-hidden="true"></span>
+    <span class="hud-phase" id="hud-phase">Behind the Wheel</span>
+    <div class="hud-meter" aria-hidden="true">
+      <div class="hud-meter-fill" id="hud-meter-fill"></div>
+    </div>
+  </aside>
+
+  <!-- Bottom Chapter Dock -->
+  <nav class="chapter-rail" aria-label="Manifesto chapters">
     <a class="rail-link is-active" href="#opening" aria-current="location">
       <span class="rail-num">00</span>
-      <span class="rail-label">2026 · Start</span>
+      <span class="rail-label">In the Car</span>
     </a>
     <a class="rail-link" href="#frustration">
       <span class="rail-num">01</span>
-      <span class="rail-label">The Street</span>
+      <span class="rail-label">Bus 750 Jam</span>
     </a>
     <a class="rail-link" href="#highways-reimagined">
       <span class="rail-num">02</span>
@@ -84,15 +112,15 @@
     </a>
     <a class="rail-link" href="#phase-1">
       <span class="rail-num">03</span>
-      <span class="rail-label">2027 · Build</span>
+      <span class="rail-label">2027 · Exit Car</span>
     </a>
     <a class="rail-link" href="#phase-2">
       <span class="rail-num">04</span>
-      <span class="rail-label">2029 · NGOs</span>
+      <span class="rail-label">2029 · Bus &amp; Rail</span>
     </a>
     <a class="rail-link" href="#phase-3">
       <span class="rail-num">05</span>
-      <span class="rail-label">2031 · Power</span>
+      <span class="rail-label">2031 · Weekend Bike</span>
     </a>
     <a class="rail-link" href="#phase-4">
       <span class="rail-num">06</span>
@@ -100,119 +128,88 @@
     </a>
   </nav>
 
-  <!-- Live 3D Timeline HUD -->
-  <aside class="scene-hud" aria-label="Timeline progress">
-    <span class="hud-year" id="hud-year">2026</span>
-    <span class="hud-divider" aria-hidden="true"></span>
-    <span class="hud-phase" id="hud-phase">The Manifesto</span>
-    <div class="hud-meter" aria-hidden="true">
-      <div class="hud-meter-fill" id="hud-meter-fill"></div>
-    </div>
-  </aside>
-
-  <!-- Main Scroll Story -->
+  <!-- Main Scroll Story — Compact Left/Right Cards Keep Center 3D Scene Wide Open -->
   <main id="main-content">
 
-    <!-- ================================================================
-         00 · OPENING (2026)
-         ================================================================ -->
-    <section class="chapter" id="opening" aria-labelledby="hero-title">
+    <!-- 00 · LEFT · IN THE CAR (2026) -->
+    <section class="chapter chapter--left" id="opening" aria-labelledby="hero-title">
       <div class="chapter-inner">
-        <div class="hero-wrap">
-          <span class="eyebrow">00 · Public Record · Shah Alam &amp; Kuala Lumpur · 2026</span>
-          <h1 id="hero-title">A country built for <em>people</em>, not just highways.</h1>
-          <p class="hero-lead">
-            I am Muhammad Alif Najmi. Today in 2026, I am a Business Analyst commuting through Selangor's broken sidewalks.
-            By 2036, I intend to stand in Malaysian public office — loud, unbought, and holding the pen to turn
-            a car-centric nation into one where railways, buses, bicycles, and pedestrians come first.
+        <article class="story-card is-visible">
+          <div class="phase-header">
+            <span class="eyebrow">00 · My Perspective · 2026</span>
+            <span class="phase-year">Shah Alam &rarr; KL</span>
+          </div>
+          <h1 id="hero-title">Every morning starts staring at <em>brake lights</em>.</h1>
+          <p>
+            I am Muhammad Alif Najmi — a Business Analyst at <strong>axrail.ai</strong> commuting out of Selangor.
+            Look straight ahead in the center of the screen: that wall of red tail lights is what car-centric planning
+            forces millions of Malaysians to accept as normal.
           </p>
-
+          <p>
+            Scroll slowly and watch what happens when we choose a different path — from trapped driver in 2026
+            to Malaysian public office by 2036.
+          </p>
           <div class="hero-actions">
-            <a class="btn btn--primary" href="#frustration">Scroll the 3D Journey &darr;</a>
-            <a class="btn" href="#phase-4">Jump to the 2036 Charter</a>
+            <a class="btn btn--primary" href="#frustration">Scroll Forward &darr;</a>
+            <a class="btn" href="#phase-4">2036 Charter</a>
           </div>
-
-          <div class="hero-meta">
-            <div class="meta-item">
-              <span class="meta-label">2026 Base</span>
-              <span class="meta-val">axrail.ai &amp; KakiLima</span>
-            </div>
-            <div class="meta-item">
-              <span class="meta-label">Core Mission</span>
-              <span class="meta-val">Rail, Buses, Kaki Lima &amp; Bikes</span>
-            </div>
-            <div class="meta-item">
-              <span class="meta-label">2036 Target</span>
-              <span class="meta-val">Malaysian Public Office</span>
-            </div>
-          </div>
-        </div>
+        </article>
       </div>
     </section>
 
-    <!-- ================================================================
-         01 · THE FRUSTRATION (2026 · SELANGOR SIDEWALKS & KKR HIGHWAYS)
-         ================================================================ -->
+    <!-- 01 · RIGHT · RAPIDKL 750 AUDIT -->
     <section class="chapter chapter--right" id="frustration" aria-labelledby="frustration-title">
       <div class="chapter-inner">
         <article class="story-card">
           <div class="phase-header">
-            <span class="eyebrow eyebrow--amber">01 · The Daily Reality</span>
-            <span class="phase-year phase-year--amber">2026 · Selangor &amp; KL</span>
+            <span class="eyebrow eyebrow--amber">01 · The Morning Reality</span>
+            <span class="phase-year phase-year--amber">RapidKL 750 · 18 km</span>
           </div>
-          <h2 id="frustration-title">Why do we keep building highways when people can't even cross the street?</h2>
+          <h2 id="frustration-title">18 km in 40 minutes. And elderly folks still can't cross safely.</h2>
           <p>
-            Every single day I commute to work, I walk past the same ugly, cracked, disappearing sidewalks.
-            In parts of Selangor, there are no proper walk paths and no safe street crossings at all.
-            I love walking and I love cycling — yet our cities treat anyone outside a car like an afterthought.
-          </p>
-          <p>
-            What breaks my heart most isn't my own inconvenience. It is watching <strong>elderly Malaysians and people in pain</strong>
-            forced to gamble with speeding traffic just to cross a few lanes of asphalt.
+            In parts of Selangor, sidewalks crack and vanish. Elderly Malaysians and people in pain have to gamble
+            with speeding lanes just to cross. Meanwhile, KKR still proposes new highways to "ease" KL congestion.
           </p>
 
           <blockquote class="pullquote pullquote--amber">
-            "On my morning RapidKL 750 commute from Section 13, Shah Alam to Mid Valley — just 18 km takes 40 minutes. That's 2.22 minutes per kilometer. You can add a bus every second, but if it still shares congestion with cars, what's the point?"
+            "Section 13, Shah Alam to Mid Valley is just 18 km — 40 minutes (2.22 min/km). You can add a bus every second, but if it shares congestion with cars, what's the point?"
           </blockquote>
 
-          <!-- Interactive 3D Street Morph Simulator (Real RapidKL 750 Commute) -->
-          <div class="street-sim" role="region" aria-label="Interactive RapidKL 750 commute and 3D street comparison">
+          <div class="street-sim" role="region" aria-label="RapidKL 750 commute audit">
             <div class="street-sim-head">
-              <h3>Real Commute Audit: RapidKL 750 · Section 13, Shah Alam &rarr; Mid Valley (18 km)</h3>
+              <h3>Audit: RapidKL 750 · Shah Alam &rarr; Mid Valley</h3>
             </div>
             <div class="sim-toggle-group">
               <button class="sim-btn is-active" id="sim-highway" type="button" data-mode="highway" aria-pressed="true">
-                Today: Bus 750 Stuck With Cars
+                Today: Shared Jam
               </button>
               <button class="sim-btn" id="sim-transit" type="button" data-mode="transit" aria-pressed="false">
-                2036 Vision: Enforced Bus 750 Lane
+                2036: Enforced Lane
               </button>
             </div>
             <div class="sim-stats">
               <div class="sim-stat">
                 <div class="sim-stat-num" id="sim-capacity">40 min</div>
-                <div class="sim-stat-label">18 km Morning Trip</div>
+                <div class="sim-stat-label">18 km Trip</div>
               </div>
               <div class="sim-stat">
                 <div class="sim-stat-num" id="sim-sidewalk">2.22 min/km</div>
-                <div class="sim-stat-label">Pace (27 km/h)</div>
+                <div class="sim-stat-label">Pace</div>
               </div>
               <div class="sim-stat">
                 <div class="sim-stat-num" id="sim-speed">Shared Jam</div>
-                <div class="sim-stat-label">Bus Lane Status</div>
+                <div class="sim-stat-label">Bus Lane</div>
               </div>
             </div>
             <p class="sim-caption" id="sim-caption">
-              Today: Even if you put a RapidKL 750 bus on the road every single second, sharing the Federal Highway jam with private cars traps every bus in the same gridlock — while KKR still proposes adding more highways.
+              Even a bus every second gets trapped if private cars choke the same lane. Only physically enforced bus lanes set commuters free.
             </p>
           </div>
         </article>
       </div>
     </section>
 
-    <!-- ================================================================
-         02 · DOES THIS MEAN DESTROYING HIGHWAYS? NO.
-         ================================================================ -->
+    <!-- 02 · LEFT · KEEP & GREEN HIGHWAYS -->
     <section class="chapter chapter--left" id="highways-reimagined" aria-labelledby="highways-title">
       <div class="chapter-inner">
         <article class="story-card">
@@ -222,53 +219,29 @@
           </div>
           <h2 id="highways-title">Does this mean destroying highways? No.</h2>
           <p>
-            What has already been built will remain. Tearing down existing highways wastes public money and disrupts
-            millions of daily commuters. The goal is simple: <strong>stop adding new urban mega-highways</strong>, and
-            transform the concrete we already live with into something humane.
-          </p>
-          <p>
-            Nobody likes staring at stark, heat-trapping grey concrete pillars on their walk to work. By wrapping
-            elevated flyovers and underpasses in tropical greenery, we cut urban heat, cool the street below, and
-            make our cities genuinely prettier to live in.
+            What has already been built stays. Watch the corridor in the center: instead of tearing down highways,
+            we stop building <em>new</em> urban mega-highways — and wrap existing grey concrete blocks in greenery,
+            rooftop gardens, and shaded walkways to cool the city and make it prettier.
           </p>
 
-          <!-- Interactive 3D Overpass Greening Toggle -->
-          <div class="street-sim" role="region" aria-label="Interactive 3D highway greening preview">
+          <div class="street-sim" role="region" aria-label="Overpass greening preview">
             <div class="street-sim-head">
-              <h3>Watch the 3D Highway Pillars Behind This Card</h3>
+              <h3>Toggle the 3D Highway Pillars</h3>
             </div>
             <div class="sim-toggle-group">
               <button class="sim-btn green-btn" id="green-bare" type="button" data-green="bare" aria-pressed="false">
-                Bare Concrete Pillars
+                Bare Concrete
               </button>
               <button class="sim-btn green-btn is-active" id="green-lush" type="button" data-green="green" aria-pressed="true">
-                Greened &amp; Cooled Overpass
+                Greened &amp; Cooled
               </button>
             </div>
-            <ul class="milestone-list" style="margin-top: 14px;">
-              <li class="milestone-item">
-                <span class="milestone-idx">01</span>
-                <div>
-                  <strong>Living Vertical Pillars &amp; Deck Planters</strong>
-                  <span>Wrap concrete piers with tropical climbing vines and cascade greenery along flyover edges so highways blend into the city instead of scarring it.</span>
-                </div>
-              </li>
-              <li class="milestone-item">
-                <span class="milestone-idx">02</span>
-                <div>
-                  <strong>Cooler Shaded Spaces Underneath</strong>
-                  <span>Turn hot, dead under-highway concrete into cool, lit, plant-lined pocket walkways and shaded waiting spaces for pedestrians and cyclists.</span>
-                </div>
-              </li>
-            </ul>
           </div>
         </article>
       </div>
     </section>
 
-    <!-- ================================================================
-         03 · PHASE I · 2026–2027 (YEAR 1 · FOUNDATION)
-         ================================================================ -->
+    <!-- 03 · RIGHT · 2026–2027 · EXITING THE CAR (YEAR 1) -->
     <section class="chapter chapter--right" id="phase-1" aria-labelledby="p1-title">
       <div class="chapter-inner">
         <article class="story-card">
@@ -276,14 +249,10 @@
             <span class="eyebrow">03 · Phase I · Year 1</span>
             <span class="phase-year">2026–2027</span>
           </div>
-          <h2 id="p1-title">Build financial independence and master real systems first.</h2>
+          <h2 id="p1-title">One day, you park the car and walk out onto shaded kaki lima.</h2>
           <p>
-            Idealism without stability burns out fast — and a public servant who needs money from the wrong people
-            can never serve the public honestly. 2026–2027 is about earning clean income, working hard, and learning how complex systems actually operate.
-          </p>
-          <p>
-            Fresh out of Universiti Teknologi PETRONAS (Computer Science Hons), I am currently working as a
-            <strong>Business Analyst at axrail.ai</strong> in Kuala Lumpur — turning messy real-world processes into structured, working solutions.
+            Watch the center screen: the car pulls into its bay, and the commuter steps out — leaving the jam behind
+            to walk calmly to the RapidKL 750 shelter. Change begins with steady baby steps.
           </p>
 
           <ul class="milestone-list">
@@ -291,21 +260,21 @@
               <span class="milestone-idx">01</span>
               <div>
                 <strong>Financial Base at axrail.ai</strong>
-                <span>Build savings, discipline, and professional credibility so future advocacy is never compromised by financial pressure.</span>
+                <span>Earn clean money and build independence first so future public service is never compromised.</span>
               </div>
             </li>
             <li class="milestone-item">
               <span class="milestone-idx">02</span>
               <div>
-                <strong>Systems &amp; Data Fluency</strong>
-                <span>Learn how organizations budget, specify, test, and deliver projects — skills Malaysian public administration desperately needs.</span>
+                <strong>Master Real Systems</strong>
+                <span>Sharpen requirements, data, and execution skills that Malaysian public administration needs.</span>
               </div>
             </li>
             <li class="milestone-item">
               <span class="milestone-idx">03</span>
               <div>
-                <strong>Grassroots Civic Tech (KakiLima)</strong>
-                <span>Keep shipping community tools like <a href="https://kakilima-iota.vercel.app" target="_blank" rel="noopener">KakiLima</a> to document unsafe sidewalks and connect Malaysians who care about walkable streets.</span>
+                <strong>Grow KakiLima</strong>
+                <span>Keep building <a href="https://kakilima-iota.vercel.app" target="_blank" rel="noopener">KakiLima</a> to spotlight broken sidewalks and connect walkable-city advocates.</span>
               </div>
             </li>
           </ul>
@@ -313,9 +282,7 @@
       </div>
     </section>
 
-    <!-- ================================================================
-         04 · PHASE II · 2028–2029 (YEAR 3 · KNOWLEDGE, MASTER'S & BUS NGOs)
-         ================================================================ -->
+    <!-- 04 · LEFT · 2028–2029 · RIDING BUS 750 & RAIL (YEAR 3) -->
     <section class="chapter chapter--left" id="phase-2" aria-labelledby="p2-title">
       <div class="chapter-inner">
         <article class="story-card">
@@ -323,13 +290,10 @@
             <span class="eyebrow">04 · Phase II · Year 3</span>
             <span class="phase-year">2028–2029</span>
           </div>
-          <h2 id="p2-title">Go deeper on knowledge. Join the NGOs. Fight loudly for buses &amp; rail.</h2>
+          <h2 id="p2-title">Riding RapidKL 750 &amp; rail — chilled, zero congestion.</h2>
           <p>
-            By 2029, financial footing is in place — but my hunger for knowledge only grows.
-            Complaining online isn't enough; I want rigorous, evidence-backed mastery of urban mobility, railway operations, and transit economics.
-          </p>
-          <p>
-            Watch the 3D corridor behind this card come alive as you scroll: an elevated electric MRT/LRT train glides into a connected station above dedicated emerald bus lanes and shaded walkways.
+            Now he's aboard Bus 750 gliding down an enforced emerald lane while a 4-car electric train hums overhead.
+            No road rage. Time to read, think, and breathe.
           </p>
 
           <ul class="milestone-list">
@@ -337,21 +301,21 @@
               <span class="milestone-idx">01</span>
               <div>
                 <strong>Pursue a Master's Degree</strong>
-                <span>Deepen formal expertise in public policy, urban transport systems, or data-driven governance to argue with ministry officials on equal footing.</span>
+                <span>Deepen formal mastery of public policy, urban transport systems, and railway economics.</span>
               </div>
             </li>
             <li class="milestone-item">
               <span class="milestone-idx">02</span>
               <div>
                 <strong>Join Pedestrian, Bus &amp; Rail NGOs</strong>
-                <span>Work directly with Malaysian walkability and public transport coalitions — auditing broken walkways in Selangor and pushing for reliable KTM Komuter, LRT, MRT, and bus connections.</span>
+                <span>Organize with transit coalitions pushing for enforced bus lanes, reliable KTM Komuter, LRT, MRT, and ETS rail.</span>
               </div>
             </li>
             <li class="milestone-item">
               <span class="milestone-idx">03</span>
               <div>
-                <strong>Champion Seamless Rail + Bus Mobility</strong>
-                <span>Advocate for high-frequency urban &amp; intercity railways as Malaysia's backbone, paired with enforced feeder bus lanes and shaded kaki lima so nobody needs a car just to reach a train station.</span>
+                <strong>Seamless First &amp; Last Mile</strong>
+                <span>Connect shaded sidewalks and feeder buses directly into rail stations so nobody needs a car to reach a train.</span>
               </div>
             </li>
           </ul>
@@ -359,9 +323,7 @@
       </div>
     </section>
 
-    <!-- ================================================================
-         05 · PHASE III · 2030–2031 (YEAR 5 · INFLUENCE & POLICY)
-         ================================================================ -->
+    <!-- 05 · RIGHT · 2030–2031 · WEEKEND CYCLING & INFLUENCE (YEAR 5) -->
     <section class="chapter chapter--right" id="phase-3" aria-labelledby="p3-title">
       <div class="chapter-inner">
         <article class="story-card">
@@ -369,36 +331,29 @@
             <span class="eyebrow">05 · Phase III · Year 5</span>
             <span class="phase-year">2030–2031</span>
           </div>
-          <h2 id="p3-title">Turn advocacy into undeniable public influence.</h2>
+          <h2 id="p3-title">Weekdays on buses &amp; trains. Weekends on a bicycle.</h2>
           <p>
-            By 2031, the goal is to hold real leverage over the national conversation on how Malaysia moves.
-            You don't strictly need to be a politician to shape policy — working inside a government office or ministry can move budgets too.
+            Look right in the 3D boulevard: on weekends, he rides his bicycle along a protected terracotta bike lane
+            under tropical shade trees — enjoying the city instead of escaping it.
           </p>
 
           <blockquote class="pullquote">
-            "Honestly, becoming a politician fits me better — because I want to be a loud complainer on behalf of ordinary people, and then actually hold the power to fix what's broken."
+            "You can work inside government to gain influence — but honestly, becoming a politician fits me better. I want to be loud about what's broken and hold the pen to fix it."
           </blockquote>
 
           <ul class="milestone-list">
             <li class="milestone-item">
               <span class="milestone-idx">01</span>
               <div>
-                <strong>National Voice on Walkable Malaysia</strong>
-                <span>Build a trusted public platform exposing car-centric budgets, spotlighting elderly-hostile intersections, and showcasing real complete-street solutions.</span>
+                <strong>Undeniable Public Influence</strong>
+                <span>Expose car-centric budgets and prove complete streets work for everyday Malaysians.</span>
               </div>
             </li>
             <li class="milestone-item">
               <span class="milestone-idx">02</span>
               <div>
-                <strong>Step Into Governance or Political Organizing</strong>
-                <span>Enter policy advisory, local council engagement, or political grassroots to learn legislation, municipal budgets, and constituency work from the inside.</span>
-              </div>
-            </li>
-            <li class="milestone-item">
-              <span class="milestone-idx">03</span>
-              <div>
-                <strong>Prove Complete Streets Work</strong>
-                <span>Push for pilot corridors with continuous shaded kaki lima, raised zebra crossings, protected cycling tracks, and strictly enforced bus lanes.</span>
+                <strong>Enter Governance or Political Organizing</strong>
+                <span>Step into policy advisory or constituency organizing to master budgets and execution.</span>
               </div>
             </li>
           </ul>
@@ -406,9 +361,7 @@
       </div>
     </section>
 
-    <!-- ================================================================
-         06 · 2036 (YEAR 10 · PUBLIC OFFICE & THE 5-POINT CHARTER)
-         ================================================================ -->
+    <!-- 06 · WIDE · 2036 · PUBLIC OFFICE & 6-POINT CHARTER -->
     <section class="chapter chapter--wide" id="phase-4" aria-labelledby="p4-title">
       <div class="chapter-inner">
         <article class="story-card">
@@ -418,46 +371,46 @@
           </div>
           <h2 id="p4-title">2036: in the seat where the nation's course actually changes.</h2>
           <p>
-            By 2036, after a decade of earning, studying, organizing, and building public trust, I aim to breach into
-            public office — seasoned enough to deliver real execution, and bold enough to refuse "that's just how Malaysia is."
-            Too many politicians speak beautifully about change while ordinary people on the street never feel it. That stops here.
+            After a decade of earning, studying, organizing, and building public trust, the goal is to stand in
+            public office — making sure change doesn't stop at speeches, but reaches every street, bus stop, and
+            train station ordinary Malaysians use every day.
           </p>
 
           <div class="charter-grid" aria-label="Six-point people's mobility and civic manifesto">
             <div class="charter-card">
               <div class="charter-num">PILLAR 01</div>
               <h3>Railways as the National Backbone</h3>
-              <p>Prioritize high-frequency LRT, MRT, reliable KTM Komuter, and intercity ETS rail connecting towns nationwide — with seamless fare and station-to-street integration.</p>
+              <p>High-frequency LRT, MRT, reliable KTM Komuter, and intercity ETS rail connecting towns nationwide with seamless fare and walkway integration.</p>
             </div>
 
             <div class="charter-card">
               <div class="charter-num">PILLAR 02</div>
-              <h3>Buses First, New Highways Last</h3>
-              <p>Halt urban mega-highway rubber-stamping. Redirect funds into physically enforced, beautified bus rapid transit lanes and reliable first-mile feeder buses to every rail hub.</p>
+              <h3>Enforced Bus Lanes Over New Highways</h3>
+              <p>Halt urban mega-highway rubber-stamping. Physically enforce dedicated bus corridors like RapidKL 750 so buses beat private cars every morning.</p>
             </div>
 
             <div class="charter-card">
               <div class="charter-num">PILLAR 03</div>
-              <h3>Continuous Shaded Kaki Lima</h3>
-              <p>Mandate connected, obstacle-free, tree-shaded sidewalks across Selangor and every Malaysian town — plus greened, cooled underpasses beneath existing highways.</p>
+              <h3>Green Existing Concrete &amp; Shaded Kaki Lima</h3>
+              <p>Keep existing highways but wrap concrete pillars in tropical greenery, and build continuous tree-shaded sidewalks across Selangor and Malaysia.</p>
             </div>
 
             <div class="charter-card">
               <div class="charter-num">PILLAR 04</div>
               <h3>Elderly-First Safe Crossings</h3>
-              <p>Build raised zebra crossings, generous pedestrian signal timings, and curb ramps so seniors, wheelchair users, and children never have to sprint across traffic.</p>
+              <p>Raised zebra crossings, generous pedestrian signal timings, and curb ramps so seniors, wheelchair users, and children cross without fear.</p>
             </div>
 
             <div class="charter-card">
               <div class="charter-num">PILLAR 05</div>
               <h3>Protected Cycling &amp; Shared Spaces</h3>
-              <p>Reclaim asphalt for physically separated bike corridors and vibrant public plazas where communities actually enjoy being outside.</p>
+              <p>Physically separated bike lanes and human-scale public plazas so Malaysians can enjoy their neighborhoods every weekend.</p>
             </div>
 
             <div class="charter-card">
               <div class="charter-num">PILLAR 06</div>
               <h3>Clean, Accountable Public Service</h3>
-              <p>Zero tolerance for stealing public money. Open project tracking, loud public accountability when contractors cut corners, and leadership judged by street-level outcomes.</p>
+              <p>Zero tolerance for stealing public money. Open project tracking and leadership judged strictly by whether daily life improves on the street.</p>
             </div>
           </div>
 
@@ -474,8 +427,8 @@
           </div>
 
           <div class="proof-links">
-            <a class="btn btn--primary" href="https://kakilima-iota.vercel.app" target="_blank" rel="noopener">Explore KakiLima (Live Project)</a>
-            <a class="btn" href="https://7ymera.github.io" target="_blank" rel="noopener">3D Portfolio (7ymera.github.io)</a>
+            <a class="btn btn--primary" href="https://kakilima-iota.vercel.app" target="_blank" rel="noopener">Explore KakiLima</a>
+            <a class="btn" href="https://7ymera.github.io" target="_blank" rel="noopener">3D Portfolio</a>
             <a class="btn" href="https://github.com/7YMERA" target="_blank" rel="noopener">GitHub (@7YMERA)</a>
             <a class="btn" href="https://www.linkedin.com/in/muhammad-alif-najmi-md-hisamudin" target="_blank" rel="noopener">LinkedIn</a>
           </div>
@@ -497,7 +450,6 @@
     </div>
   </footer>
 
-  <!-- Three.js (r128) + Scene & App Logic -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
   <script src="./scene.js"></script>
   <script src="./app.js"></script>

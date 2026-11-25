@@ -6,6 +6,8 @@
   'use strict';
 
   const root = document.documentElement;
+  const gate = document.getElementById('opening-gate');
+  const gateBtn = document.getElementById('gate-enter-btn');
   const themeBtn = document.getElementById('theme-toggle');
   const lightBtn = document.getElementById('light-toggle');
   const cruiseBtn = document.getElementById('cruise-toggle');
@@ -18,14 +20,32 @@
   const chapters = Array.from(document.querySelectorAll('.chapter'));
   const storyCards = Array.from(document.querySelectorAll('.story-card'));
 
+  // Click-to-Open Entrance Gate
+  function openGate() {
+    if (!gate || gate.classList.contains('is-open')) return;
+    gate.classList.add('is-open');
+    document.body.classList.remove('is-gated');
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }
+
+  if (gateBtn) {
+    gateBtn.addEventListener('click', openGate);
+  }
+  window.addEventListener('keydown', function (e) {
+    if (document.body.classList.contains('is-gated') && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      openGate();
+    }
+  });
+
   const PHASE_META = [
-    { id: 'opening', year: '2026', label: 'The Manifesto' },
-    { id: 'frustration', year: '2026', label: 'Why Streets Matter' },
-    { id: 'highways-reimagined', year: '2026', label: 'Keep & Green Highways' },
-    { id: 'phase-1', year: '2026–2027', label: 'Year 1 · Foundation' },
-    { id: 'phase-2', year: '2028–2029', label: 'Year 3 · Knowledge & NGOs' },
-    { id: 'phase-3', year: '2030–2031', label: 'Year 5 · Influence' },
-    { id: 'phase-4', year: '2036', label: 'Year 10 · Public Office' }
+    { id: 'opening', year: '2026', label: 'Behind the Wheel' },
+    { id: 'frustration', year: '2026', label: 'RapidKL 750 Jam' },
+    { id: 'highways-reimagined', year: '2026', label: 'Greening the Concrete' },
+    { id: 'phase-1', year: '2026–2027', label: 'Exiting the Car' },
+    { id: 'phase-2', year: '2028–2029', label: 'Riding Bus 750 & Rail' },
+    { id: 'phase-3', year: '2030–2031', label: 'Weekend Cycling' },
+    { id: 'phase-4', year: '2036', label: '2036 · Public Office' }
   ];
 
   // =========================================================================
