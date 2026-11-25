@@ -50,6 +50,7 @@
       document.body.classList.remove('is-gated');
       window.scrollTo({ top: 0, behavior: 'auto' });
       updateScroll();
+      if (typeof renderRailConnectors === 'function') renderRailConnectors();
     }, 1150);
   };
 
@@ -380,4 +381,295 @@
       renderStamp();
     });
   }
+
+  // =========================================================================
+  // 7. Continuous Subtle Klang Valley Transit-Map Rail Connectors
+  // =========================================================================
+
+  const connectorSvg = document.getElementById('rail-connector-svg');
+  const mainEl = document.getElementById('main-content');
+
+  function getOffsetBox(el, ancestor) {
+    if (!el || !ancestor) return null;
+    let x = 0;
+    let y = 0;
+    let cur = el;
+    while (cur && cur !== ancestor) {
+      x += cur.offsetLeft || 0;
+      y += cur.offsetTop || 0;
+      cur = cur.offsetParent;
+    }
+    return {
+      left: x,
+      top: y,
+      right: x + el.offsetWidth,
+      bottom: y + el.offsetHeight,
+      width: el.offsetWidth,
+      height: el.offsetHeight,
+      cx: x + el.offsetWidth * 0.5
+    };
+  }
+
+  // Rounded-corner polyline path helper for sleek MRT/LRT map 45° elbows
+  function buildRoundedPolyline(pts, radius) {
+    if (pts.length < 2) return '';
+    let d = 'M ' + pts[0][0].toFixed(1) + ' ' + pts[0][1].toFixed(1);
+    for (let i = 1; i < pts.length - 1; i++) {
+      const prev = pts[i - 1];
+      const curr = pts[i];
+      const next = pts[i + 1];
+      const v1x = curr[0] - prev[0];
+      const v1y = curr[1] - prev[1];
+      const v2x = next[0] - curr[0];
+      const v2y = next[1] - curr[1];
+      const len1 = Math.hypot(v1x, v1y) || 1;
+      const len2 = Math.hypot(v2x, v2y) || 1;
+      const r = Math.min(radius, len1 * 0.45, len2 * 0.45);
+      const ax = curr[0] - (v1x / len1) * r;
+      const ay = curr[1] - (v1y / len1) * r;
+      const bx = curr[0] + (v2x / len2) * r;
+      const by = curr[1] + (v2y / len2) * r;
+      d += ' L ' + ax.toFixed(1) + ' ' + ay.toFixed(1);
+      d += ' Q ' + curr[0].toFixed(1) + ' ' + curr[1].toFixed(1) + ' ' + bx.toFixed(1) + ' ' + by.toFixed(1);
+    }
+    const last = pts[pts.length - 1];
+    d += ' L ' + last[0].toFixed(1) + ' ' + last[1].toFixed(1);
+    return d;
+  }
+
+  function buildOctilinearRoute(x1, y1, x2, y2) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    if (Math.abs(dx) < 36 || dy <= 24) {
+      return 'M ' + x1.toFixed(1) + ' ' + y1.toFixed(1) + ' L ' + x2.toFixed(1) + ' ' + y2.toFixed(1);
+    }
+    const dir = dx > 0 ? 1 : -1;
+    const yMid = y1 + dy * 0.5;
+    const diag = Math.min(Math.abs(dx) * 0.28, dy * 0.44, 180);
+    const pts = [
+      [x1, y1],
+      [x1 + dir * diag, yMid],
+      [x2 - dir * diag, yMid],
+      [x2, y2]
+    ];
+    return buildRoundedPolyline(pts, 26);
+  }
+
+  function svgEl(tag, attrs) {
+    const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    Object.keys(attrs).forEach(function (k) {
+      el.setAttribute(k, String(attrs[k]));
+    });
+    return el;
+  }
+
+  function renderRailConnectors() {
+    if (!connectorSvg || !mainEl) return;
+    const w = mainEl.offsetWidth;
+    const h = mainEl.offsetHeight;
+    if (!w || !h) return;
+
+    connectorSvg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+    connectorSvg.innerHTML = '';
+
+    const defs = svgEl('defs', {});
+    connectorSvg.appendChild(defs);
+
+    let gradCounter = 0;
+
+    function addTrack(d, x1, y1, x2, y2, colorStart, colorEnd, opts) {
+      opts = opts || {};
+      const gradId = 'rail-grad-' + ++gradCounter;
+      const grad = svgEl('linearGradient', {
+        id: gradId,
+        gradientUnits: 'userSpaceOnUse',
+        x1: x1.toFixed(1),
+        y1: y1.toFixed(1),
+        x2: x2.toFixed(1),
+        y2: y2.toFixed(1)
+      });
+      grad.appendChild(svgEl('stop', {
+        offset: '0%',
+        'stop-color': colorStart,
+        'stop-opacity': opts.fadeTop ? '0' : '1'
+      }));
+      if (opts.fadeTop) {
+        grad.appendChild(svgEl('stop', {
+          offset: '38%',
+          'stop-color': colorStart,
+          'stop-opacity': '0.9'
+        }));
+      }
+      grad.appendChild(svgEl('stop', {
+        offset: '100%',
+        'stop-color': colorEnd,
+        'stop-opacity': '1'
+      }));
+      defs.appendChild(grad);
+
+      if (!opts.fadeTop) {
+        connectorSvg.appendChild(svgEl('path', {
+          d: d,
+          class: 'rail-track-halo'
+        }));
+      }
+
+      connectorSvg.appendChild(svgEl('path', {
+        d: d,
+        class: 'rail-track-line',
+        stroke: 'url(#' + gradId + ')'
+      }));
+
+      if (opts.pulse) {
+        connectorSvg.appendChild(svgEl('path', {
+          d: d,
+          class: 'rail-track-pulse'
+        }));
+      }
+
+      if (opts.startDot) {
+        connectorSvg.appendChild(svgEl('circle', {
+          cx: x1.toFixed(1),
+          cy: y1.toFixed(1),
+          r: 4.5,
+          class: 'rail-anchor-dot',
+          stroke: colorStart
+        }));
+      }
+      if (opts.endDot) {
+        connectorSvg.appendChild(svgEl('circle', {
+          cx: x2.toFixed(1),
+          cy: y2.toFixed(1),
+          r: 4.5,
+          class: 'rail-anchor-dot',
+          stroke: colorEnd
+        }));
+      }
+    }
+
+    const c0 = getOffsetBox(document.querySelector('#opening .story-card'), mainEl);
+    const c1 = getOffsetBox(document.querySelector('#frustration .story-card'), mainEl);
+    const c2 = getOffsetBox(document.querySelector('#highways-reimagined .story-card'), mainEl);
+    const p1Head = getOffsetBox(document.querySelector('#phase-1 .rail-hub-head'), mainEl);
+    const p1Out = getOffsetBox(document.querySelector('#phase-1 .rail-transfer'), mainEl);
+    const p2Head = getOffsetBox(document.querySelector('#phase-2 .rail-hub-head'), mainEl);
+    const p2Out = getOffsetBox(document.querySelector('#phase-2 .rail-transfer'), mainEl);
+    const p3Head = getOffsetBox(document.querySelector('#phase-3 .rail-hub-head'), mainEl);
+    const p3Out = getOffsetBox(document.querySelector('#phase-3 .rail-transfer'), mainEl);
+    const interSvgEl = document.getElementById('interchange-svg');
+    const interBox = getOffsetBox(interSvgEl, mainEl);
+
+    const BLUE = '#0047AB';
+    const RED = '#D92332';
+    const GREEN = '#0E7C59';
+
+    // 1. Ch 00 (Left) -> Ch 01 (Right)
+    if (c0 && c1) {
+      const x1 = c0.left + 26;
+      const y1 = c0.bottom;
+      const x2 = c1.left + 26;
+      const y2 = c1.top;
+      addTrack(buildOctilinearRoute(x1, y1, x2, y2), x1, y1, x2, y2, RED, RED, {
+        pulse: true,
+        startDot: true,
+        endDot: true
+      });
+    }
+
+    // 2. Ch 01 (Right) -> Ch 02 (Right) — clean vertical drop along the right card spine
+    if (c1 && c2) {
+      const x1 = c1.left + 26;
+      const y1 = c1.bottom;
+      const x2 = c2.left + 26;
+      const y2 = c2.top;
+      addTrack(buildOctilinearRoute(x1, y1, x2, y2), x1, y1, x2, y2, RED, GREEN, {
+        pulse: true,
+        startDot: true,
+        endDot: true
+      });
+    }
+
+    // 3. Ch 02 (Right) -> Phase I / Line 01 (Left)
+    if (c2 && p1Head) {
+      const x1 = c2.left + 26;
+      const y1 = c2.bottom;
+      const x2 = p1Head.left + 18;
+      const y2 = p1Head.top;
+      addTrack(buildOctilinearRoute(x1, y1, x2, y2), x1, y1, x2, y2, GREEN, BLUE, {
+        pulse: true,
+        startDot: true,
+        endDot: true
+      });
+    }
+
+    // 4. Phase I / Line 01 (Left) -> Phase II / Line 02 (Right)
+    if (p1Out && p2Head) {
+      const x1 = p1Out.left + 12;
+      const y1 = p1Out.bottom;
+      const x2 = p2Head.left + 18;
+      const y2 = p2Head.top;
+      addTrack(buildOctilinearRoute(x1, y1, x2, y2), x1, y1, x2, y2, BLUE, RED, {
+        pulse: true,
+        endDot: true
+      });
+    }
+
+    // 5. Phase II / Line 02 (Right) -> Phase III / Line 03 (Left)
+    if (p2Out && p3Head) {
+      const x1 = p2Out.left + 12;
+      const y1 = p2Out.bottom;
+      const x2 = p3Head.left + 18;
+      const y2 = p3Head.top;
+      addTrack(buildOctilinearRoute(x1, y1, x2, y2), x1, y1, x2, y2, RED, GREEN, {
+        pulse: true,
+        endDot: true
+      });
+    }
+
+    // 6. 2036 Central Interchange: 5 Tall Vertical Feeder Lines Descending Into Convergence Dots
+    if (interSvgEl && interBox) {
+      const dots = Array.from(interSvgEl.querySelectorAll('.interchange-dot'));
+      const scaleX = interBox.width / 960;
+      const scaleY = interBox.height / 108;
+      const feederHeight = Math.min(460, Math.max(240, window.innerHeight * 0.46));
+
+      dots.forEach(function (dot, idx) {
+        const cxAttr = parseFloat(dot.getAttribute('cx')) || 0;
+        const cyAttr = parseFloat(dot.getAttribute('cy')) || 10;
+        const col = dot.getAttribute('data-color') || BLUE;
+        const x = interBox.left + cxAttr * scaleX;
+        const yEnd = interBox.top + cyAttr * scaleY;
+        const yStart = yEnd - feederHeight;
+
+        const d = 'M ' + x.toFixed(1) + ' ' + yStart.toFixed(1) + ' L ' + x.toFixed(1) + ' ' + yEnd.toFixed(1);
+        addTrack(d, x, yStart, x, yEnd, col, col, {
+          fadeTop: true,
+          pulse: idx === 2
+        });
+
+        // Connect Phase III transfer pill smoothly into the Center Line 03 feeder!
+        if (idx === 2 && p3Out) {
+          const sx = p3Out.left + 12;
+          const sy = p3Out.bottom;
+          const joinY = Math.max(sy + 40, yEnd - 70);
+          addTrack(buildOctilinearRoute(sx, sy, x, joinY), sx, sy, x, joinY, GREEN, GREEN, {
+            pulse: true
+          });
+        }
+      });
+    }
+  }
+
+  let railResizeTimer = 0;
+  function scheduleRailRender() {
+    clearTimeout(railResizeTimer);
+    railResizeTimer = setTimeout(renderRailConnectors, 60);
+  }
+
+  window.addEventListener('resize', scheduleRailRender, { passive: true });
+  window.addEventListener('load', renderRailConnectors);
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(renderRailConnectors);
+  }
+  renderRailConnectors();
 })();

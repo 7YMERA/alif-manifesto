@@ -152,6 +152,8 @@
 
   <!-- Main Scroll Story — Compact Left/Right Cards Keep Center 3D Metropolis Wide Open -->
   <main id="main-content">
+    <!-- Continuous Subtle Klang Valley Transit-Map Rail Connectors Across All Chapters -->
+    <svg class="rail-connector-svg" id="rail-connector-svg" aria-hidden="true"></svg>
 
     <!-- 00 · LEFT · MOVING WITH THE MORNING CONGESTION -->
     <section class="chapter chapter--left" id="opening" aria-labelledby="hero-title">
@@ -331,24 +333,24 @@
       <div class="chapter-inner">
         <div class="interchange-wrap">
           <!-- Multi-Line Rail Map Convergence: Left & Right Lines Merging into 2036! -->
-          <svg class="interchange-svg" viewBox="0 0 960 108" fill="none" aria-hidden="true">
+          <svg class="interchange-svg" id="interchange-svg" viewBox="0 0 960 108" fill="none" aria-hidden="true">
             <!-- Left incoming transit lines (Line 01 Blue & Line 02 Red) -->
-            <path d="M 30 6 C 30 66, 210 56, 360 102" stroke="#0047AB" stroke-width="7" stroke-linecap="round"/>
-            <path d="M 110 6 C 110 62, 260 66, 420 102" stroke="#D92332" stroke-width="7" stroke-linecap="round"/>
+            <path d="M 30 10 C 30 66, 210 56, 360 102" stroke="#0047AB" stroke-width="4.5" stroke-opacity="0.82" stroke-linecap="round"/>
+            <path d="M 110 10 C 110 62, 260 66, 420 102" stroke="#D92332" stroke-width="4.5" stroke-opacity="0.82" stroke-linecap="round"/>
             <!-- Center direct feeder line (Line 03 Green) -->
-            <path d="M 480 6 L 480 102" stroke="#0E7C59" stroke-width="7" stroke-linecap="round"/>
+            <path d="M 480 10 L 480 102" stroke="#0E7C59" stroke-width="4.5" stroke-opacity="0.82" stroke-linecap="round"/>
             <!-- Right incoming transit lines (Bus Rapid & Shared Spaces) -->
-            <path d="M 850 6 C 850 62, 700 66, 540 102" stroke="#D92332" stroke-width="7" stroke-linecap="round"/>
-            <path d="M 930 6 C 930 66, 750 56, 600 102" stroke="#0E7C59" stroke-width="7" stroke-linecap="round"/>
-            <!-- Interchange station circles -->
-            <circle cx="30" cy="10" r="8" fill="#FDFCF9" stroke="#0047AB" stroke-width="4"/>
-            <circle cx="110" cy="10" r="8" fill="#FDFCF9" stroke="#D92332" stroke-width="4"/>
-            <circle cx="480" cy="10" r="8" fill="#FDFCF9" stroke="#0E7C59" stroke-width="4"/>
-            <circle cx="850" cy="10" r="8" fill="#FDFCF9" stroke="#D92332" stroke-width="4"/>
-            <circle cx="930" cy="10" r="8" fill="#FDFCF9" stroke="#0E7C59" stroke-width="4"/>
+            <path d="M 850 10 C 850 62, 700 66, 540 102" stroke="#D92332" stroke-width="4.5" stroke-opacity="0.82" stroke-linecap="round"/>
+            <path d="M 930 10 C 930 66, 750 56, 600 102" stroke="#0E7C59" stroke-width="4.5" stroke-opacity="0.82" stroke-linecap="round"/>
+            <!-- Interchange station circles (anchored to vertical feeder lines) -->
+            <circle class="interchange-dot" data-color="#0047AB" cx="30" cy="10" r="6.5" fill="#FDFCF9" stroke="#0047AB" stroke-width="3.5"/>
+            <circle class="interchange-dot" data-color="#D92332" cx="110" cy="10" r="6.5" fill="#FDFCF9" stroke="#D92332" stroke-width="3.5"/>
+            <circle class="interchange-dot" data-color="#0E7C59" cx="480" cy="10" r="6.5" fill="#FDFCF9" stroke="#0E7C59" stroke-width="3.5"/>
+            <circle class="interchange-dot" data-color="#D92332" cx="850" cy="10" r="6.5" fill="#FDFCF9" stroke="#D92332" stroke-width="3.5"/>
+            <circle class="interchange-dot" data-color="#0E7C59" cx="930" cy="10" r="6.5" fill="#FDFCF9" stroke="#0E7C59" stroke-width="3.5"/>
             <!-- Central 2036 Interchange Hub Node -->
-            <rect x="378" y="76" width="204" height="30" rx="15" fill="#0047AB"/>
-            <text x="480" y="95" text-anchor="middle" fill="#FFFFFF" font-family="JetBrains Mono, monospace" font-size="12" font-weight="700" letter-spacing="1.2">2036 · CENTRAL INTERCHANGE</text>
+            <rect x="350" y="76" width="260" height="30" rx="15" fill="#0047AB"/>
+            <text x="480" y="95" text-anchor="middle" fill="#FFFFFF" font-family="JetBrains Mono, monospace" font-size="11.5" font-weight="700" letter-spacing="1.1">2036 · CENTRAL INTERCHANGE</text>
           </svg>
 
           <article class="story-card interchange-card">
