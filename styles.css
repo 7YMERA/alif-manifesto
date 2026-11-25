@@ -92,7 +92,6 @@ body {
 
 body.is-gated {
   overflow: hidden;
-  height: 100vh;
 }
 
 /* Subtle paper grain overlay */
@@ -146,9 +145,12 @@ a:hover {
 body.is-gated main,
 body.is-gated .chapter-rail,
 body.is-gated .scene-hud,
-body.is-gated .year-backdrop {
-  opacity: 0;
-  pointer-events: none;
+body.is-gated .year-backdrop,
+body.is-gated .compare-dock,
+body.is-gated .back-to-top {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
   transition: opacity 0.6s ease;
 }
 

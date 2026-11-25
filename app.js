@@ -30,7 +30,8 @@
     setTimeout(function () {
       document.body.classList.remove('is-gated');
       window.scrollTo({ top: 0, behavior: 'auto' });
-    }, 950);
+      updateScroll();
+    }, 1150);
   };
 
   function startFromBus() {
@@ -161,7 +162,27 @@
     });
   }
 
+  // Force top of page on refresh so browser scroll restoration never triggers end-of-page UI early
+  if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+  }
+  window.scrollTo(0, 0);
+
   function updateScroll() {
+    const gated = document.body.classList.contains('is-gated');
+    if (gated) {
+      if (window.ManifestoScene) {
+        window.ManifestoScene.setScrollProgress(0);
+        if (window.ManifestoScene.setCompareRatio) window.ManifestoScene.setCompareRatio(null);
+      }
+      if (hudFill) hudFill.style.width = '0%';
+      if (progressBar) progressBar.style.width = '0%';
+      if (yearBackdrop) yearBackdrop.textContent = '2026';
+      if (backToTopBtn) backToTopBtn.classList.remove('is-shown');
+      if (compareDock) compareDock.classList.remove('is-shown');
+      return;
+    }
+
     const scrollTop = window.scrollY || window.pageYOffset || 0;
     const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
     const progress = Math.max(0, Math.min(1, scrollTop / maxScroll));

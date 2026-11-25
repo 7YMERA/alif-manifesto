@@ -668,8 +668,32 @@
     return new THREE.CanvasTexture(c);
   }
 
+  function makePressToGoTexture() {
+    const c = document.createElement('canvas');
+    c.width = 512;
+    c.height = 144;
+    const ctx = c.getContext('2d');
+    // Crisp RapidKL Blue rounded pill with Red left accent
+    ctx.fillStyle = '#0047ab';
+    ctx.fillRect(0, 0, 512, 144);
+    ctx.fillStyle = '#d92332';
+    ctx.fillRect(0, 0, 26, 144);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(4, 4, 504, 136);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '800 54px "Bricolage Grotesque", system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('PRESS TO GO  →', 266, 74, 452);
+    const tex = new THREE.CanvasTexture(c);
+    tex.anisotropy = 4;
+    return tex;
+  }
+
   const routeSignMat = new THREE.MeshBasicMaterial({ map: makeRouteSignTexture() });
   const plateMat = new THREE.MeshBasicMaterial({ map: makePlateTexture() });
+  const pressToGoMat = new THREE.MeshBasicMaterial({ map: makePressToGoTexture() });
 
   function makeRapidKLBus(detailedRear) {
     const bus = new THREE.Group();
@@ -701,14 +725,19 @@
 
     if (detailedRear) {
       // Rear window frame
-      const rearWin = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.88, 0.1), busGlassMat);
-      rearWin.position.set(0, 1.98, 5.31);
+      const rearWin = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.72, 0.1), busGlassMat);
+      rearWin.position.set(0, 2.04, 5.31);
       bus.add(rearWin);
 
-      // Glowing "750 KL SENTRAL" rear LED matrix sign
-      const rearSign = new THREE.Mesh(new THREE.PlaneGeometry(1.85, 0.42), routeSignMat);
-      rearSign.position.set(0, 2.52, 5.36);
+      // Glowing "750 · KL SENTRAL" rear LED matrix sign
+      const rearSign = new THREE.Mesh(new THREE.PlaneGeometry(1.88, 0.42), routeSignMat);
+      rearSign.position.set(0, 2.58, 5.37);
       bus.add(rearSign);
+
+      // Bold "PRESS TO GO ->" logo painted right on the back of the bus!
+      const pressBadge = new THREE.Mesh(new THREE.PlaneGeometry(1.76, 0.48), pressToGoMat);
+      pressBadge.position.set(0, 1.38, 5.38);
+      bus.add(pressBadge);
 
       // Rear bumper + dual glowing red brake/tail lights + license plate
       const bumper = new THREE.Mesh(new THREE.BoxGeometry(2.58, 0.34, 0.24), busBumperMat);
@@ -717,12 +746,12 @@
 
       [-0.96, 0.96].forEach(function (tx) {
         const tail = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.24, 0.12), busRearTailMat);
-        tail.position.set(tx, 0.86, 5.34);
+        tail.position.set(tx, 0.84, 5.35);
         bus.add(tail);
       });
 
       const plate = new THREE.Mesh(new THREE.PlaneGeometry(0.72, 0.19), plateMat);
-      plate.position.set(0, 0.76, 5.36);
+      plate.position.set(0, 0.80, 5.37);
       bus.add(plate);
     } else {
       const ledR = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.22, 0.12), busLedMat);
@@ -1431,9 +1460,9 @@
   let introT = 0;
   const raycaster = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
-  const introCamPos = new THREE.Vector3(-2.4, 1.92, 57.4);
-  const introZoomPos = new THREE.Vector3(-2.4, 1.88, 55.2);
-  const introCamLook = new THREE.Vector3(-2.4, 1.82, 44.0);
+  const introCamPos = new THREE.Vector3(-2.4, 2.05, 61.2);
+  const introZoomPos = new THREE.Vector3(-2.4, 1.98, 58.8);
+  const introCamLook = new THREE.Vector3(-2.4, 1.72, 48.5);
 
   function triggerBusDeparture() {
     if (introState !== 'waiting') return;
@@ -1524,9 +1553,10 @@
     const s = clamp(smoothScroll, 0, 1);
     const speedMult = reducedMotion ? 0 : 1;
 
-    const targetGreen = compareRatio !== null ? compareRatio : smoothstep(0.35, 0.56, s);
-    const targetMorph = compareRatio !== null ? compareRatio : smoothstep(0.37, 0.74, s);
-    const targetPretty = compareRatio !== null ? compareRatio : smoothstep(0.32, 0.70, s);
+    const lockedIntro = introState !== 'active';
+    const targetGreen = lockedIntro ? 0 : (compareRatio !== null ? compareRatio : smoothstep(0.35, 0.56, s));
+    const targetMorph = lockedIntro ? 0 : (compareRatio !== null ? compareRatio : smoothstep(0.37, 0.74, s));
+    const targetPretty = lockedIntro ? 0 : (compareRatio !== null ? compareRatio : smoothstep(0.32, 0.70, s));
 
     greenFactor = lerp(greenFactor, targetGreen, damp);
     morphFactor = lerp(morphFactor, targetMorph, damp);
