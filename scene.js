@@ -229,38 +229,177 @@
 
   const roadMat = new THREE.MeshStandardMaterial({ color: 0x2b313a, roughness: 0.88 });
   const sideRoadMat = new THREE.MeshStandardMaterial({ color: 0x353c45, roughness: 0.9 });
+  const curvedBusLaneMat = new THREE.MeshStandardMaterial({
+    color: 0x0047ab,
+    roughness: 0.65,
+    transparent: true,
+    opacity: 0.88
+  });
 
-  // Main boulevard stops cleanly at z = -255 and joins a curved KLCC Perimeter Ring Road!
+  // Procedural Curved Road Ribbon Builder (Silky IRL Kuala Lumpur Road Curves!)
+  function makeRoadRibbon(pts, width, y, mat, segs) {
+    const curve = new THREE.CatmullRomCurve3(pts);
+    const n = segs || 48;
+    const positions = [];
+    const indices = [];
+    const halfW = width / 2;
+    const p = new THREE.Vector3();
+    const tan = new THREE.Vector3();
+
+    for (let i = 0; i <= n; i++) {
+      const t = i / n;
+      curve.getPointAt(t, p);
+      curve.getTangentAt(t, tan);
+      const nx = -tan.z;
+      const nz = tan.x;
+      const len = Math.hypot(nx, nz) || 1;
+      const rx = (nx / len) * halfW;
+      const rz = (nz / len) * halfW;
+      positions.push(p.x - rx, y, p.z - rz);
+      positions.push(p.x + rx, y, p.z + rz);
+      if (i < n) {
+        const a = i * 2;
+        indices.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
+      }
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    geo.setIndex(indices);
+    geo.computeVertexNormals();
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.receiveShadow = true;
+    return { mesh: mesh, curve: curve };
+  }
+
+  // Main boulevard stops cleanly at z = -255 and joins the curved KLCC Perimeter Ring Road!
   const mainRoad = new THREE.Mesh(new THREE.BoxGeometry(18, 0.18, 340), roadMat);
   mainRoad.position.set(0, 0, -85);
   mainRoad.receiveShadow = true;
   world.add(mainRoad);
 
-  // Curved KLCC Perimeter Ring Road & Landscaped Park Loop around Petronas Twin Towers (18, -295)
-  const ringRoad = new THREE.Mesh(new THREE.RingGeometry(30, 41, 48), roadMat);
+  // Curved KLCC Perimeter Ring Road around Petronas Twin Towers (18, -295)
+  const ringRoad = new THREE.Mesh(new THREE.RingGeometry(30, 41, 56), roadMat);
   ringRoad.rotation.x = -Math.PI / 2;
   ringRoad.position.set(18, 0.08, -295);
   ringRoad.receiveShadow = true;
   world.add(ringRoad);
 
-  const ringConnector = new THREE.Mesh(new THREE.BoxGeometry(16, 0.16, 26), roadMat);
-  ringConnector.position.set(6, 0, -258);
-  ringConnector.rotation.y = -0.32;
-  world.add(ringConnector);
+  const ringConnector = makeRoadRibbon([
+    new THREE.Vector3(0, 0, -242),
+    new THREE.Vector3(2, 0, -254),
+    new THREE.Vector3(8, 0, -264)
+  ], 16, 0.10, roadMat, 16);
+  world.add(ringConnector.mesh);
 
-  // 4 Major Cross-Streets weaving through the metropolis & downtown KL
+  // === IRL KUALA LUMPUR CURVED ARTERIAL NETWORK ===
+
+  // 1. Jalan Sultan Ismail S-Curve sweeping around Bukit Nanas / Menara KL -> Bukit Bintang / TRX
+  const jlnSultanIsmail = makeRoadRibbon([
+    new THREE.Vector3(-145, 0, -135),
+    new THREE.Vector3(-82, 0, -182),
+    new THREE.Vector3(-22, 0, -220),
+    new THREE.Vector3(26, 0, -214),
+    new THREE.Vector3(68, 0, -182),
+    new THREE.Vector3(115, 0, -148)
+  ], 13, 0.11, roadMat, 56);
+  world.add(jlnSultanIsmail.mesh);
+
+  // 2. Jalan Ampang Diagonal Curved Arterial past KLCC -> Ampang Park (with Curved RapidKL Bus Lane!)
+  const jlnAmpangPts = [
+    new THREE.Vector3(-145, 0, -195),
+    new THREE.Vector3(-68, 0, -246),
+    new THREE.Vector3(-6, 0, -266),
+    new THREE.Vector3(54, 0, -274),
+    new THREE.Vector3(114, 0, -284),
+    new THREE.Vector3(175, 0, -296)
+  ];
+  world.add(makeRoadRibbon(jlnAmpangPts, 13.5, 0.12, roadMat, 56).mesh);
+  world.add(makeRoadRibbon(jlnAmpangPts, 3.2, 0.14, curvedBusLaneMat, 56).mesh);
+
+  // 3. Jalan Tun Razak Sweeping Eastern Curved Arterial (Ampang Park -> Persiaran KLCC -> TRX)
+  world.add(makeRoadRibbon([
+    new THREE.Vector3(98, 0, -356),
+    new THREE.Vector3(116, 0, -288),
+    new THREE.Vector3(112, 0, -212),
+    new THREE.Vector3(102, 0, -140),
+    new THREE.Vector3(92, 0, -68),
+    new THREE.Vector3(88, 0, 10)
+  ], 14, 0.10, roadMat, 56).mesh);
+
+  // 4. AKLEH (E12) Curved Elevated Highway Arc behind KLCC + Curved Interchange Slip-Ramp!
+  const aklehMat = new THREE.MeshStandardMaterial({ color: 0x767d85, roughness: 0.9 });
+  const aklehArc = makeRoadRibbon([
+    new THREE.Vector3(-150, 0, -245),
+    new THREE.Vector3(-62, 0, -324),
+    new THREE.Vector3(38, 0, -348),
+    new THREE.Vector3(124, 0, -332),
+    new THREE.Vector3(185, 0, -295)
+  ], 12, 8.2, aklehMat, 52);
+  world.add(aklehArc.mesh);
+
+  // AKLEH Curved Interchange Slip-Ramp curving smoothly into Jalan Tun Razak
+  const aklehRamp = makeRoadRibbon([
+    new THREE.Vector3(52, 0, -344),
+    new THREE.Vector3(88, 0, -328),
+    new THREE.Vector3(112, 0, -296)
+  ], 6.5, 4.6, aklehMat, 24);
+  world.add(aklehRamp.mesh);
+
+  // Sculpted concrete piers supporting the curved AKLEH highway arc
+  const aklehPierGeo = new THREE.CylinderGeometry(0.95, 1.15, 8.2, 10);
+  for (let pIdx = 1; pIdx < 12; pIdx++) {
+    const pt = aklehArc.curve.getPointAt(pIdx / 12);
+    const pier = new THREE.Mesh(aklehPierGeo, aklehMat);
+    pier.position.set(pt.x, 4.1, pt.z);
+    world.add(pier);
+  }
+
+  // 5. Real KLCC Park Crescent + Reflective Symphony Lake (SE of Petronas Twin Towers!)
+  const klccParkGroup = new THREE.Group();
+  const klccLawn = new THREE.Mesh(
+    new THREE.CircleGeometry(24, 32),
+    new THREE.MeshStandardMaterial({ color: 0x358c55, roughness: 0.9 })
+  );
+  klccLawn.rotation.x = -Math.PI / 2;
+  klccLawn.scale.set(1.25, 0.85, 1);
+  klccLawn.position.set(46, 0.06, -264);
+  klccParkGroup.add(klccLawn);
+
+  const symphonyLake = new THREE.Mesh(
+    new THREE.CircleGeometry(9.5, 28),
+    new THREE.MeshStandardMaterial({ color: 0x3b8fb8, roughness: 0.18, metalness: 0.45 })
+  );
+  symphonyLake.rotation.x = -Math.PI / 2;
+  symphonyLake.scale.set(1.35, 0.72, 1);
+  symphonyLake.position.set(44, 0.11, -266);
+  klccParkGroup.add(symphonyLake);
+  world.add(klccParkGroup);
+
+  // 4 Major Cross-Streets with Curved Slip-Lane Corner Aprons (Real Malaysian Intersections!)
   const crossZList = [-18, -84, -150, -220];
   crossZList.forEach(function (cz) {
-    const cr = new THREE.Mesh(new THREE.BoxGeometry(300, 0.17, 14), roadMat);
+    const cr = new THREE.Mesh(new THREE.BoxGeometry(240, 0.17, 14), roadMat);
     cr.position.set(0, -0.01, cz);
     cr.receiveShadow = true;
     world.add(cr);
+
+    // Curved corner slip-lane fillets at all 4 quadrants of each intersection!
+    [
+      [-1, -1], [1, -1], [-1, 1], [1, 1]
+    ].forEach(function (q) {
+      const slip = makeRoadRibbon([
+        new THREE.Vector3(q[0] * 8.5, 0, cz + q[1] * 13.5),
+        new THREE.Vector3(q[0] * 11.2, 0, cz + q[1] * 9.2),
+        new THREE.Vector3(q[0] * 16.5, 0, cz + q[1] * 6.5)
+      ], 4.2, 0.09, roadMat, 10);
+      world.add(slip.mesh);
+    });
   });
 
   // Parallel Neighborhood Avenues
   [-48, 48].forEach(function (ax) {
-    const ave = new THREE.Mesh(new THREE.BoxGeometry(9, 0.14, 320), sideRoadMat);
-    ave.position.set(ax, -0.02, -90);
+    const ave = new THREE.Mesh(new THREE.BoxGeometry(9, 0.14, 300), sideRoadMat);
+    ave.position.set(ax, -0.02, -85);
     ave.receiveShadow = true;
     world.add(ave);
   });
@@ -1608,8 +1747,9 @@
       roofGardens[r].visible = prettyFactor > 0.04;
     }
 
-    // 3. Dedicated RapidKL Bus Lanes, Bike Lanes, Zebra Crossings & Signals
+    // 3. Dedicated RapidKL Bus Lanes (Straight + Curved Jalan Ampang), Bike Lanes, Zebra Crossings & Signals
     busLaneMat.opacity = smoothstep(0.18, 0.62, morphFactor) * 0.92;
+    curvedBusLaneMat.opacity = busLaneMat.opacity;
     bikeLaneMat.opacity = smoothstep(0.36, 0.80, morphFactor) * 0.90;
     zebraMat.opacity = smoothstep(0.28, 0.72, morphFactor);
     dashMat.opacity = lerp(0.78, 0.20, morphFactor);
