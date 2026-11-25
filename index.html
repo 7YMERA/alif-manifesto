@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Alif Najmi · 10-Year Civic Manifesto (2026–2036)</title>
-  <meta name="description" content="Muhammad Alif Najmi's interactive 3D 10-year roadmap from Business Analyst at axrail.ai to Malaysian public office: fighting for dignified sidewalks, enforced bus lanes, cycling, and people-first cities.">
+  <meta name="description" content="Muhammad Alif Najmi's interactive 3D 10-year roadmap (2026–2036) from Business Analyst at axrail.ai to Malaysian public office: fighting for dignified sidewalks, enforced bus lanes, cycling, and people-first cities.">
   <meta property="og:title" content="Alif Najmi · A Country Built for People, Not Just Highways">
-  <meta property="og:description" content="An interactive 3D 10-year civic manifesto (2026–2036): Year 1 Foundation, Year 3 Master's & Bus NGOs, Year 5 Policy Influence, Year 10 Public Office at 32.">
+  <meta property="og:description" content="An interactive 3D 10-year civic manifesto (2026–2036): 2026–2027 Foundation, 2028–2029 Master's & Bus NGOs, 2030–2031 Policy Influence, 2036 Public Office.">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="en_MY">
   <meta name="theme-color" content="#f3efe6">
@@ -19,9 +19,12 @@
 <body>
   <a class="skip-link" href="#main-content">Skip to manifesto</a>
 
-  <!-- Fixed Full-Viewport 3D Malaysian Street & KL Skyline Canvas -->
+  <!-- Fixed Full-Viewport 3D Malaysian Street & Real KL Landmarks Canvas -->
   <canvas id="scene-canvas" aria-hidden="true"></canvas>
   <div class="scene-scrim" aria-hidden="true"></div>
+
+  <!-- Oversized Kinetic Year Watermark (Ticks 2026 -> 2036 on Scroll) -->
+  <div class="year-backdrop" id="year-backdrop" aria-hidden="true">2026</div>
 
   <!-- Top Navigation Bar -->
   <header class="topbar">
@@ -35,6 +38,13 @@
       </a>
 
       <div class="topbar-controls">
+        <button class="ctrl-btn" id="cruise-toggle" type="button" aria-pressed="false" aria-label="Auto-cruise through the 3D timeline">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          <span>Auto-Cruise</span>
+        </button>
+
         <button class="ctrl-btn" id="light-toggle" type="button" aria-pressed="false" aria-label="Toggle golden hour lighting in 3D scene">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="12" cy="12" r="4"></circle>
@@ -53,11 +63,16 @@
     </div>
   </header>
 
-  <!-- Chapter Scroll Rail -->
-  <nav class="chapter-rail" aria-label="Manifesto chapters">
+  <!-- Top Hairline Scroll Progress Bar -->
+  <div class="scroll-progress" aria-hidden="true">
+    <div class="scroll-progress-bar" id="scroll-progress-bar"></div>
+  </div>
+
+  <!-- Chapter Scroll Rail (Year-Driven) -->
+  <nav class="chapter-rail" aria-label="Manifesto timeline">
     <a class="rail-link is-active" href="#opening" aria-current="location">
       <span class="rail-num">00</span>
-      <span class="rail-label">Manifesto</span>
+      <span class="rail-label">2026 · Start</span>
     </a>
     <a class="rail-link" href="#frustration">
       <span class="rail-num">01</span>
@@ -65,19 +80,19 @@
     </a>
     <a class="rail-link" href="#phase-1">
       <span class="rail-num">02</span>
-      <span class="rail-label">Yr 1 · Build</span>
+      <span class="rail-label">2027 · Build</span>
     </a>
     <a class="rail-link" href="#phase-2">
       <span class="rail-num">03</span>
-      <span class="rail-label">Yr 3 · Learn</span>
+      <span class="rail-label">2029 · NGOs</span>
     </a>
     <a class="rail-link" href="#phase-3">
       <span class="rail-num">04</span>
-      <span class="rail-label">Yr 5 · Power</span>
+      <span class="rail-label">2031 · Power</span>
     </a>
     <a class="rail-link" href="#phase-4">
       <span class="rail-num">05</span>
-      <span class="rail-label">Yr 10 · 2036</span>
+      <span class="rail-label">2036 · Office</span>
     </a>
   </nav>
 
@@ -95,36 +110,36 @@
   <main id="main-content">
 
     <!-- ================================================================
-         00 · OPENING
+         00 · OPENING (2026)
          ================================================================ -->
     <section class="chapter" id="opening" aria-labelledby="hero-title">
       <div class="chapter-inner">
         <div class="hero-wrap">
-          <span class="eyebrow">00 · Public Record · Shah Alam &amp; Kuala Lumpur</span>
+          <span class="eyebrow">00 · Public Record · Shah Alam &amp; Kuala Lumpur · 2026</span>
           <h1 id="hero-title">A country built for <em>people</em>, not just highways.</h1>
           <p class="hero-lead">
-            I am Muhammad Alif Najmi. Today I am a 22-year-old Business Analyst commuting through Selangor's broken sidewalks.
-            In ten years, at 32, I intend to stand in Malaysian public office — loud, unbought, and holding the pen to turn
+            I am Muhammad Alif Najmi. Today in 2026, I am a Business Analyst commuting through Selangor's broken sidewalks.
+            By 2036, I intend to stand in Malaysian public office — loud, unbought, and holding the pen to turn
             a car-centric nation into one where buses, bicycles, and pedestrians come first.
           </p>
 
           <div class="hero-actions">
-            <a class="btn btn--primary" href="#frustration">Scroll the 3D Roadmap &darr;</a>
-            <a class="btn" href="#phase-4">Jump to the 5-Point Charter</a>
+            <a class="btn btn--primary" href="#frustration">Scroll the 3D Journey &darr;</a>
+            <a class="btn" href="#phase-4">Jump to the 2036 Charter</a>
           </div>
 
           <div class="hero-meta">
             <div class="meta-item">
-              <span class="meta-label">Starting Point</span>
-              <span class="meta-val">2026 · Age 22 · axrail.ai</span>
+              <span class="meta-label">2026 Base</span>
+              <span class="meta-val">axrail.ai &amp; KakiLima</span>
             </div>
             <div class="meta-item">
-              <span class="meta-label">Core Fight</span>
+              <span class="meta-label">Core Mission</span>
               <span class="meta-val">Buses, Kaki Lima &amp; Bikes</span>
             </div>
             <div class="meta-item">
-              <span class="meta-label">10-Year Target</span>
-              <span class="meta-val">2036 · Age 32 · Public Office</span>
+              <span class="meta-label">2036 Target</span>
+              <span class="meta-val">Malaysian Public Office</span>
             </div>
           </div>
         </div>
@@ -132,14 +147,14 @@
     </section>
 
     <!-- ================================================================
-         01 · THE FRUSTRATION (SELANGOR SIDEWALKS & KKR HIGHWAYS)
+         01 · THE FRUSTRATION (2026 · SELANGOR SIDEWALKS & KKR HIGHWAYS)
          ================================================================ -->
     <section class="chapter chapter--right" id="frustration" aria-labelledby="frustration-title">
       <div class="chapter-inner">
         <article class="story-card">
           <div class="phase-header">
             <span class="eyebrow eyebrow--amber">01 · The Daily Reality</span>
-            <span class="phase-year phase-year--amber">Selangor &amp; KL · Today</span>
+            <span class="phase-year phase-year--amber">2026 · Selangor &amp; KL</span>
           </div>
           <h2 id="frustration-title">Why do we keep building highways when people can't even cross the street?</h2>
           <p>
@@ -166,7 +181,7 @@
                 Status Quo: More Highways
               </button>
               <button class="sim-btn" id="sim-transit" type="button" data-mode="transit" aria-pressed="false">
-                Alif's Vision: Bus Lanes &amp; Kaki Lima
+                2036 Vision: Bus Lanes &amp; Kaki Lima
               </button>
             </div>
             <div class="sim-stats">
@@ -192,23 +207,23 @@
     </section>
 
     <!-- ================================================================
-         02 · PHASE I · YEAR 1 (FOUNDATION)
+         02 · PHASE I · 2026–2027 (YEAR 1 · FOUNDATION)
          ================================================================ -->
     <section class="chapter chapter--left" id="phase-1" aria-labelledby="p1-title">
       <div class="chapter-inner">
         <article class="story-card">
           <div class="phase-header">
             <span class="eyebrow">02 · Phase I · Year 1</span>
-            <span class="phase-year">2026–2027 · Age 22–23</span>
+            <span class="phase-year">2026–2027</span>
           </div>
-          <h2 id="p1-title">Baby steps first: build financial independence, master real systems.</h2>
+          <h2 id="p1-title">Build financial independence and master real systems first.</h2>
           <p>
-            Idealism without stability burns out fast — and a politician who needs money from the wrong people
-            can never serve the public honestly. Year One is about earning clean money, working hard, and learning how complex systems actually operate.
+            Idealism without stability burns out fast — and a public servant who needs money from the wrong people
+            can never serve the public honestly. 2026–2027 is about earning clean income, working hard, and learning how complex systems actually operate.
           </p>
           <p>
             Fresh out of Universiti Teknologi PETRONAS (Computer Science Hons), I am currently working as a
-            <strong>Business Analyst at axrail.ai</strong> in Kuala Lumpur — sharpening how I turn messy real-world problems into structured, working solutions.
+            <strong>Business Analyst at axrail.ai</strong> in Kuala Lumpur — turning messy real-world processes into structured, working solutions.
           </p>
 
           <ul class="milestone-list">
@@ -230,7 +245,7 @@
               <span class="milestone-idx">03</span>
               <div>
                 <strong>Grassroots Civic Tech (KakiLima)</strong>
-                <span>Keep shipping community tools like <a href="https://kakilima-iota.vercel.app" target="_blank" rel="noopener">KakiLima</a> to document unsafe sidewalks and connect everyday Malaysians who care about walkable streets.</span>
+                <span>Keep shipping community tools like <a href="https://kakilima-iota.vercel.app" target="_blank" rel="noopener">KakiLima</a> to document unsafe sidewalks and connect Malaysians who care about walkable streets.</span>
               </div>
             </li>
           </ul>
@@ -239,22 +254,22 @@
     </section>
 
     <!-- ================================================================
-         03 · PHASE II · YEAR 3 (KNOWLEDGE, MASTER'S & BUS NGOs)
+         03 · PHASE II · 2028–2029 (YEAR 3 · KNOWLEDGE, MASTER'S & BUS NGOs)
          ================================================================ -->
     <section class="chapter chapter--right" id="phase-2" aria-labelledby="p2-title">
       <div class="chapter-inner">
         <article class="story-card">
           <div class="phase-header">
             <span class="eyebrow">03 · Phase II · Year 3</span>
-            <span class="phase-year">2028–2029 · Age 24–25</span>
+            <span class="phase-year">2028–2029</span>
           </div>
           <h2 id="p2-title">Go deeper on knowledge. Join the NGOs. Fight loudly for buses.</h2>
           <p>
-            By Year Three, financial footing is in place — but my hunger for knowledge only grows.
-            Complaining on the internet isn't enough; I want rigorous, evidence-backed mastery of urban mobility, public policy, and transit economics.
+            By 2029, financial footing is in place — but my hunger for knowledge only grows.
+            Complaining online isn't enough; I want rigorous, evidence-backed mastery of urban mobility, public policy, and transit economics.
           </p>
           <p>
-            Notice the 3D street behind this card transforming: dedicated emerald bus lanes are taking back space from gridlock, and shaded trees are returning to the walkway.
+            Watch the 3D street behind this card transform as you scroll: dedicated emerald bus lanes are taking back space from gridlock, and shaded trees are returning to the walkway.
           </p>
 
           <ul class="milestone-list">
@@ -285,18 +300,18 @@
     </section>
 
     <!-- ================================================================
-         04 · PHASE III · YEAR 5 (INFLUENCE & ENTERING THE ARENA)
+         04 · PHASE III · 2030–2031 (YEAR 5 · INFLUENCE & POLICY)
          ================================================================ -->
     <section class="chapter chapter--left" id="phase-3" aria-labelledby="p3-title">
       <div class="chapter-inner">
         <article class="story-card">
           <div class="phase-header">
             <span class="eyebrow">04 · Phase III · Year 5</span>
-            <span class="phase-year">2030–2031 · Age 26–27</span>
+            <span class="phase-year">2030–2031</span>
           </div>
           <h2 id="p3-title">Turn advocacy into undeniable public influence.</h2>
           <p>
-            By Year Five, the goal is to hold real leverage over the national conversation on how Malaysia moves.
+            By 2031, the goal is to hold real leverage over the national conversation on how Malaysia moves.
             You don't strictly need to be a politician to shape policy — working inside a government office or ministry can move budgets too.
           </p>
 
@@ -316,7 +331,7 @@
               <span class="milestone-idx">02</span>
               <div>
                 <strong>Step Into Governance or Political Organizing</strong>
-                <span>Enter policy advisory, local council engagement, or political party grassroots to learn legislation, municipal budgets, and constituency work from the inside.</span>
+                <span>Enter policy advisory, local council engagement, or political grassroots to learn legislation, municipal budgets, and constituency work from the inside.</span>
               </div>
             </li>
             <li class="milestone-item">
@@ -332,20 +347,20 @@
     </section>
 
     <!-- ================================================================
-         05 · YEAR 10 · AGE 32 (PUBLIC OFFICE & THE 5-POINT CHARTER)
+         05 · 2036 (YEAR 10 · PUBLIC OFFICE & THE 5-POINT CHARTER)
          ================================================================ -->
     <section class="chapter chapter--wide" id="phase-4" aria-labelledby="p4-title">
       <div class="chapter-inner">
         <article class="story-card">
           <div class="phase-header">
             <span class="eyebrow">05 · The 10-Year Horizon</span>
-            <span class="phase-year">2036 · Age 32 · Public Office</span>
+            <span class="phase-year">2036 · Public Office</span>
           </div>
-          <h2 id="p4-title">At 32: in the seat where the nation's course actually changes.</h2>
+          <h2 id="p4-title">2036: in the seat where the nation's course actually changes.</h2>
           <p>
-            In ten years I will be 32 years old — old enough to carry real technical, policy, and grassroots experience,
-            and young enough to refuse "that's just how Malaysia is." Too many politicians speak beautifully about change
-            while the people on the ground never feel a single centimeter of it. I want to change that.
+            By 2036, after a decade of earning, studying, organizing, and building public trust, I aim to breach into
+            public office — seasoned enough to deliver real execution, and bold enough to refuse "that's just how Malaysia is."
+            Too many politicians speak beautifully about change while ordinary people on the street never feel it. That stops here.
           </p>
 
           <div class="charter-grid" aria-label="Five-point people's street manifesto">
@@ -406,7 +421,7 @@
 
   <footer class="site-footer">
     <div class="footer-inner">
-      <span>&copy; 2026 Muhammad Alif Najmi (7YMERA) · Built with plain HTML, CSS, JS &amp; Three.js · Ready for Vercel.</span>
+      <span>&copy; 2026 Muhammad Alif Najmi (7YMERA) · 3D KL Landmarks from 7ymera.github.io · Ready for Vercel.</span>
       <div class="footer-links">
         <a href="#opening">Back to Top</a>
         <a href="https://kakilima-iota.vercel.app" target="_blank" rel="noopener">KakiLima</a>

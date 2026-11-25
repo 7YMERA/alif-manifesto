@@ -391,6 +391,47 @@ a:hover {
   white-space: nowrap;
 }
 
+/* Top Hairline Scroll Progress Bar */
+.scroll-progress {
+  position: fixed;
+  top: var(--nav-h);
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 55;
+  background: transparent;
+  pointer-events: none;
+}
+
+.scroll-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--emerald);
+  transition: width 0.08s linear;
+}
+
+/* Oversized Kinetic Year Watermark (2026 -> 2036) */
+.year-backdrop {
+  position: fixed;
+  top: calc(var(--nav-h) + 18px);
+  right: 28px;
+  z-index: 4;
+  pointer-events: none;
+  font-family: var(--f-display);
+  font-weight: 800;
+  font-size: clamp(4.2rem, 11vw, 9.5rem);
+  line-height: 0.9;
+  letter-spacing: -0.05em;
+  color: var(--ink);
+  opacity: 0.075;
+  user-select: none;
+  transition: opacity 0.3s ease;
+}
+
+[data-theme="dark"] .year-backdrop {
+  opacity: 0.11;
+}
+
 /* ==========================================================================
    Main Scroll Container & Chapters
    ========================================================================== */
@@ -401,8 +442,8 @@ main {
 }
 
 .chapter {
-  min-height: 100vh;
-  padding: calc(var(--nav-h) + 56px) 24px 96px;
+  min-height: 122vh;
+  padding: calc(var(--nav-h) + 72px) 24px 120px;
   display: flex;
   align-items: center;
 }
@@ -584,14 +625,30 @@ h1 em {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   opacity: 0;
-  transform: translateY(28px);
-  transition: opacity 0.65s var(--ease), transform 0.65s var(--ease);
+  transform: perspective(1200px) translateY(44px) rotateX(4deg) scale(0.985);
+  transition: opacity 0.72s var(--ease), transform 0.78s var(--ease);
+  will-change: transform, opacity;
 }
 
 .story-card.is-visible {
   opacity: 1;
+  transform: perspective(1200px) translateY(0) rotateX(0deg) scale(1);
+}
+
+.story-card .milestone-item {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.55s var(--ease), transform 0.55s var(--ease);
+}
+
+.story-card.is-visible .milestone-item {
+  opacity: 1;
   transform: translateY(0);
 }
+
+.story-card.is-visible .milestone-item:nth-child(1) { transition-delay: 0.12s; }
+.story-card.is-visible .milestone-item:nth-child(2) { transition-delay: 0.24s; }
+.story-card.is-visible .milestone-item:nth-child(3) { transition-delay: 0.36s; }
 
 .phase-header {
   display: flex;

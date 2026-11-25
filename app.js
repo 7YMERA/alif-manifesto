@@ -1,5 +1,5 @@
 /* ==========================================================================
-   ALIF MANIFESTO — Scroll Orchestration, Interactive Street Simulator & UI
+   ALIF MANIFESTO — Scroll Orchestration, Auto-Cruise, Street Simulator & UI
    ========================================================================== */
 
 (function () {
@@ -8,9 +8,12 @@
   const root = document.documentElement;
   const themeBtn = document.getElementById('theme-toggle');
   const lightBtn = document.getElementById('light-toggle');
+  const cruiseBtn = document.getElementById('cruise-toggle');
   const hudYear = document.getElementById('hud-year');
   const hudPhase = document.getElementById('hud-phase');
   const hudFill = document.getElementById('hud-meter-fill');
+  const progressBar = document.getElementById('scroll-progress-bar');
+  const yearBackdrop = document.getElementById('year-backdrop');
   const railLinks = Array.from(document.querySelectorAll('.rail-link'));
   const chapters = Array.from(document.querySelectorAll('.chapter'));
   const storyCards = Array.from(document.querySelectorAll('.story-card'));
@@ -21,7 +24,7 @@
     { id: 'phase-1', year: '2026–2027', label: 'Year 1 · Foundation' },
     { id: 'phase-2', year: '2028–2029', label: 'Year 3 · Knowledge & NGOs' },
     { id: 'phase-3', year: '2030–2031', label: 'Year 5 · Influence' },
-    { id: 'phase-4', year: '2036 · Age 32', label: 'Year 10 · Public Office' }
+    { id: 'phase-4', year: '2036', label: 'Year 10 · Public Office' }
   ];
 
   // =========================================================================
@@ -72,7 +75,7 @@
   }
 
   // =========================================================================
-  // 2. Scroll Progress -> 3D Scene & Telemetry HUD
+  // 2. Scroll Progress -> 3D Scene, Progress Hairline & Kinetic Year Watermark
   // =========================================================================
 
   let currentPreviewMode = null;
@@ -84,15 +87,19 @@
 
     if (window.ManifestoScene) {
       window.ManifestoScene.setScrollProgress(progress);
-      // Automatically release Chapter 01 manual override once scrolled into Phase I+
       if (currentPreviewMode && progress > 0.34) {
         currentPreviewMode = null;
         window.ManifestoScene.setPreviewMode(null);
       }
     }
 
-    if (hudFill) {
-      hudFill.style.width = Math.round(progress * 100) + '%';
+    const pct = (progress * 100).toFixed(2) + '%';
+    if (hudFill) hudFill.style.width = pct;
+    if (progressBar) progressBar.style.width = pct;
+
+    if (yearBackdrop) {
+      const interpolatedYear = Math.round(2026 + progress * 10);
+      yearBackdrop.textContent = String(interpolatedYear);
     }
   }
 
@@ -101,7 +108,60 @@
   updateScroll();
 
   // =========================================================================
-  // 3. Chapter Active State & Card Reveal Observer
+  // 3. Auto-Cruise 3D Timeline Glide
+  // =========================================================================
+
+  let cruising = false;
+  let cruiseRaf = 0;
+
+  function stopCruise() {
+    if (!cruising) return;
+    cruising = false;
+    cancelAnimationFrame(cruiseRaf);
+    if (cruiseBtn) {
+      cruiseBtn.setAttribute('aria-pressed', 'false');
+      const label = cruiseBtn.querySelector('span');
+      if (label) label.textContent = 'Auto-Cruise';
+    }
+  }
+
+  function stepCruise() {
+    if (!cruising) return;
+    const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+    const current = window.scrollY || window.pageYOffset || 0;
+    if (current >= maxScroll - 2) {
+      stopCruise();
+      return;
+    }
+    window.scrollBy(0, 2.2);
+    cruiseRaf = requestAnimationFrame(stepCruise);
+  }
+
+  if (cruiseBtn) {
+    cruiseBtn.addEventListener('click', function () {
+      if (cruising) {
+        stopCruise();
+        return;
+      }
+      const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+      if ((window.scrollY || 0) >= maxScroll - 16) {
+        window.scrollTo({ top: 0, behavior: 'auto' });
+      }
+      cruising = true;
+      cruiseBtn.setAttribute('aria-pressed', 'true');
+      const label = cruiseBtn.querySelector('span');
+      if (label) label.textContent = 'Stop Cruise';
+      cruiseRaf = requestAnimationFrame(stepCruise);
+    });
+  }
+
+  // Stop auto-cruise immediately if user takes manual control
+  ['wheel', 'touchstart', 'keydown'].forEach(function (evt) {
+    window.addEventListener(evt, stopCruise, { passive: true });
+  });
+
+  // =========================================================================
+  // 4. Chapter Active State & Card Reveal Observer
   // =========================================================================
 
   if ('IntersectionObserver' in window) {
@@ -151,7 +211,7 @@
   }
 
   // =========================================================================
-  // 4. Interactive Street Simulator (Chapter 01: Highway vs Bus & Sidewalk)
+  // 5. Interactive Street Simulator (Chapter 01: Highway vs Bus & Sidewalk)
   // =========================================================================
 
   const simButtons = Array.from(document.querySelectorAll('.sim-btn'));
@@ -173,7 +233,7 @@
       sidewalk: '3.5 m shaded',
       speed: '42 km/h bus',
       caption:
-        'Alif’s vision: Convert car lanes into enforced, beautified bus lanes with wide shaded kaki lima, raised zebra crossings, and protected bike lanes. Watch the 3D street transform behind this card.'
+        '2036 vision: Convert car lanes into enforced, beautified bus lanes with wide shaded kaki lima, raised zebra crossings, and protected bike lanes. Watch the 3D street transform behind this card.'
     }
   };
 
@@ -202,7 +262,7 @@
   });
 
   // =========================================================================
-  // 5. "Witness This Timeline" Interactive Stamp
+  // 6. "Witness This Timeline" Interactive Stamp
   // =========================================================================
 
   const pledgeBtn = document.getElementById('pledge-btn');
