@@ -947,18 +947,18 @@
   const skyline = new THREE.Group();
   const roofGardens = [];
   const colorfulTowerMats = [];
+  const shopColorMats = [];
 
   const shopWallColors = [0xefe2c9, 0xe4c68d, 0xc3d6c4, 0xd89378, 0xb6cde0, 0xf2e8d8];
   const awningColors = [0xd92332, 0x0047ab, 0x0e7c59, 0xd48a29];
-  const roofTileMat = new THREE.MeshStandardMaterial({ color: 0xb3523a, roughness: 0.82 });
-  const warmShopGlassMat = new THREE.MeshBasicMaterial({ color: 0xffe6b3 });
+  const roofTileMat = new THREE.MeshStandardMaterial({ color: 0x6f7479, roughness: 0.85 });
+  const warmShopGlassMat = new THREE.MeshBasicMaterial({ color: 0x9aa3ab });
 
-  // 8A. Street-Level Shophouses (respecting parks & KL Sentral hub!)
+  // 8A. Street-Level Shophouses (start weathered grey -> bloom into vibrant Malaysian colors!)
   for (let i = 0; i < 36; i++) {
     const side = i % 2 === 0 ? -1 : 1;
     const bz = 54 - i * 9.2;
     if (crossZList.some(function (cz) { return Math.abs(bz - cz) < 11; })) continue;
-    // Leave clean zoning for our Parks & Basketball Court!
     if (side > 0 && Math.abs(bz - -51) < 20) continue;
     if (side > 0 && Math.abs(bz - -117) < 24) continue;
     if (side < 0 && Math.abs(bz - -185) < 20) continue;
@@ -969,10 +969,13 @@
     const h = 5.4 + (i % 2) * 2.2;
     const dLen = 7.2;
 
+    const targetWallHex = shopWallColors[i % shopWallColors.length];
     const wallMat = new THREE.MeshStandardMaterial({
-      color: shopWallColors[i % shopWallColors.length],
-      roughness: 0.78
+      color: 0x8e9399,
+      roughness: 0.82
     });
+    shopColorMats.push({ mat: wallMat, ugly: new THREE.Color(0x8e9399), pretty: new THREE.Color(targetWallHex) });
+
     const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, dLen), wallMat);
     body.position.y = h / 2;
     body.castShadow = true;
@@ -983,10 +986,13 @@
     roof.position.y = h + 0.3;
     shop.add(roof);
 
+    const targetAwningHex = awningColors[i % awningColors.length];
     const awningMat = new THREE.MeshStandardMaterial({
-      color: awningColors[i % awningColors.length],
-      roughness: 0.7
+      color: 0x676d73,
+      roughness: 0.74
     });
+    shopColorMats.push({ mat: awningMat, ugly: new THREE.Color(0x676d73), pretty: new THREE.Color(targetAwningHex) });
+
     const awning = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.22, dLen - 0.8), awningMat);
     awning.position.set(side < 0 ? w / 2 + 0.75 : -w / 2 - 0.75, 2.75, 0);
     awning.rotation.z = side < 0 ? -0.25 : 0.25;
@@ -1247,12 +1253,16 @@
 
   let scrollProgress = 0;
   let smoothScroll = 0;
+  let compareRatio = null; // null during scroll; 0..1 when user scrubs End-of-Scroll Before/After slider
   let lightingMode = 'day';
   let isDark = false;
 
   window.ManifestoScene = {
     setScrollProgress: function (p) {
       scrollProgress = clamp(p, 0, 1);
+    },
+    setCompareRatio: function (val) {
+      compareRatio = val === null ? null : clamp(val, 0, 1);
     },
     setLighting: function (mode) {
       lightingMode = mode;
@@ -1269,14 +1279,27 @@
   });
 
   // =========================================================================
-  // 11. Silky-Smooth Animation Loop (Delayed Greenery — Zero Early Pop-In!)
+  // 11. Silky-Smooth Animation Loop: Ugliness (0) -> Shared Spaces (1)
   // =========================================================================
 
   let morphFactor = 0;
   let greenFactor = 0;
+  let prettyFactor = 0;
   let lastTime = performance.now();
   const tmpPos = new THREE.Vector3();
   const tmpLook = new THREE.Vector3();
+
+  const uglySidewalkCol = new THREE.Color(0x88857e);
+  const prettySidewalkCol = new THREE.Color(0xe0d4be);
+  const uglyRoofCol = new THREE.Color(0x6d7278);
+  const prettyRoofCol = new THREE.Color(0xb3523a);
+  const uglyShopWinCol = new THREE.Color(0x868f98);
+  const prettyShopWinCol = new THREE.Color(0xffe6b3);
+  const uglyTowerCol = new THREE.Color(0x8a9096);
+  const uglySkyTop = new THREE.Color(0x9ca4ad);
+  const uglySkyMid = new THREE.Color(0xc5c4be);
+  const uglyFogCol = new THREE.Color(0xd2cfc7);
+  const tmpColor = new THREE.Color();
 
   function animate(now) {
     requestAnimationFrame(animate);
@@ -1289,9 +1312,15 @@
     const s = clamp(smoothScroll, 0, 1);
     const speedMult = reducedMotion ? 0 : 1;
 
-    // Strictly delayed greenery so Act 1 (0.00 - 0.35) is 100% bare concrete & jam!
-    greenFactor = lerp(greenFactor, smoothstep(0.36, 0.56, s), damp);
-    morphFactor = lerp(morphFactor, smoothstep(0.38, 0.74, s), damp);
+    // Natural scroll progression (ugly concrete & jam -> greened & vibrant shared spaces)
+    // Overridden ONLY when user drags the End-of-Scroll Before/After slider!
+    const targetGreen = compareRatio !== null ? compareRatio : smoothstep(0.35, 0.56, s);
+    const targetMorph = compareRatio !== null ? compareRatio : smoothstep(0.37, 0.74, s);
+    const targetPretty = compareRatio !== null ? compareRatio : smoothstep(0.32, 0.70, s);
+
+    greenFactor = lerp(greenFactor, targetGreen, damp);
+    morphFactor = lerp(morphFactor, targetMorph, damp);
+    prettyFactor = lerp(prettyFactor, targetPretty, damp);
 
     // 1. Existing highway stays utilized with cars driving smoothly on top!
     for (let h = 0; h < highwayCars.length; h++) {
@@ -1312,18 +1341,31 @@
       }
     }
 
-    // 2. Colorful towers & rooftop gardens
-    const bldgPretty = smoothstep(0.36, 0.68, s);
+    // 2. Full Ugliness -> Vibrant Malaysian Color Progression (Sidewalks, Shophouses, Towers!)
+    sidewalkMat.color.copy(uglySidewalkCol).lerp(prettySidewalkCol, prettyFactor);
+    roofTileMat.color.copy(uglyRoofCol).lerp(prettyRoofCol, prettyFactor);
+    warmShopGlassMat.color.copy(uglyShopWinCol).lerp(prettyShopWinCol, prettyFactor);
+
+    for (let sc = 0; sc < shopColorMats.length; sc++) {
+      const entry = shopColorMats[sc];
+      entry.mat.color.copy(entry.ugly).lerp(entry.pretty, prettyFactor);
+    }
+
     for (let m = 0; m < colorfulTowerMats.length; m++) {
       const entry = colorfulTowerMats[m];
       entry.mat.map = isDark ? facadeNightTex : facadeDayTex;
       entry.mat.emissive.setHex(isDark ? 0x263a52 : 0x000000);
       entry.mat.emissiveIntensity = isDark ? 0.55 : 0;
-      entry.mat.color.lerp(new THREE.Color(isDark ? 0x627a99 : entry.dayHex), 0.05);
+      if (isDark) {
+        tmpColor.setHex(0x4b5663).lerp(new THREE.Color(0x627a99), prettyFactor);
+      } else {
+        tmpColor.copy(uglyTowerCol).lerp(new THREE.Color(entry.dayHex), prettyFactor);
+      }
+      entry.mat.color.lerp(tmpColor, 0.08);
     }
     for (let r = 0; r < roofGardens.length; r++) {
-      roofGardens[r].scale.set(1, Math.max(0.001, bldgPretty), 1);
-      roofGardens[r].visible = bldgPretty > 0.04;
+      roofGardens[r].scale.set(1, Math.max(0.001, prettyFactor), 1);
+      roofGardens[r].visible = prettyFactor > 0.04;
     }
 
     // 3. Dedicated RapidKL Bus Lanes, Bike Lanes, Zebra Crossings & Signals
@@ -1429,13 +1471,28 @@
     camera.position.copy(tmpPos);
     camera.lookAt(tmpLook);
 
-    // 9. Sky Dome, Stars, & Landmark Night Illumination
+    // 9. Sky Dome, Exhaust Haze -> Clear Sky Transition, Stars & Landmark Night Glow
     const pal = isDark ? PALETTES.dark : (lightingMode === 'golden' ? PALETTES.golden : PALETTES.day);
-    skyUniforms.uTop.value.lerp(pal.skyTop, 0.06);
-    skyUniforms.uMid.value.lerp(pal.skyMid, 0.06);
-    skyUniforms.uHorizon.value.lerp(pal.skyHorizon, 0.06);
-    scene.background.lerp(pal.fog, 0.06);
-    scene.fog.color.lerp(pal.fog, 0.06);
+    if (!isDark && lightingMode === 'day') {
+      // Blend from smoggy exhaust haze (ugly 2026) -> crisp Malaysian blue sky (pretty 2036)!
+      tmpColor.copy(uglySkyTop).lerp(pal.skyTop, prettyFactor);
+      skyUniforms.uTop.value.lerp(tmpColor, 0.06);
+      tmpColor.copy(uglySkyMid).lerp(pal.skyMid, prettyFactor);
+      skyUniforms.uMid.value.lerp(tmpColor, 0.06);
+      tmpColor.copy(uglyFogCol).lerp(pal.fog, prettyFactor);
+      skyUniforms.uHorizon.value.lerp(tmpColor, 0.06);
+      scene.background.lerp(tmpColor, 0.06);
+      scene.fog.color.lerp(tmpColor, 0.06);
+      scene.fog.density = lerp(scene.fog.density, lerp(0.0036, 0.0020, prettyFactor), 0.06);
+    } else {
+      skyUniforms.uTop.value.lerp(pal.skyTop, 0.06);
+      skyUniforms.uMid.value.lerp(pal.skyMid, 0.06);
+      skyUniforms.uHorizon.value.lerp(pal.skyHorizon, 0.06);
+      scene.background.lerp(pal.fog, 0.06);
+      scene.fog.color.lerp(pal.fog, 0.06);
+      scene.fog.density = lerp(scene.fog.density, 0.0024, 0.06);
+    }
+
     sunLight.color.lerp(pal.sun, 0.06);
     sunLight.intensity = lerp(sunLight.intensity, pal.sunInt, 0.06);
     hemiLight.color.lerp(pal.hemiSky, 0.06);

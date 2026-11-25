@@ -1120,6 +1120,67 @@ h3 {
   color: var(--emerald);
 }
 
+/* End-of-Scroll Before / After Interactive Slider Bar */
+.compare-dock {
+  position: fixed;
+  left: 50%;
+  bottom: 72px;
+  transform: translateX(-50%) translateY(14px);
+  z-index: 48;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1.5px solid var(--line-strong);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease, transform 0.35s var(--ease);
+}
+
+.compare-dock.is-shown {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+
+.compare-pill {
+  min-height: 36px;
+  padding: 0 13px;
+  border-radius: 10px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-solid);
+  color: var(--ink);
+  font-family: var(--f-mono);
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.compare-pill.is-active {
+  background: var(--emerald);
+  border-color: var(--emerald);
+  color: var(--emerald-ink);
+}
+
+#compare-before.is-active {
+  background: var(--amber);
+  border-color: var(--amber);
+  color: #fffaf6;
+}
+
+.compare-slider {
+  width: clamp(130px, 24vw, 240px);
+  accent-color: var(--emerald);
+  cursor: pointer;
+}
+
 /* Responsive */
 @media (max-width: 960px) {
   .scene-hud,

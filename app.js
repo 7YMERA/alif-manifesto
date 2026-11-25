@@ -122,6 +122,36 @@
   // 3. Scroll Progress -> 3D Scene, Hairline, Year Watermark & Back-to-Top
   // =========================================================================
 
+  const compareDock = document.getElementById('compare-dock');
+  const compareSlider = document.getElementById('compare-slider');
+  const compareBefore = document.getElementById('compare-before');
+  const compareAfter = document.getElementById('compare-after');
+
+  function applyCompareUI(ratio) {
+    if (compareSlider) compareSlider.value = String(Math.round(ratio * 100));
+    if (compareBefore) compareBefore.classList.toggle('is-active', ratio < 0.5);
+    if (compareAfter) compareAfter.classList.toggle('is-active', ratio >= 0.5);
+    if (window.ManifestoScene && window.ManifestoScene.setCompareRatio) {
+      window.ManifestoScene.setCompareRatio(ratio);
+    }
+  }
+
+  if (compareSlider) {
+    compareSlider.addEventListener('input', function () {
+      applyCompareUI(Number(compareSlider.value) / 100);
+    });
+  }
+  if (compareBefore) {
+    compareBefore.addEventListener('click', function () {
+      applyCompareUI(0);
+    });
+  }
+  if (compareAfter) {
+    compareAfter.addEventListener('click', function () {
+      applyCompareUI(1);
+    });
+  }
+
   function updateScroll() {
     const scrollTop = window.scrollY || window.pageYOffset || 0;
     const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
@@ -129,6 +159,9 @@
 
     if (window.ManifestoScene) {
       window.ManifestoScene.setScrollProgress(progress);
+      if (progress < 0.84 && window.ManifestoScene.setCompareRatio) {
+        window.ManifestoScene.setCompareRatio(null);
+      }
     }
 
     const pct = (progress * 100).toFixed(2) + '%';
@@ -141,6 +174,16 @@
 
     if (backToTopBtn) {
       backToTopBtn.classList.toggle('is-shown', progress > 0.14);
+    }
+
+    if (compareDock) {
+      const atEnd = progress > 0.88;
+      compareDock.classList.toggle('is-shown', atEnd);
+      if (!atEnd && compareSlider && compareSlider.value !== '100') {
+        compareSlider.value = '100';
+        if (compareBefore) compareBefore.classList.remove('is-active');
+        if (compareAfter) compareAfter.classList.add('is-active');
+      }
     }
   }
 
