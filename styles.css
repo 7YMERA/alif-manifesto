@@ -803,13 +803,15 @@ h3 {
   transition: all 0.2s var(--ease);
 }
 
-.sim-btn.is-active[data-mode="highway"] {
+.sim-btn.is-active[data-mode="highway"],
+.sim-btn.is-active[data-green="bare"] {
   background: var(--amber);
   border-color: var(--amber);
   color: #fffaf6;
 }
 
-.sim-btn.is-active[data-mode="transit"] {
+.sim-btn.is-active[data-mode="transit"],
+.sim-btn.is-active[data-green="green"] {
   background: var(--emerald);
   border-color: var(--emerald);
   color: var(--emerald-ink);

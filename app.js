@@ -21,6 +21,7 @@
   const PHASE_META = [
     { id: 'opening', year: '2026', label: 'The Manifesto' },
     { id: 'frustration', year: '2026', label: 'Why Streets Matter' },
+    { id: 'highways-reimagined', year: '2026', label: 'Keep & Green Highways' },
     { id: 'phase-1', year: '2026–2027', label: 'Year 1 · Foundation' },
     { id: 'phase-2', year: '2028–2029', label: 'Year 3 · Knowledge & NGOs' },
     { id: 'phase-3', year: '2030–2031', label: 'Year 5 · Influence' },
@@ -214,7 +215,8 @@
   // 5. Interactive Street Simulator (Chapter 01: Highway vs Bus & Sidewalk)
   // =========================================================================
 
-  const simButtons = Array.from(document.querySelectorAll('.sim-btn'));
+  const simButtons = Array.from(document.querySelectorAll('.sim-btn[data-mode]'));
+  const greenButtons = Array.from(document.querySelectorAll('.green-btn[data-green]'));
   const simCapacity = document.getElementById('sim-capacity');
   const simSidewalk = document.getElementById('sim-sidewalk');
   const simSpeed = document.getElementById('sim-speed');
@@ -257,6 +259,20 @@
       currentPreviewMode = mode;
       if (window.ManifestoScene) {
         window.ManifestoScene.setPreviewMode(mode);
+      }
+    });
+  });
+
+  greenButtons.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const mode = btn.getAttribute('data-green');
+      greenButtons.forEach(function (b) {
+        const active = b === btn;
+        b.classList.toggle('is-active', active);
+        b.setAttribute('aria-pressed', String(active));
+      });
+      if (window.ManifestoScene) {
+        window.ManifestoScene.setGreenOverpass(mode);
       }
     });
   });

@@ -12,6 +12,7 @@
     window.ManifestoScene = {
       setScrollProgress: function () {},
       setPreviewMode: function () {},
+      setGreenOverpass: function () {},
       setLighting: function () {},
       setDark: function () {}
     };
@@ -219,7 +220,7 @@
   world.add(ribbonL, ribbonR);
 
   // =========================================================================
-  // 2. Heavy Concrete Highway Overpass (Retracts as Transit Vision Takes Over)
+  // 2. Existing Concrete Highway Overpass (Remains — Transformed with Greenery!)
   // =========================================================================
 
   const highwayGroup = new THREE.Group();
@@ -230,12 +231,81 @@
   highwayGroup.add(deck);
 
   const pillarGeo = new THREE.BoxGeometry(2.2, 9.6, 2.2);
+  const vineWrapMat = new THREE.MeshStandardMaterial({ color: 0x267347, roughness: 0.85 });
+  const vineBrightMat = new THREE.MeshStandardMaterial({ color: 0x38945d, roughness: 0.82 });
+  const planterBoxMat = new THREE.MeshStandardMaterial({ color: 0x4b555c, roughness: 0.8 });
+  const underLampMat = new THREE.MeshBasicMaterial({ color: 0xffe4ad });
+
+  const overpassGreenery = [];
+  const pillarGreeneryGeo = new THREE.BoxGeometry(2.58, 7.6, 2.58);
+
   for (let z = 38; z >= -118; z -= 24) {
     const pillar = new THREE.Mesh(pillarGeo, concreteMat);
     pillar.position.set(-14.5, 4.8, z);
     pillar.castShadow = true;
     highwayGroup.add(pillar);
+
+    // Living vertical greenery wrap around each concrete pillar
+    const wrap = new THREE.Group();
+    const mossSleeve = new THREE.Mesh(pillarGreeneryGeo, vineWrapMat);
+    mossSleeve.position.y = 4.2;
+    wrap.add(mossSleeve);
+
+    // Organic foliage clusters climbing the pillar
+    for (let k = 0; k < 4; k++) {
+      const puff = new THREE.Mesh(
+        new THREE.DodecahedronGeometry(0.95 + (k % 2) * 0.25, 0),
+        k % 2 === 0 ? vineBrightMat : vineWrapMat
+      );
+      const angle = (k * Math.PI) / 2 + 0.4;
+      puff.position.set(Math.cos(angle) * 1.25, 2.0 + k * 1.85, Math.sin(angle) * 1.25);
+      wrap.add(puff);
+    }
+
+    // Cool shaded underpass planter shrub at pillar base
+    const baseShrub = new THREE.Mesh(new THREE.DodecahedronGeometry(1.55, 1), vineBrightMat);
+    baseShrub.scale.set(1.3, 0.55, 1.3);
+    baseShrub.position.set(1.6, 0.55, 0);
+    wrap.add(baseShrub);
+
+    // Warm under-deck lighting strip
+    const underLight = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.12, 0.35), underLampMat);
+    underLight.position.set(0, 8.82, 0);
+    wrap.add(underLight);
+
+    wrap.position.set(-14.5, 0.15, z);
+    wrap.scale.setScalar(0.001);
+    highwayGroup.add(wrap);
+    overpassGreenery.push(wrap);
   }
+
+  // Continuous Deck-Edge Planter Boxes & Cascading Greenery along the Highway
+  [-7.55, -21.45].forEach(function (edgeX) {
+    const edgeGroup = new THREE.Group();
+    const planter = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.72, 224), planterBoxMat);
+    planter.position.set(0, 10.35, -40);
+    edgeGroup.add(planter);
+
+    const hedge = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.85, 224), vineWrapMat);
+    hedge.position.set(0, 10.95, -40);
+    edgeGroup.add(hedge);
+
+    // Trailing hanging vines cascading down the concrete fascia
+    for (let z = 55; z >= -135; z -= 10) {
+      const drape = new THREE.Mesh(
+        new THREE.BoxGeometry(0.32, 1.45 + ((Math.abs(z) % 3) * 0.4), 3.6),
+        z % 20 === 0 ? vineBrightMat : vineWrapMat
+      );
+      drape.position.set(edgeX > -14.5 ? 0.32 : -0.32, 9.75, z);
+      edgeGroup.add(drape);
+    }
+
+    edgeGroup.position.set(edgeX, 0, 0);
+    edgeGroup.scale.set(1, 0.001, 1);
+    highwayGroup.add(edgeGroup);
+    overpassGreenery.push(edgeGroup);
+  });
+
   world.add(highwayGroup);
 
   // =========================================================================
@@ -538,26 +608,29 @@
 
   const camPosCurve = new THREE.CatmullRomCurve3([
     new THREE.Vector3(24, 21, 52),     // 0.00 Opening: Dramatic high approach toward highway & KL skyline
-    new THREE.Vector3(-12.5, 4.4, 24), // 0.20 The Street: Eye-level at broken Selangor crossing
-    new THREE.Vector3(14, 11.5, 4),    // 0.40 Year 1: Framing Petronas Twin Towers & KL corridor
-    new THREE.Vector3(-6.2, 5.2, -22), // 0.60 Year 3: Low drone glide along emerging emerald bus lanes
-    new THREE.Vector3(10.5, 6.2, -52), // 0.80 Year 5: Sweeping across complete street, trees & bike lane
-    new THREE.Vector3(0, 20.5, 16)     // 1.00 Year 10 (2036): Grand hero vista over walkable KL
+    new THREE.Vector3(-12.5, 4.4, 26), // 0.16 The Street: Eye-level at broken Selangor crossing
+    new THREE.Vector3(-3.5, 6.4, 10),  // 0.32 Highways Reimagined: Close sweep alongside concrete overpass pillars blooming green
+    new THREE.Vector3(14, 11.5, -2),   // 0.48 Year 1: Framing Petronas Twin Towers & KL corridor
+    new THREE.Vector3(-6.2, 5.2, -26), // 0.65 Year 3: Low drone glide along emerging emerald bus lanes
+    new THREE.Vector3(10.5, 6.2, -54), // 0.82 Year 5: Sweeping across complete street, trees & bike lane
+    new THREE.Vector3(0, 20.5, 16)     // 1.00 Year 10 (2036): Grand hero vista over greened overpass & walkable KL
   ]);
 
   const camLookCurve = new THREE.CatmullRomCurve3([
     new THREE.Vector3(0, 5, -35),      // 0.00
-    new THREE.Vector3(1.5, 2.2, -22),  // 0.20
-    new THREE.Vector3(0, 14, -140),    // 0.40
-    new THREE.Vector3(1, 5, -120),     // 0.60
-    new THREE.Vector3(0, 8, -155),     // 0.80
-    new THREE.Vector3(0, 18, -175)     // 1.00
+    new THREE.Vector3(1.5, 2.2, -22),  // 0.16
+    new THREE.Vector3(-14.5, 5.8, -18),// 0.32 Looking directly at the concrete overpass pillars & greenery
+    new THREE.Vector3(0, 14, -140),    // 0.48
+    new THREE.Vector3(1, 5, -120),     // 0.65
+    new THREE.Vector3(0, 8, -155),     // 0.82
+    new THREE.Vector3(-2, 16, -175)    // 1.00
   ]);
 
   let scrollProgress = 0;
   let smoothScroll = 0;
   let prevSmoothScroll = 0;
   let previewMode = null;
+  let greenOverride = null; // null | 'bare' | 'green'
   let lightingMode = 'day';
   let isDark = false;
   let pointerX = 0;
@@ -603,6 +676,9 @@
     setPreviewMode: function (mode) {
       previewMode = mode;
     },
+    setGreenOverpass: function (mode) {
+      greenOverride = mode; // 'bare' | 'green' | null
+    },
     setLighting: function (mode) {
       lightingMode = mode;
     },
@@ -622,6 +698,7 @@
   // =========================================================================
 
   let morphFactor = 0;
+  let greenFactor = 0;
   let lastTime = performance.now();
   const tmpPos = new THREE.Vector3();
   const tmpLook = new THREE.Vector3();
@@ -637,14 +714,29 @@
     const scrollVel = (smoothScroll - prevSmoothScroll) / Math.max(dt, 0.008);
 
     // Street transformation (0 = car-centric highway, 1 = complete walkable transit street)
-    let targetMorph = smoothstep(0.28, 0.80, smoothScroll);
+    let targetMorph = smoothstep(0.38, 0.84, smoothScroll);
     if (previewMode === 'highway') targetMorph = 0;
     if (previewMode === 'transit') targetMorph = 1;
     morphFactor = lerp(morphFactor, targetMorph, reducedMotion ? 1 : 0.075);
 
-    // 1. Highway overpass retracts upward & away
-    highwayGroup.position.y = lerp(0, 22, smoothstep(0.22, 0.75, morphFactor));
-    highwayGroup.visible = highwayGroup.position.y < 21.2;
+    // 1. Existing highway overpass STAYS standing — wrapped in living greenery to cool & beautify!
+    let targetGreen = smoothstep(0.22, 0.44, smoothScroll);
+    if (previewMode === 'transit') targetGreen = 1;
+    if (previewMode === 'highway') targetGreen = 0;
+    if (greenOverride === 'bare') targetGreen = 0;
+    if (greenOverride === 'green') targetGreen = 1;
+    greenFactor = lerp(greenFactor, targetGreen, reducedMotion ? 1 : 0.08);
+
+    for (let g = 0; g < overpassGreenery.length; g++) {
+      const item = overpassGreenery[g];
+      const gs = Math.max(0.001, greenFactor);
+      item.visible = greenFactor > 0.02;
+      if (g < overpassGreenery.length - 2) {
+        item.scale.set(gs, gs, gs);
+      } else {
+        item.scale.set(1, gs, 1);
+      }
+    }
 
     // 2. Bus lanes, bike lanes, zebra crossings & light ribbons
     busLaneMat.opacity = smoothstep(0.14, 0.62, morphFactor) * 0.94;
