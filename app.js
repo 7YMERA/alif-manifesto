@@ -224,18 +224,18 @@
 
   const SIM_DATA = {
     highway: {
-      capacity: '1,800 / hr',
-      sidewalk: '0.8 m broken',
-      speed: '14 km/h jam',
+      capacity: '40 min',
+      sidewalk: '2.22 min/km',
+      speed: 'Shared Jam',
       caption:
-        'Status quo: Adding more urban highways triggers induced demand. Cars fill the new lanes within months while elderly pedestrians still have nowhere safe to cross.'
+        'Today: Even if you put a RapidKL 750 bus on the road every single second, sharing the Federal Highway jam with private cars traps every bus in the same gridlock — while KKR still proposes adding more highways.'
     },
     transit: {
-      capacity: '9,000+ / hr',
-      sidewalk: '3.5 m shaded',
-      speed: '42 km/h bus',
+      capacity: '22 min',
+      sidewalk: '1.22 min/km',
+      speed: 'Enforced Lane',
       caption:
-        '2036 vision: Convert car lanes into enforced, beautified bus lanes with wide shaded kaki lima, raised zebra crossings, and protected bike lanes. Watch the 3D street transform behind this card.'
+        '2036 vision: Give RapidKL 750 a physically enforced, dedicated bus lane along the Federal Highway corridor plus shaded kaki lima at every stop — cutting 18 km from 40 min down to ~22 min and beating private cars every morning.'
     }
   };
 
