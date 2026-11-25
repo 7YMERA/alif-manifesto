@@ -1,0 +1,1025 @@
+/* ==========================================================================
+   ALIF MANIFESTO — Civic Editorial & Architectural 3D Design System
+   Light-first, high-legibility, zero purple/magenta, accessible & responsive.
+   ========================================================================== */
+
+:root {
+  /* Core Palette — Warm Architectural Limestone & Malaysian Transit Emerald */
+  --bg: #f3efe6;
+  --bg-elevated: rgba(248, 245, 238, 0.86);
+  --surface: rgba(252, 250, 245, 0.90);
+  --surface-solid: #fcfaf5;
+  --surface-muted: rgba(235, 229, 217, 0.78);
+  --ink: #131b21;
+  --ink-soft: #2e3b44;
+  --muted: #52616b;
+  --line: rgba(19, 27, 33, 0.14);
+  --line-strong: rgba(19, 27, 33, 0.28);
+
+  /* Civic Accents */
+  --emerald: #0c6b4d;
+  --emerald-bright: #128762;
+  --emerald-soft: rgba(12, 107, 77, 0.12);
+  --emerald-ink: #f7fbf9;
+  --amber: #c9521e;
+  --amber-soft: rgba(201, 82, 30, 0.12);
+  --cobalt: #1d4e78;
+  --cobalt-soft: rgba(29, 78, 120, 0.11);
+
+  /* Typography */
+  --f-display: 'Bricolage Grotesque', system-ui, -apple-system, sans-serif;
+  --f-serif: 'Instrument Serif', Georgia, serif;
+  --f-body: 'Albert Sans', system-ui, -apple-system, sans-serif;
+  --f-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+
+  /* Geometry & Elevation */
+  --radius-sm: 10px;
+  --radius: 18px;
+  --radius-lg: 26px;
+  --shadow-card: 0 18px 48px rgba(15, 24, 30, 0.10), 0 2px 6px rgba(15, 24, 30, 0.05);
+  --shadow-float: 0 10px 28px rgba(15, 24, 30, 0.12);
+
+  /* Layout */
+  --max-w: 1180px;
+  --nav-h: 72px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-theme="dark"] {
+  --bg: #0c1217;
+  --bg-elevated: rgba(14, 21, 27, 0.84);
+  --surface: rgba(18, 27, 35, 0.86);
+  --surface-solid: #121b23;
+  --surface-muted: rgba(26, 38, 48, 0.82);
+  --ink: #f0ece3;
+  --ink-soft: #d5cfc3;
+  --muted: #98a6b0;
+  --line: rgba(240, 236, 227, 0.13);
+  --line-strong: rgba(240, 236, 227, 0.26);
+
+  --emerald: #28a97e;
+  --emerald-bright: #34c293;
+  --emerald-soft: rgba(40, 169, 126, 0.16);
+  --emerald-ink: #071912;
+  --amber: #e87742;
+  --amber-soft: rgba(232, 119, 66, 0.16);
+  --cobalt: #5ea0d8;
+  --cobalt-soft: rgba(94, 160, 216, 0.15);
+
+  --shadow-card: 0 22px 54px rgba(0, 0, 0, 0.46), 0 2px 8px rgba(0, 0, 0, 0.30);
+  --shadow-float: 0 12px 32px rgba(0, 0, 0, 0.42);
+}
+
+/* Reset & Base */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  margin: 0;
+  font-family: var(--f-body);
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: var(--ink);
+  background: var(--bg);
+  overflow-x: hidden;
+  transition: background-color 0.35s var(--ease), color 0.35s var(--ease);
+}
+
+/* Subtle paper grain overlay for tactile depth */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 90;
+  opacity: 0.032;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+a {
+  color: var(--emerald);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  color: var(--emerald-bright);
+}
+
+:focus-visible {
+  outline: 3px solid var(--amber);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.skip-link {
+  position: fixed;
+  top: -100px;
+  left: 16px;
+  z-index: 200;
+  background: var(--ink);
+  color: var(--bg);
+  padding: 12px 18px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+  top: 16px;
+}
+
+/* ==========================================================================
+   3D WebGL Canvas & Atmospheric Vignette
+   ========================================================================== */
+
+#scene-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  display: block;
+  pointer-events: none;
+}
+
+.scene-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 85% 70% at 50% 45%, transparent 32%, rgba(243, 239, 230, 0.42) 100%),
+    linear-gradient(180deg, rgba(243, 239, 230, 0.45) 0%, transparent 18%, transparent 82%, rgba(243, 239, 230, 0.55) 100%);
+  transition: background 0.4s ease;
+}
+
+[data-theme="dark"] .scene-scrim {
+  background:
+    radial-gradient(ellipse 85% 70% at 50% 45%, transparent 28%, rgba(8, 13, 18, 0.58) 100%),
+    linear-gradient(180deg, rgba(8, 13, 18, 0.55) 0%, transparent 20%, transparent 80%, rgba(8, 13, 18, 0.68) 100%);
+}
+
+/* ==========================================================================
+   Top Navigation Bar — Big, Clear, Obvious Controls
+   ========================================================================== */
+
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--nav-h);
+  z-index: 50;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.topbar-inner {
+  max-width: var(--max-w);
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.brand-mark {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--emerald);
+  color: var(--emerald-ink);
+  display: grid;
+  place-items: center;
+  font-family: var(--f-display);
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: -0.03em;
+  flex-shrink: 0;
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.brand-name {
+  font-family: var(--f-display);
+  font-weight: 800;
+  font-size: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.brand-sub {
+  font-family: var(--f-mono);
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.topbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ctrl-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 15px;
+  border-radius: 12px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-solid);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s var(--ease), border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.ctrl-btn:hover {
+  border-color: var(--emerald);
+  transform: translateY(-1px);
+}
+
+.ctrl-btn[aria-pressed="true"] {
+  background: var(--emerald);
+  border-color: var(--emerald);
+  color: var(--emerald-ink);
+}
+
+.ctrl-btn svg {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+}
+
+/* Live 3D Telemetry HUD Pill (Bottom-Right) */
+.scene-hud {
+  position: fixed;
+  right: 24px;
+  bottom: 22px;
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 16px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-float);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-family: var(--f-mono);
+  font-size: 0.76rem;
+}
+
+.hud-year {
+  font-weight: 600;
+  color: var(--emerald);
+  font-size: 0.9rem;
+}
+
+.hud-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--line-strong);
+}
+
+.hud-phase {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.hud-meter {
+  width: 72px;
+  height: 6px;
+  border-radius: 99px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.hud-meter-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--emerald);
+  border-radius: 99px;
+  transition: width 0.15s linear;
+}
+
+/* ==========================================================================
+   Fixed Left Chapter Rail (Scroll Navigation)
+   ========================================================================== */
+
+.chapter-rail {
+  position: fixed;
+  left: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 10px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-float);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.rail-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s var(--ease);
+}
+
+.rail-link:hover {
+  background: var(--surface-muted);
+  color: var(--ink);
+}
+
+.rail-link.is-active {
+  background: var(--emerald);
+  color: var(--emerald-ink);
+}
+
+.rail-num {
+  font-family: var(--f-mono);
+  font-size: 0.72rem;
+  opacity: 0.85;
+}
+
+.rail-label {
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Main Scroll Container & Chapters
+   ========================================================================== */
+
+main {
+  position: relative;
+  z-index: 10;
+}
+
+.chapter {
+  min-height: 100vh;
+  padding: calc(var(--nav-h) + 56px) 24px 96px;
+  display: flex;
+  align-items: center;
+}
+
+.chapter-inner {
+  width: 100%;
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding-left: 168px; /* Room for fixed chapter rail on desktop */
+}
+
+/* Alternating card alignment so the 3D Malaysian street stays visible */
+.chapter--left .story-card {
+  margin-right: auto;
+}
+
+.chapter--right .story-card {
+  margin-left: auto;
+}
+
+.chapter--wide .story-card {
+  max-width: 960px;
+}
+
+/* ==========================================================================
+   Hero Chapter (00)
+   ========================================================================== */
+
+.hero-wrap {
+  max-width: 740px;
+  padding: 40px 42px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.eyebrow {
+  display: inline-block;
+  font-family: var(--f-mono);
+  font-size: 0.78rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--emerald);
+  margin-bottom: 14px;
+}
+
+.eyebrow--amber {
+  color: var(--amber);
+}
+
+h1 {
+  margin: 0 0 20px;
+  font-family: var(--f-display);
+  font-weight: 800;
+  font-size: clamp(2.4rem, 5.2vw, 4.1rem);
+  line-height: 1.03;
+  letter-spacing: -0.032em;
+  color: var(--ink);
+}
+
+h1 em {
+  font-family: var(--f-serif);
+  font-weight: 400;
+  font-style: italic;
+  color: var(--emerald);
+  letter-spacing: -0.01em;
+}
+
+.hero-lead {
+  margin: 0 0 28px;
+  font-size: 1.15rem;
+  line-height: 1.65;
+  color: var(--ink-soft);
+  max-width: 60ch;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 22px;
+  border-radius: 13px;
+  border: 1.5px solid var(--line-strong);
+  background: var(--surface-solid);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 0.96rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.2s var(--ease), background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  border-color: var(--emerald);
+  color: var(--ink);
+}
+
+.btn--primary {
+  background: var(--emerald);
+  border-color: var(--emerald);
+  color: var(--emerald-ink);
+  box-shadow: 0 8px 22px rgba(12, 107, 77, 0.24);
+}
+
+.btn--primary:hover {
+  background: var(--emerald-bright);
+  border-color: var(--emerald-bright);
+  color: var(--emerald-ink);
+}
+
+.btn--amber {
+  background: var(--amber);
+  border-color: var(--amber);
+  color: #fffaf6;
+}
+
+.btn--amber:hover {
+  filter: brightness(1.06);
+  border-color: var(--amber);
+  color: #fffaf6;
+}
+
+.hero-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.meta-label {
+  font-family: var(--f-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.meta-val {
+  font-family: var(--f-display);
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+/* ==========================================================================
+   Story Cards & Phase Layout
+   ========================================================================== */
+
+.story-card {
+  width: 100%;
+  max-width: 640px;
+  padding: 36px 38px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.65s var(--ease), transform 0.65s var(--ease);
+}
+
+.story-card.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.phase-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.phase-year {
+  font-family: var(--f-mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 5px 11px;
+  border-radius: 8px;
+  background: var(--emerald-soft);
+  color: var(--emerald);
+}
+
+.phase-year--amber {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+h2 {
+  margin: 0 0 14px;
+  font-family: var(--f-display);
+  font-weight: 800;
+  font-size: clamp(1.75rem, 3.2vw, 2.55rem);
+  line-height: 1.1;
+  letter-spacing: -0.028em;
+  color: var(--ink);
+}
+
+h3 {
+  margin: 0 0 8px;
+  font-family: var(--f-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+
+.story-card p {
+  margin: 0 0 16px;
+  color: var(--ink-soft);
+}
+
+.story-card p:last-child {
+  margin-bottom: 0;
+}
+
+.pullquote {
+  margin: 22px 0;
+  padding: 18px 22px;
+  border-left: 3.5px solid var(--emerald);
+  background: var(--surface-muted);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-family: var(--f-serif);
+  font-size: 1.42rem;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.pullquote--amber {
+  border-left-color: var(--amber);
+}
+
+/* Actionable List Inside Phases */
+.milestone-list {
+  list-style: none;
+  margin: 22px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.milestone-item {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+  border: 1px solid var(--line);
+}
+
+.milestone-idx {
+  font-family: var(--f-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--emerald);
+  padding-top: 2px;
+}
+
+.milestone-item strong {
+  display: block;
+  font-family: var(--f-display);
+  font-size: 1rem;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+
+.milestone-item span {
+  font-size: 0.93rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   Interactive Street Simulator (Chapter 01 — Highway vs Bus & Sidewalk)
+   ========================================================================== */
+
+.street-sim {
+  margin-top: 24px;
+  padding: 20px;
+  border-radius: var(--radius);
+  background: var(--surface-muted);
+  border: 1px solid var(--line-strong);
+}
+
+.street-sim-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.sim-toggle-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.sim-btn {
+  min-height: 46px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1.5px solid var(--line-strong);
+  background: var(--surface-solid);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+}
+
+.sim-btn.is-active[data-mode="highway"] {
+  background: var(--amber);
+  border-color: var(--amber);
+  color: #fffaf6;
+}
+
+.sim-btn.is-active[data-mode="transit"] {
+  background: var(--emerald);
+  border-color: var(--emerald);
+  color: var(--emerald-ink);
+}
+
+.sim-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.sim-stat {
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--surface-solid);
+  border: 1px solid var(--line);
+}
+
+.sim-stat-num {
+  font-family: var(--f-display);
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: var(--ink);
+  line-height: 1.1;
+}
+
+.sim-stat-label {
+  font-family: var(--f-mono);
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.sim-caption {
+  margin-top: 12px !important;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+/* ==========================================================================
+   Manifesto Charter Grid (Chapter 05 — 10-Year Horizon)
+   ========================================================================== */
+
+.charter-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.charter-card {
+  padding: 20px 22px;
+  border-radius: var(--radius);
+  background: var(--surface-muted);
+  border: 1px solid var(--line);
+  transition: transform 0.22s var(--ease), border-color 0.22s ease;
+}
+
+.charter-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--emerald);
+}
+
+.charter-card--full {
+  grid-column: 1 / -1;
+}
+
+.charter-num {
+  font-family: var(--f-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--emerald);
+  margin-bottom: 6px;
+}
+
+.charter-card p {
+  font-size: 0.94rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* Creed & Pledge Box */
+.creed-box {
+  margin-top: 28px;
+  padding: 26px 28px;
+  border-radius: var(--radius);
+  background: var(--emerald);
+  color: var(--emerald-ink);
+}
+
+.creed-box blockquote {
+  margin: 0 0 18px;
+  font-family: var(--f-serif);
+  font-size: clamp(1.5rem, 2.8vw, 2.1rem);
+  line-height: 1.28;
+}
+
+.creed-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.creed-sign {
+  font-family: var(--f-mono);
+  font-size: 0.8rem;
+  opacity: 0.92;
+}
+
+.pledge-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--emerald-ink);
+  font-family: var(--f-body);
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s var(--ease);
+}
+
+.pledge-btn:hover {
+  background: rgba(255, 255, 255, 0.24);
+  transform: translateY(-1px);
+}
+
+.pledge-btn.is-stamped {
+  background: #ffffff;
+  color: #0b4c36;
+  border-color: #ffffff;
+}
+
+/* Proof of Work Links Row */
+.proof-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+
+.site-footer {
+  position: relative;
+  z-index: 10;
+  padding: 36px 24px 88px;
+  border-top: 1px solid var(--line);
+  background: var(--bg-elevated);
+  backdrop-filter: blur(12px);
+}
+
+.footer-inner {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding-left: 168px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+/* ==========================================================================
+   Responsive Design (Tablet & Mobile 390px)
+   ========================================================================== */
+
+@media (max-width: 1080px) {
+  .chapter-rail {
+    top: auto;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    flex-direction: row;
+    padding: 6px;
+    gap: 4px;
+    max-width: calc(100vw - 24px);
+    overflow-x: auto;
+  }
+
+  .rail-label {
+    display: none;
+  }
+
+  .rail-link {
+    padding: 8px 12px;
+  }
+
+  .chapter-inner,
+  .footer-inner {
+    padding-left: 0;
+  }
+
+  .scene-hud {
+    display: none;
+  }
+}
+
+@media (max-width: 680px) {
+  .topbar-inner {
+    padding: 0 14px;
+  }
+
+  .brand-sub {
+    display: none;
+  }
+
+  .ctrl-btn span {
+    display: none;
+  }
+
+  .ctrl-btn {
+    padding: 0 12px;
+  }
+
+  .chapter {
+    padding: calc(var(--nav-h) + 28px) 14px 88px;
+    min-height: auto;
+  }
+
+  .hero-wrap,
+  .story-card {
+    padding: 24px 20px;
+    border-radius: 20px;
+  }
+
+  .hero-meta,
+  .sim-stats,
+  .charter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sim-toggle-group {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .story-card {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+  }
+}
