@@ -391,6 +391,27 @@
 
   function getOffsetBox(el, ancestor) {
     if (!el || !ancestor) return null;
+    // SVG elements have no offsetLeft/offsetWidth (they read as undefined -> NaN paths),
+    // so measure them with the bounding rect relative to the ancestor instead.
+    if (typeof el.offsetWidth !== 'number') {
+      const er = el.getBoundingClientRect();
+      const ar = ancestor.getBoundingClientRect();
+      const sx = ancestor.offsetWidth ? ar.width / ancestor.offsetWidth : 1;
+      const sy = ancestor.offsetHeight ? ar.height / ancestor.offsetHeight : 1;
+      const left = (er.left - ar.left) / sx;
+      const top = (er.top - ar.top) / sy;
+      const width = er.width / sx;
+      const height = er.height / sy;
+      return {
+        left: left,
+        top: top,
+        right: left + width,
+        bottom: top + height,
+        width: width,
+        height: height,
+        cx: left + width * 0.5
+      };
+    }
     let x = 0;
     let y = 0;
     let cur = el;

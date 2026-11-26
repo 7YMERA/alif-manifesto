@@ -83,7 +83,7 @@
   scene.background = PALETTES.day.fog.clone();
   scene.fog = new THREE.FogExp2(PALETTES.day.fog.getHex(), 0.0024);
 
-  const camera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 0.5, 1900);
+  const camera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 1.5, 1900);
   camera.position.set(1.0, 5.2, 56);
 
   const hemiLight = new THREE.HemisphereLight(0xe8f2fc, 0xc5bfb0, 0.90);
@@ -92,8 +92,9 @@
   const sunLight = new THREE.DirectionalLight(0xfff7e8, 1.44);
   sunLight.position.set(75, 105, 55);
   sunLight.castShadow = true;
-  sunLight.shadow.mapSize.width = 1024;
-  sunLight.shadow.mapSize.height = 1024;
+  const shadowRes = window.innerWidth <= 820 ? 1024 : 2048;
+  sunLight.shadow.mapSize.width = shadowRes;
+  sunLight.shadow.mapSize.height = shadowRes;
   sunLight.shadow.camera.near = 10;
   sunLight.shadow.camera.far = 420;
   const d = 120;
@@ -102,6 +103,8 @@
   sunLight.shadow.camera.top = d;
   sunLight.shadow.camera.bottom = -d;
   scene.add(sunLight);
+  scene.add(sunLight.target);
+  const SUN_OFFSET = new THREE.Vector3(75, 105, 55);
 
   function clamp(v, min, max) {
     return Math.max(min, Math.min(max, v));
@@ -271,60 +274,92 @@
     return { mesh: mesh, curve: curve };
   }
 
-  // Main boulevard stops cleanly at z = -255 and joins the curved KLCC Perimeter Ring Road!
-  const mainRoad = new THREE.Mesh(new THREE.BoxGeometry(18, 0.18, 340), roadMat);
-  mainRoad.position.set(0, 0, -85);
+  // Layout registry: roads & reserved areas so buildings never spawn on top of them.
+  const roadBlockers = [];
+  const areaBlockers = [];
+  function registerRoad(ribbon, width) {
+    ribbon.curve.getSpacedPoints(90).forEach(function (p) {
+      roadBlockers.push({ x: p.x, z: p.z, r: width / 2 + 1.5 });
+    });
+  }
+  function footprintBlocked(x, z, hw, hd) {
+    for (let i = 0; i < areaBlockers.length; i++) {
+      const a = areaBlockers[i];
+      if (Math.abs(x - a.x) < a.hw + hw && Math.abs(z - a.z) < a.hd + hd) return true;
+    }
+    for (let j = 0; j < roadBlockers.length; j++) {
+      const r = roadBlockers[j];
+      const nx = clamp(r.x, x - hw, x + hw);
+      const nz = clamp(r.z, z - hd, z + hd);
+      if (Math.hypot(r.x - nx, r.z - nz) < r.r) return true;
+    }
+    return false;
+  }
+
+  // Main boulevard stops at z = -250, flush inside the KLCC Perimeter Ring Road band!
+  const mainRoad = new THREE.Mesh(new THREE.BoxGeometry(18, 0.18, 335), roadMat);
+  mainRoad.position.set(0, 0, -82.5);
   mainRoad.receiveShadow = true;
   world.add(mainRoad);
 
-  // Curved KLCC Perimeter Ring Road around Petronas Twin Towers (18, -295)
-  const ringRoad = new THREE.Mesh(new THREE.RingGeometry(30, 41, 56), roadMat);
+  // Curved KLCC Perimeter Ring Road. Centred on the real tower + podium footprint
+  // (towers at 18,-295; podium extends south-east), so the podium sits inside the ring hole.
+  const RING_CX = 26;
+  const RING_CZ = -288;
+  const ringRoad = new THREE.Mesh(new THREE.RingGeometry(40, 51, 64), roadMat);
   ringRoad.rotation.x = -Math.PI / 2;
-  ringRoad.position.set(18, 0.08, -295);
+  ringRoad.position.set(RING_CX, 0.08, RING_CZ);
   ringRoad.receiveShadow = true;
   world.add(ringRoad);
-
-  const ringConnector = makeRoadRibbon([
-    new THREE.Vector3(0, 0, -242),
-    new THREE.Vector3(2, 0, -254),
-    new THREE.Vector3(8, 0, -264)
-  ], 16, 0.10, roadMat, 16);
-  world.add(ringConnector.mesh);
+  areaBlockers.push({ x: RING_CX, z: RING_CZ, hw: 53, hd: 53 });
 
   // === IRL KUALA LUMPUR CURVED ARTERIAL NETWORK ===
 
-  // 1. Jalan Sultan Ismail S-Curve sweeping around Bukit Nanas / Menara KL -> Bukit Bintang / TRX
+  // 1. Jalan Sultan Ismail S-Curve: west of the boulevard, between the -84 and -150 cross streets,
+  //    clear of Merdeka 118 and Bukit Nanas, ending flush at the boulevard's left kerb.
   const jlnSultanIsmail = makeRoadRibbon([
-    new THREE.Vector3(-145, 0, -135),
-    new THREE.Vector3(-82, 0, -182),
-    new THREE.Vector3(-22, 0, -220),
-    new THREE.Vector3(26, 0, -214),
-    new THREE.Vector3(68, 0, -182),
-    new THREE.Vector3(115, 0, -148)
-  ], 13, 0.11, roadMat, 56);
+    new THREE.Vector3(-155, 0, -104),
+    new THREE.Vector3(-118, 0, -118),
+    new THREE.Vector3(-80, 0, -131),
+    new THREE.Vector3(-46, 0, -123),
+    new THREE.Vector3(-19, 0, -130)
+  ], 11, 0.10, roadMat, 48);
   world.add(jlnSultanIsmail.mesh);
+  registerRoad(jlnSultanIsmail, 11);
 
-  // 2. Jalan Ampang Diagonal Curved Arterial past KLCC -> Ampang Park (with Curved RapidKL Bus Lane!)
-  const jlnAmpangPts = [
-    new THREE.Vector3(-145, 0, -195),
-    new THREE.Vector3(-68, 0, -246),
-    new THREE.Vector3(-6, 0, -266),
-    new THREE.Vector3(54, 0, -274),
-    new THREE.Vector3(114, 0, -284),
-    new THREE.Vector3(175, 0, -296)
+  // 2. Jalan Ampang: two arms that wrap the KLCC ring road (north side) instead of cutting
+  //    through Bukit Nanas, the park lake or the ring itself. Each carries a curved RapidKL bus lane.
+  const jlnAmpangWestPts = [
+    new THREE.Vector3(-120, 0, -238),
+    new THREE.Vector3(-104, 0, -284),
+    new THREE.Vector3(-72, 0, -318),
+    new THREE.Vector3(-42, 0, -326),
+    new THREE.Vector3(-16, 0, -314)
   ];
-  world.add(makeRoadRibbon(jlnAmpangPts, 13.5, 0.12, roadMat, 56).mesh);
-  world.add(makeRoadRibbon(jlnAmpangPts, 3.2, 0.14, curvedBusLaneMat, 56).mesh);
+  const jlnAmpangEastPts = [
+    new THREE.Vector3(62, 0, -318),
+    new THREE.Vector3(100, 0, -306),
+    new THREE.Vector3(140, 0, -300),
+    new THREE.Vector3(185, 0, -300)
+  ];
+  [jlnAmpangWestPts, jlnAmpangEastPts].forEach(function (pts) {
+    const road = makeRoadRibbon(pts, 13.5, 0.14, roadMat, 56);
+    world.add(road.mesh);
+    world.add(makeRoadRibbon(pts, 3.2, 0.17, curvedBusLaneMat, 56).mesh);
+    registerRoad(road, 13.5);
+  });
 
   // 3. Jalan Tun Razak Sweeping Eastern Curved Arterial (Ampang Park -> Persiaran KLCC -> TRX)
-  world.add(makeRoadRibbon([
+  const jlnTunRazak = makeRoadRibbon([
     new THREE.Vector3(98, 0, -356),
     new THREE.Vector3(116, 0, -288),
     new THREE.Vector3(112, 0, -212),
     new THREE.Vector3(102, 0, -140),
     new THREE.Vector3(92, 0, -68),
     new THREE.Vector3(88, 0, 10)
-  ], 14, 0.10, roadMat, 56).mesh);
+  ], 14, 0.12, roadMat, 56);
+  world.add(jlnTunRazak.mesh);
+  registerRoad(jlnTunRazak, 14);
 
   // 4. AKLEH (E12) Curved Elevated Highway Arc behind KLCC + Curved Interchange Slip-Ramp!
   const aklehMat = new THREE.MeshStandardMaterial({ color: 0x767d85, roughness: 0.9 });
@@ -349,6 +384,7 @@
   const aklehPierGeo = new THREE.CylinderGeometry(0.95, 1.15, 8.2, 10);
   for (let pIdx = 1; pIdx < 12; pIdx++) {
     const pt = aklehArc.curve.getPointAt(pIdx / 12);
+    if (footprintBlocked(pt.x, pt.z, 1.2, 1.2)) continue;
     const pier = new THREE.Mesh(aklehPierGeo, aklehMat);
     pier.position.set(pt.x, 4.1, pt.z);
     world.add(pier);
@@ -357,25 +393,26 @@
   // 5. Real KLCC Park Crescent + Reflective Symphony Lake (SE of Petronas Twin Towers!)
   const klccParkGroup = new THREE.Group();
   const klccLawn = new THREE.Mesh(
-    new THREE.CircleGeometry(24, 32),
+    new THREE.CircleGeometry(15, 32),
     new THREE.MeshStandardMaterial({ color: 0x358c55, roughness: 0.9 })
   );
   klccLawn.rotation.x = -Math.PI / 2;
-  klccLawn.scale.set(1.25, 0.85, 1);
-  klccLawn.position.set(46, 0.06, -264);
+  klccLawn.scale.set(1.0, 0.8, 1);
+  klccLawn.position.set(91, 0.06, -248);
   klccParkGroup.add(klccLawn);
 
   const symphonyLake = new THREE.Mesh(
-    new THREE.CircleGeometry(9.5, 28),
+    new THREE.CircleGeometry(6.5, 28),
     new THREE.MeshStandardMaterial({ color: 0x3b8fb8, roughness: 0.18, metalness: 0.45 })
   );
   symphonyLake.rotation.x = -Math.PI / 2;
-  symphonyLake.scale.set(1.35, 0.72, 1);
-  symphonyLake.position.set(44, 0.11, -266);
+  symphonyLake.scale.set(1.3, 0.7, 1);
+  symphonyLake.position.set(91, 0.11, -249);
   klccParkGroup.add(symphonyLake);
   world.add(klccParkGroup);
+  areaBlockers.push({ x: 91, z: -248, hw: 16, hd: 13 });
 
-  // 4 Major Cross-Streets with Curved Slip-Lane Corner Aprons (Real Malaysian Intersections!)
+  // 4 Major Cross-Streets (Real Malaysian Intersections!)
   const crossZList = [-18, -84, -150, -220];
   crossZList.forEach(function (cz) {
     const cr = new THREE.Mesh(new THREE.BoxGeometry(240, 0.17, 14), roadMat);
@@ -383,25 +420,16 @@
     cr.receiveShadow = true;
     world.add(cr);
 
-    // Curved corner slip-lane fillets at all 4 quadrants of each intersection!
-    [
-      [-1, -1], [1, -1], [-1, 1], [1, 1]
-    ].forEach(function (q) {
-      const slip = makeRoadRibbon([
-        new THREE.Vector3(q[0] * 8.5, 0, cz + q[1] * 13.5),
-        new THREE.Vector3(q[0] * 11.2, 0, cz + q[1] * 9.2),
-        new THREE.Vector3(q[0] * 16.5, 0, cz + q[1] * 6.5)
-      ], 4.2, 0.09, roadMat, 10);
-      world.add(slip.mesh);
-    });
+    areaBlockers.push({ x: 0, z: cz, hw: 120, hd: 8 });
   });
 
   // Parallel Neighborhood Avenues
-  [-48, 48].forEach(function (ax) {
+  [-56, 56].forEach(function (ax) {
     const ave = new THREE.Mesh(new THREE.BoxGeometry(9, 0.14, 300), sideRoadMat);
     ave.position.set(ax, -0.02, -85);
     ave.receiveShadow = true;
     world.add(ave);
+    areaBlockers.push({ x: ax, z: -85, hw: 5.5, hd: 150 });
   });
 
   // Traffic lights at first intersection (z = -18)
@@ -438,7 +466,7 @@
       if (crossZList.some(function (cz) { return Math.abs(z - cz) < 8.5; })) continue;
       const dash = new THREE.Mesh(dashGeo, dashMat);
       dash.rotation.x = -Math.PI / 2;
-      dash.position.set(xPos, 0.10, z);
+      dash.position.set(xPos, 0.11, z);
       world.add(dash);
     }
   });
@@ -450,12 +478,12 @@
     transparent: true,
     opacity: 0
   });
-  const busLaneL = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 420), busLaneMat);
+  const busLaneL = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 330), busLaneMat);
   busLaneL.rotation.x = -Math.PI / 2;
-  busLaneL.position.set(-2.4, 0.11, -130);
-  const busLaneR = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 420), busLaneMat);
+  busLaneL.position.set(-2.4, 0.11, -85);
+  const busLaneR = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 330), busLaneMat);
   busLaneR.rotation.x = -Math.PI / 2;
-  busLaneR.position.set(2.4, 0.11, -130);
+  busLaneR.position.set(2.4, 0.11, -85);
   world.add(busLaneL, busLaneR);
 
   // Protected RapidKL Crimson-Red Cycling Lanes
@@ -465,12 +493,12 @@
     transparent: true,
     opacity: 0
   });
-  const bikeLaneL = new THREE.Mesh(new THREE.PlaneGeometry(1.75, 420), bikeLaneMat);
+  const bikeLaneL = new THREE.Mesh(new THREE.PlaneGeometry(1.75, 330), bikeLaneMat);
   bikeLaneL.rotation.x = -Math.PI / 2;
-  bikeLaneL.position.set(-7.25, 0.115, -130);
-  const bikeLaneR = new THREE.Mesh(new THREE.PlaneGeometry(1.75, 420), bikeLaneMat);
+  bikeLaneL.position.set(-7.25, 0.115, -85);
+  const bikeLaneR = new THREE.Mesh(new THREE.PlaneGeometry(1.75, 330), bikeLaneMat);
   bikeLaneR.rotation.x = -Math.PI / 2;
-  bikeLaneR.position.set(7.25, 0.115, -130);
+  bikeLaneR.position.set(7.25, 0.115, -85);
   world.add(bikeLaneL, bikeLaneR);
 
   // Wide Warm Sandstone Kaki Lima Sidewalks
@@ -480,7 +508,7 @@
     [-51, 52],
     [-117, 52],
     [-185, 56],
-    [-280, 106]
+    [-232, 10]
   ].forEach(function (sp) {
     [-12.6, 12.6].forEach(function (sx) {
       const sw = new THREE.Mesh(new THREE.BoxGeometry(7.2, 0.34, sp[1]), sidewalkMat);
@@ -516,26 +544,26 @@
   const warmParkLightMat = new THREE.MeshBasicMaterial({ color: 0xffe4a8 });
 
   const HWY_Y = 7.6; // Clear sightline to traffic on top!
-  const deck = new THREE.Mesh(new THREE.BoxGeometry(14, 1.2, 380), concreteMat);
-  deck.position.set(-16.0, HWY_Y, -110);
+  const deck = new THREE.Mesh(new THREE.BoxGeometry(14, 1.2, 330), concreteMat);
+  deck.position.set(-16.0, HWY_Y, -85);
   deck.castShadow = true;
   highwayGroup.add(deck);
 
-  const hwyTopAsphalt = new THREE.Mesh(new THREE.PlaneGeometry(12.6, 378), hwyRoadMat);
+  const hwyTopAsphalt = new THREE.Mesh(new THREE.PlaneGeometry(12.6, 328), hwyRoadMat);
   hwyTopAsphalt.rotation.x = -Math.PI / 2;
-  hwyTopAsphalt.position.set(-16.0, HWY_Y + 0.62, -110);
+  hwyTopAsphalt.position.set(-16.0, HWY_Y + 0.62, -85);
   highwayGroup.add(hwyTopAsphalt);
 
   // Low sleek barrier rails so vehicles on top are clearly visible
   [-22.6, -9.4].forEach(function (gx) {
-    const rail = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.48, 378), concreteMat);
-    rail.position.set(gx, HWY_Y + 0.84, -110);
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.48, 328), concreteMat);
+    rail.position.set(gx, HWY_Y + 0.84, -85);
     highwayGroup.add(rail);
   });
 
   // Highway center dashed line on top
   const hwyDashMat = new THREE.MeshBasicMaterial({ color: 0xe8edf2 });
-  for (let z = 72; z >= -290; z -= 8) {
+  for (let z = 72; z >= -240; z -= 8) {
     const hd = new THREE.Mesh(new THREE.PlaneGeometry(0.18, 3.0), hwyDashMat);
     hd.rotation.x = -Math.PI / 2;
     hd.position.set(-16.0, HWY_Y + 0.64, z);
@@ -559,7 +587,7 @@
   const overpassGreenery = [];
   const pillarGreeneryGeo = new THREE.BoxGeometry(2.58, HWY_Y - 1.2, 2.58);
 
-  for (let z = 48; z >= -285; z -= 24) {
+  for (let z = 48; z >= -240; z -= 24) {
     if (crossZList.some(function (cz) { return Math.abs(z - cz) < 10; })) continue;
     const pillar = new THREE.Mesh(pillarGeo, concreteMat);
     pillar.position.set(-16.0, HWY_Y / 2, z);
@@ -612,31 +640,31 @@
   // Deck-Edge Planter Boxes with Lush Hedges, Hanging Vines & Blooming Flower Clusters!
   [-9.05, -22.95].forEach(function (edgeX) {
     const edgeGroup = new THREE.Group();
-    const planter = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.68, 370), planterBoxMat);
-    planter.position.set(0, HWY_Y + 0.52, -110);
+    const planter = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.68, 315), planterBoxMat);
+    planter.position.set(0, 0.52, -87.5);
     edgeGroup.add(planter);
 
-    const hedge = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.72, 370), vineWrapMat);
-    hedge.position.set(0, HWY_Y + 1.02, -110);
+    const hedge = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.72, 315), vineWrapMat);
+    hedge.position.set(0, 1.02, -87.5);
     edgeGroup.add(hedge);
 
-    for (let z = 65; z >= -285; z -= 8) {
+    for (let z = 65; z >= -240; z -= 8) {
       const isRightEdge = edgeX > -16.0;
       const drape = new THREE.Mesh(
         new THREE.BoxGeometry(0.32, 1.35 + ((Math.abs(z) % 3) * 0.35), 3.2),
-        z % 16 === 0 ? vineBrightMat : vineWrapMat
+        Math.round((65 - z) / 8) % 2 === 0 ? vineBrightMat : vineWrapMat
       );
-      drape.position.set(isRightEdge ? 0.34 : -0.34, HWY_Y + 0.05, z);
+      drape.position.set(isRightEdge ? 0.34 : -0.34, 0.05, z);
       edgeGroup.add(drape);
 
       // Vibrant flower blooms perched along the highway planter hedge!
       const bloom = new THREE.Mesh(flowerGeo, flowerMats[Math.abs(z) % flowerMats.length]);
       bloom.scale.setScalar(1.15);
-      bloom.position.set(isRightEdge ? 0.32 : -0.32, HWY_Y + 1.42, z);
+      bloom.position.set(isRightEdge ? 0.32 : -0.32, 1.42, z);
       edgeGroup.add(bloom);
     }
 
-    edgeGroup.position.set(edgeX, 0, 0);
+    edgeGroup.position.set(edgeX, HWY_Y, 0);
     edgeGroup.scale.set(1, 0.001, 1);
     edgeGroup.visible = false;
     highwayGroup.add(edgeGroup);
@@ -687,7 +715,7 @@
     }
 
     const laneX = dir < 0 ? -12.6 - (h % 2) * 2.5 : -19.4 + (h % 2) * 2.5;
-    hCar.position.set(laneX, HWY_Y + 0.64, 70 - h * 10.6);
+    hCar.position.set(laneX, HWY_Y + 0.64, 70 - ((h * 10.6) % 300));
     hCar.userData = { dir: dir, speed: isTruck ? 10.5 : 14.5 + (h % 4) * 2.0 };
     highwayGroup.add(hCar);
     highwayCars.push(hCar);
@@ -987,7 +1015,8 @@
     bballPark.add(gl);
   });
 
-  bballPark.position.set(27, 0, -117);
+  bballPark.position.set(33, 0, -117);
+  areaBlockers.push({ x: 33, z: -117, hw: 12.5, hd: 21.5 });
   bballPark.scale.setScalar(0.001);
   world.add(bballPark);
   parkFeatures.push(bballPark);
@@ -995,8 +1024,9 @@
   // 6B. Green Neighborhood Pocket Parks (x = -27, z = -185 & x = +27, z = -185)
   [
     [-28, -185],
-    [28, -51]
+    [36, -51]
   ].forEach(function (pos) {
+    areaBlockers.push({ x: pos[0], z: pos[1], hw: 10.5, hd: 17.5 });
     const pk = new THREE.Group();
     const lawn = new THREE.Mesh(new THREE.BoxGeometry(20, 0.22, 34), grassMat);
     lawn.position.y = 0.06;
@@ -1015,18 +1045,30 @@
     parkFeatures.push(pk);
   });
 
+  const SHELTER_SPOTS = [
+    [-10.2, -40],
+    [10.2, -52],
+    [-10.2, -108],
+    [10.2, -124],
+    [-10.2, -176],
+    [10.2, -190],
+    [-10.2, -232]
+  ];
+
   // 6C. Shade Trees along the Stretching Kaki Lima
   const trees = [];
   const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5c4938, roughness: 0.95 });
   const canopyMat1 = new THREE.MeshStandardMaterial({ color: 0x2c7a4e, roughness: 0.82 });
   const canopyMat2 = new THREE.MeshStandardMaterial({ color: 0x3b9460, roughness: 0.85 });
 
-  for (let z = 48; z >= -285; z -= 15) {
+  for (let z = 48; z >= -240; z -= 15) {
     if (crossZList.some(function (cz) { return Math.abs(z - cz) < 10; })) continue;
     [
       [-10.6, z],
       [10.6, z - 5]
     ].forEach(function (pos, idx) {
+      // keep canopies clear of the bus shelters (8.2 long, +2.8 crown radius)
+      if (SHELTER_SPOTS.some(function (sp) { return sp[0] * pos[0] > 0 && Math.abs(sp[1] - pos[1]) < 7.2; })) return;
       const tree = new THREE.Group();
       const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.28, 3.2, 8), trunkMat);
       trunk.position.y = 1.6;
@@ -1061,15 +1103,7 @@
     opacity: 0.48
   });
 
-  [
-    [-10.2, -40],
-    [10.2, -52],
-    [-10.2, -108],
-    [10.2, -124],
-    [-10.2, -176],
-    [10.2, -190],
-    [-10.2, -248]
-  ].forEach(function (pos) {
+  SHELTER_SPOTS.forEach(function (pos) {
     const sh = new THREE.Group();
     const isLeft = pos[0] < 0;
 
@@ -1134,8 +1168,11 @@
     head.position.y = 1.38;
     wg.add(head);
 
-    const wx = side * (11.6 + (w % 3) * 1.1);
-    const wz = -34 - w * 9.5;
+    const wx = side * (12.8 + (w % 3) * 1.0);
+    let wz = -34 - w * 9.5;
+    crossZList.forEach(function (cz) {
+      if (Math.abs(wz - cz) < 16) wz = cz + (wz >= cz ? 1 : -1) * 16;
+    });
     wg.position.set(wx, 0.28, wz);
     wg.scale.setScalar(0.001);
     wg.userData = {
@@ -1183,7 +1220,7 @@
   // Downward LRT/MRT Ramp & Underground Tunnel Portal (z = -196 -> -236, diving smoothly under KLCC!)
   const tunnelRamp = new THREE.Mesh(new THREE.BoxGeometry(5.8, 1.25, 42), railViaductMat);
   tunnelRamp.position.set(17.8, 4.2, -216);
-  tunnelRamp.rotation.x = 0.21;
+  tunnelRamp.rotation.x = -0.207; // descends toward -z, into the portal
   railGroup.add(tunnelRamp);
 
   const tunnelPortal = new THREE.Group();
@@ -1249,8 +1286,12 @@
     });
   });
 
+  areaBlockers.push({ x: 17.8, z: -68, hw: 3.3, hd: 130 });
+  areaBlockers.push({ x: 17.8, z: -176, hw: 6, hd: 22 });
+
   // 4-Car RapidKL Electric LRT/MRT Train
   const train = new THREE.Group();
+  const trainCoaches = [];
   const trainWindowMat = new THREE.MeshBasicMaterial({ color: 0xffe9ba });
 
   for (let carIdx = 0; carIdx < 4; carIdx++) {
@@ -1267,8 +1308,10 @@
     const winBand = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.85, 10.2), trainWindowMat);
     winBand.position.y = 1.92;
     coach.add(winBand);
-    coach.position.z = -carIdx * 12.1;
+    coach.position.z = carIdx * 12.1; // train.position.z is the HEAD; coaches trail behind (+z)
+    coach.userData = { zOff: carIdx * 12.1 };
     train.add(coach);
+    trainCoaches.push(coach);
   }
   train.position.set(17.8, 9.2, -120);
   railGroup.add(train);
@@ -1291,6 +1334,11 @@
   const roofTileMat = new THREE.MeshStandardMaterial({ color: 0x6f7479, roughness: 0.85 });
   const warmShopGlassMat = new THREE.MeshBasicMaterial({ color: 0x9aa3ab });
 
+  // Reserved footprints of the real landmark models (so no shophouse/tower grows through them)
+  areaBlockers.push({ x: -66, z: -186, hw: 36, hd: 22 });  // Merdeka 118 podium
+  areaBlockers.push({ x: 72, z: -198, hw: 20, hd: 16 });   // Exchange 106
+  areaBlockers.push({ x: -62, z: -262, hw: 26, hd: 26 });  // Bukit Nanas + Menara KL
+
   // 8A. Street-Level Shophouses (start weathered grey -> bloom into vibrant Malaysian colors!)
   for (let i = 0; i < 36; i++) {
     const side = i % 2 === 0 ? -1 : 1;
@@ -1303,8 +1351,9 @@
 
     const shop = new THREE.Group();
     const w = 7.4;
-    const h = 5.4 + (i % 2) * 2.2;
+    const h = 5.4 + (Math.floor(i / 2) % 2) * 2.2;
     const dLen = 7.2;
+    if (footprintBlocked(side * 26.5, bz, 5.3, 4.2)) continue;
 
     const targetWallHex = shopWallColors[i % shopWallColors.length];
     const wallMat = new THREE.MeshStandardMaterial({
@@ -1339,7 +1388,7 @@
     win.position.set(side < 0 ? w / 2 + 0.04 : -w / 2 - 0.04, 1.45, 0);
     shop.add(win);
 
-    shop.position.set(side * 22.0, 0, bz);
+    shop.position.set(side * 26.5, 0, bz);
     skyline.add(shop);
   }
 
@@ -1350,7 +1399,7 @@
 
   const ringConfigs = [
     { xOff: 38, count: 32, stepZ: 10.5, minH: 13, maxH: 28 },
-    { xOff: 66, count: 26, stepZ: 12.5, minH: 9, maxH: 22 },
+    { xOff: 70, count: 26, stepZ: 12.5, minH: 9, maxH: 22 },
     { xOff: 92, count: 20, stepZ: 16.0, minH: 6, maxH: 14 }
   ];
 
@@ -1359,15 +1408,14 @@
       const side = i % 2 === 0 ? -1 : 1;
       const bz = 58 - i * ring.stepZ;
       if (crossZList.some(function (cz) { return Math.abs(bz - cz) < 9.5; })) continue;
-      // Keep landmark plots clear!
-      if (Math.hypot(side * ring.xOff - -60, bz - -192) < 26) continue;
-      if (Math.hypot(side * ring.xOff - 72, bz - -198) < 26) continue;
-      if (Math.hypot(side * ring.xOff - -38, bz - -258) < 28) continue;
 
       const h = ring.minH + ((i * 7 + rIdx * 5) % (ring.maxH - ring.minH + 1));
       const w = 7.8 + (i % 3) * 2.4;
       const dLen = 7.8 + (i % 4) * 2.0;
-      const bx = side * (ring.xOff + (i % 3) * 4.0);
+      const xBase = ring.xOff + (rIdx === 2 && side > 0 ? 40 : 0); // clear of Jalan Tun Razak
+      const bx = side * (xBase + (i % 3) * 3.0);
+      // skip plots that would sit on roads, avenues, parks, rail or landmark footprints
+      if (footprintBlocked(bx, bz, (w + 1.2) / 2 + 0.4, (dLen + 1.2) / 2 + 0.4)) continue;
 
       const tower = new THREE.Group();
       const baseColorHex = towerColorPalette[(i + rIdx) % towerColorPalette.length];
@@ -1378,7 +1426,7 @@
         roughness: 0.58,
         metalness: 0.22
       });
-      colorfulTowerMats.push({ mat: fMat, dayHex: baseColorHex });
+      colorfulTowerMats.push({ mat: fMat, dayHex: baseColorHex, dayCol: new THREE.Color(baseColorHex) });
 
       const pMat = new THREE.MeshStandardMaterial({
         color: podiumColorPalette[(i + rIdx) % podiumColorPalette.length],
@@ -1438,10 +1486,10 @@
 
   // Lush Green Bukit Nanas Hill beneath Menara KL!
   const bukitNanas = new THREE.Mesh(
-    new THREE.ConeGeometry(30, 13, 16),
+    new THREE.ConeGeometry(24, 13, 16),
     new THREE.MeshStandardMaterial({ color: 0x2d7a4a, roughness: 0.92 })
   );
-  bukitNanas.position.set(-38, 5.5, -258);
+  bukitNanas.position.set(-62, 5.5, -262);
   klGroup.add(bukitNanas);
 
   const LANDMARK_MATERIALS = {
@@ -1558,8 +1606,8 @@
 
   // Exact GPS-proportioned Kuala Lumpur landmarks:
   loadPortfolioModel('./assets/city/klcc.json', 18, 0, -295, 0.12, LANDMARK_MATERIALS.klcc);
-  loadPortfolioModel('./assets/city/menara_kl.json', -38, 10, -258, 0.30, LANDMARK_MATERIALS.menara);
-  loadPortfolioModel('./assets/city/merdeka118.json', -60, 0, -192, -0.32, LANDMARK_MATERIALS.merdeka);
+  loadPortfolioModel('./assets/city/menara_kl.json', -62, 10, -262, 0.30, LANDMARK_MATERIALS.menara);
+  loadPortfolioModel('./assets/city/merdeka118.json', -66, 0, -186, Math.PI / 2, LANDMARK_MATERIALS.merdeka);
   loadPortfolioModel('./assets/city/exchange106.json', 72, 0, -198, 0.22, LANDMARK_MATERIALS.trx);
 
   // =========================================================================
@@ -1680,6 +1728,10 @@
   const uglySkyMid = new THREE.Color(0xc5c4be);
   const uglyFogCol = new THREE.Color(0xd2cfc7);
   const tmpColor = new THREE.Color();
+  const towerNightUgly = new THREE.Color(0x4b5663);
+  const towerNightPretty = new THREE.Color(0x627a99);
+  const groundDayCol = new THREE.Color(0xd8d2c3);
+  const groundNightCol = new THREE.Color(0x223042);
 
   function animate(now) {
     requestAnimationFrame(animate);
@@ -1705,8 +1757,8 @@
     for (let h = 0; h < highwayCars.length; h++) {
       const hc = highwayCars[h];
       hc.position.z += hc.userData.dir * hc.userData.speed * dt * speedMult;
-      if (hc.position.z < -260) hc.position.z = 75;
-      if (hc.position.z > 75) hc.position.z = -260;
+      if (hc.position.z < -240) hc.position.z = 75;
+      if (hc.position.z > 75) hc.position.z = -240;
     }
 
     // Highway greenery & flowers bloom ONLY after scrolling past the intersection!
@@ -1736,9 +1788,9 @@
       entry.mat.emissive.setHex(isDark ? 0x263a52 : 0x000000);
       entry.mat.emissiveIntensity = isDark ? 0.55 : 0;
       if (isDark) {
-        tmpColor.setHex(0x4b5663).lerp(new THREE.Color(0x627a99), prettyFactor);
+        tmpColor.copy(towerNightUgly).lerp(towerNightPretty, prettyFactor);
       } else {
-        tmpColor.copy(uglyTowerCol).lerp(new THREE.Color(entry.dayHex), prettyFactor);
+        tmpColor.copy(uglyTowerCol).lerp(entry.dayCol, prettyFactor);
       }
       entry.mat.color.lerp(tmpColor, 0.08);
     }
@@ -1784,7 +1836,7 @@
       wk.visible = walkerScale > 0.05;
       if (wk.visible) {
         wk.position.z += wk.userData.dir * wk.userData.speed * dt * speedMult;
-        if (Math.abs(wk.position.z - wk.userData.baseZ) > 14) {
+        if (Math.abs(wk.position.z - wk.userData.baseZ) > 5) {
           wk.userData.dir *= -1;
         }
       }
@@ -1795,12 +1847,18 @@
     railGroup.visible = railLift > 0.02;
     if (railGroup.visible) {
       railGroup.position.y = lerp(-16, 0, railLift);
-      train.position.z -= 22 * dt * speedMult; // Heads north toward tunnel portal!
-      if (train.position.z < -236) train.position.z = 78;
-      // Smoothly dive down the tunnel ramp between z = -196 and z = -236!
-      const diveT = smoothstep(-196, -234, train.position.z);
-      train.position.y = lerp(9.2, 0.8, diveT);
-      train.rotation.x = diveT * 0.20;
+      train.position.z -= 22 * dt * speedMult; // head heads north toward the tunnel portal
+      // restart once the LAST coach has vanished into the portal
+      if (train.position.z + trainCoaches[trainCoaches.length - 1].userData.zOff + 6 < -236) train.position.z = 24; // tail starts at the viaduct's southern end
+      // each coach follows the ramp on its own (z -196 -> -236), then hides inside the portal
+      for (let tc = 0; tc < trainCoaches.length; tc++) {
+        const coach = trainCoaches[tc];
+        const wz = train.position.z + coach.userData.zOff;
+        const run = clamp((-196 - wz) / 40, 0, 1);
+        coach.position.y = -run * 8.4;
+        coach.rotation.x = run > 0 && run < 1 ? -0.207 : 0;
+        coach.visible = wz > -233; // nose is hidden inside the solid portal block
+      }
     }
 
     // 6. Ground Traffic: DEAD STILL Horrible Jam Until Congestion Clears on Scroll!
@@ -1914,7 +1972,7 @@
 
     starMat.opacity = lerp(starMat.opacity, isDark ? 0.88 : 0.0, 0.06);
     stars.rotation.y = elapsed * 0.004;
-    groundMat.color.lerp(new THREE.Color(isDark ? 0x223042 : 0xd8d2c3), 0.06);
+    groundMat.color.lerp(isDark ? groundNightCol : groundDayCol, 0.06);
 
     const lmEmissive = isDark ? 0.65 : (lightingMode === 'golden' ? 0.30 : 0.18);
     Object.keys(LANDMARK_MATERIALS).forEach(function (key) {
@@ -1924,6 +1982,11 @@
         0.06
       );
     });
+
+    // Shadow frustum tracks the camera (snapped to the shadow-map grid to avoid shimmering)
+    const sunZ = Math.round((camera.position.z - 40) / 6) * 6;
+    sunLight.target.position.set(0, 0, sunZ);
+    sunLight.position.copy(sunLight.target.position).add(SUN_OFFSET);
 
     renderer.render(scene, camera);
   }
