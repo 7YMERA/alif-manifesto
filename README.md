@@ -1,6 +1,6 @@
 # Alif Najmi — 10-Year Civic Manifesto (2026–2036)
 
-An interactive, scroll-driven 3D Malaysian civic & political manifesto for **Muhammad Alif Najmi (`7YMERA`)** charting a 10-year roadmap (2026–2036) from Business Analyst at `axrail.ai` to Malaysian public office — advocating for enforced RapidKL bus lanes, high-frequency railways, greened & flower-decorated existing highways, continuous shaded sidewalks (*kaki lima*), elderly-first crossings, and vibrant shared community spaces.
+An interactive, scroll-driven 3D Malaysian civic & political manifesto for **Muhammad Alif Najmi (`7YMERA`)** charting a personal 10-year roadmap (2026–2036) toward Malaysian public office — advocating for enforced RapidKL bus lanes, high-frequency railways, greened & flower-decorated existing highways, continuous shaded sidewalks (*kaki lima*), elderly-first crossings, and vibrant shared community spaces.
 
 ---
 
@@ -9,7 +9,7 @@ An interactive, scroll-driven 3D Malaysian civic & political manifesto for **Muh
 If you are an AI agent picking up this repo to polish or extend it, follow these non-negotiable rules from the owner:
 
 1. **Privacy (Public Repo)**:
-   - Keep employer strictly as **`axrail.ai`** — never publish employer client names, internal project details, or colleagues' info.
+   - Personal manifesto only — never publish any employer or company names, client details, or colleagues' info.
    - Keep Shah Alam residence general as **"Section 13, Shah Alam"** — never publish exact apartment names or street numbers.
    - Do **not** link the public GitHub source code in the UI.
 2. **Timeline & Copy**:
