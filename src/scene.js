@@ -283,6 +283,105 @@ export function createManifestoScene() {
   }
   world.add(highwayGroup);
 
+  // -------------------------------------------------------------------------
+  // 3b. Induced-demand stack: bypass 2 and bypass 3 built on top of bypass 1.
+  //     Only shown while the simulator section is active (see setSimScenario).
+  // -------------------------------------------------------------------------
+  const SEDAN_COLORS = [
+    0xdadfe5, 0x3b4856, 0x9aa5b1, 0x1e4c8a, 0xb8352e,
+    0xc4a46c, 0x2b333d, 0x4b7466, 0xe8e4dc
+  ];
+  const TIER_GAP = 8.6;
+  const HWY_X = -16.5;
+  const JAM_LANES = [-2.4, 0, 2.4];          // lane offsets from the deck centre
+  const JAM_Z_FROM = 52, JAM_Z_TO = -128, JAM_STEP = 5.6;
+  const JAM_ROWS = Math.floor((JAM_Z_FROM - JAM_Z_TO) / JAM_STEP) + 1;
+  const JAM_COUNT = JAM_ROWS * JAM_LANES.length;
+
+  const jamBodyMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.55, metalness: 0.15 });
+  const jamCabinMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35, metalness: 0.2 });
+  const jamTailMat = new THREE.MeshBasicMaterial({ color: 0xff2a2a });
+  const jamBodyGeo = new THREE.BoxGeometry(1.7, 0.7, 4.1);
+  const jamCabinGeo = new THREE.BoxGeometry(1.45, 0.55, 2.0);
+  const jamTailGeo = new THREE.BoxGeometry(1.45, 0.16, 0.08);
+  const jamTmp = new THREE.Object3D();
+  const jamCol = new THREE.Color();
+
+  // One bumper-to-bumper block of cars on a deck. Three instanced draws per deck,
+  // ordered row by row so a growing `count` reads as a queue filling up.
+  function makeJamTraffic(parent, deckTopY, seed) {
+    const body = new THREE.InstancedMesh(jamBodyGeo, jamBodyMat, JAM_COUNT);
+    const cabin = new THREE.InstancedMesh(jamCabinGeo, jamCabinMat, JAM_COUNT);
+    const tail = new THREE.InstancedMesh(jamTailGeo, jamTailMat, JAM_COUNT);
+    let i = 0;
+    for (let row = 0; row < JAM_ROWS; row++) {
+      JAM_LANES.forEach((lx, lane) => {
+        const oncoming = lane === 2;
+        const z = JAM_Z_FROM - row * JAM_STEP + ((row * 7 + lane * 3 + seed) % 5) * 0.12;
+        const flip = oncoming ? -1 : 1;
+        jamTmp.rotation.set(0, 0, 0);
+        jamTmp.position.set(HWY_X + lx, deckTopY + 0.55, z);
+        jamTmp.updateMatrix(); body.setMatrixAt(i, jamTmp.matrix);
+        jamTmp.position.set(HWY_X + lx, deckTopY + 1.18, z - 0.1 * flip);
+        jamTmp.updateMatrix(); cabin.setMatrixAt(i, jamTmp.matrix);
+        jamTmp.position.set(HWY_X + lx, deckTopY + 0.62, z + 2.06 * flip);
+        jamTmp.updateMatrix(); tail.setMatrixAt(i, jamTmp.matrix);
+        jamCol.setHex(SEDAN_COLORS[(i * 5 + seed) % SEDAN_COLORS.length]);
+        body.setColorAt(i, jamCol);
+        cabin.setColorAt(i, jamCol.multiplyScalar(0.62)); // darker glass-and-roof tone of the same car
+        i++;
+      });
+    }
+    [body, cabin, tail].forEach((m) => {
+      m.instanceMatrix.needsUpdate = true;
+      m.frustumCulled = false;
+      m.count = 0;
+      parent.add(m);
+    });
+    body.instanceColor.needsUpdate = true;
+    cabin.instanceColor.needsUpdate = true;
+    return {
+      meshes: [body, cabin, tail],
+      setFill(f) {
+        const n = Math.floor(JAM_COUNT * clamp(f, 0, 1));
+        body.count = cabin.count = tail.count = n;
+        body.visible = cabin.visible = tail.visible = n > 0;
+      }
+    };
+  }
+
+  const hwyJam = makeJamTraffic(highwayGroup, 7.81, 0);
+
+  const bypassTiers = [1, 2].map((k) => {
+    const grp = new THREE.Group();
+    const dy = TIER_GAP * k;
+    const deck = new THREE.Mesh(new THREE.BoxGeometry(8.8, 1.05, 316), concreteMat);
+    deck.position.set(HWY_X, 7.2 + dy, -84);
+    deck.castShadow = true; deck.receiveShadow = true;
+    const road = new THREE.Mesh(new THREE.BoxGeometry(7.8, 0.12, 316), asphaltMat);
+    road.position.set(HWY_X, 7.75 + dy, -84);
+    road.receiveShadow = true;
+    grp.add(deck, road);
+    [-20.6, -12.4].forEach((rx) => {
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.65, 316), concreteMat);
+      rail.position.set(rx, 8.05 + dy, -84);
+      grp.add(rail);
+    });
+    for (let pz = 64; pz >= -232; pz -= 28) {
+      [-19.2, -13.8].forEach((px) => {
+        const pier = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.95, TIER_GAP, 10), concreteMat);
+        pier.position.set(px, 7.2 + dy - TIER_GAP / 2, pz);
+        pier.castShadow = true;
+        grp.add(pier);
+      });
+    }
+    const jam = makeJamTraffic(grp, 7.81 + dy, k * 11);
+    grp.visible = false;
+    grp.scale.y = 0.001;
+    world.add(grp);
+    return { grp, jam, built: 0, fill: 0 };
+  });
+
   // =========================================================================
   // 4. Right Elevated LRT/MRT Viaduct, Station & Underground Tunnel Portal
   // =========================================================================
@@ -489,11 +588,6 @@ export function createManifestoScene() {
   const jejantasBridges = [];
   const flowerPlanters = [];
   let sharedPlaza = null;
-
-  const SEDAN_COLORS = [
-    0xdadfe5, 0x3b4856, 0x9aa5b1, 0x1e4c8a, 0xb8352e,
-    0xc4a46c, 0x2b333d, 0x4b7466, 0xe8e4dc
-  ];
 
   function prepGLB(sceneRoot, targetLen, rotY = 0) {
     const root = sceneRoot.clone(true);
@@ -748,6 +842,13 @@ export function createManifestoScene() {
   let scrollProgress = 0;
   let smoothScroll = 0;
   let compareRatio = null;
+  let simKey = null; // 'base' | 'bypass2' | 'bypass3' | 'rail' while the simulator is on screen
+  let simBlend = 0;
+  let hwyFill = 0;
+  // Simulator camera: high and to the right of the stack, looking down the corridor,
+  // so every deck's traffic is visible between the title card and the control panel.
+  const simPos = new THREE.Vector3(26, 34, 70);
+  const simLook = new THREE.Vector3(-14, 17, -60);
   let introState = 'waiting';
   let introT = 0;
   const raycaster = new THREE.Raycaster();
@@ -794,6 +895,9 @@ export function createManifestoScene() {
     setCompareRatio(val) {
       compareRatio = val === null ? null : clamp(val, 0, 1);
     },
+    setSimScenario(key) {
+      simKey = key || null;
+    },
     triggerBusDeparture
   };
   window.ManifestoScene = api;
@@ -827,6 +931,7 @@ export function createManifestoScene() {
 
   function animate(now) {
     requestAnimationFrame(animate);
+    const wallDt = Math.min((now - lastTime) / 1000, 0.5); // real elapsed time, for the simulator's timed steps
     const dt = Math.min((now - lastTime) / 1000, 0.05);
     const elapsed = now * 0.001;
     lastTime = now;
@@ -837,9 +942,35 @@ export function createManifestoScene() {
     const speedMult = reducedMotion ? 0 : 1;
 
     const lockedIntro = introState !== 'active';
-    const targetGreen = lockedIntro ? 0 : (compareRatio !== null ? compareRatio : smoothstep(0.12, 0.50, s));
-    const targetMorph = lockedIntro ? 0 : (compareRatio !== null ? compareRatio : smoothstep(0.15, 0.80, s));
-    const targetPretty = lockedIntro ? 0 : (compareRatio !== null ? compareRatio : smoothstep(0.10, 0.82, s));
+    const simOn = simKey !== null && !lockedIntro;
+    const simRail = simOn && simKey === 'rail';
+    const ratio = simOn ? (simRail ? 1 : 0) : compareRatio;
+    const targetGreen = lockedIntro ? 0 : (ratio !== null ? ratio : smoothstep(0.12, 0.50, s));
+    const targetMorph = lockedIntro ? 0 : (ratio !== null ? ratio : smoothstep(0.15, 0.80, s));
+    const targetPretty = lockedIntro ? 0 : (ratio !== null ? ratio : smoothstep(0.10, 0.82, s));
+
+    // Induced-demand stack: each bypass rises, opens, then floods with traffic.
+    const jamMode = simOn && !simRail;
+    const wantTier = [
+      jamMode && (simKey === 'bypass2' || simKey === 'bypass3'),
+      jamMode && simKey === 'bypass3'
+    ];
+    const buildRate = reducedMotion ? 1 : 1 - Math.exp(-1.6 * wallDt);
+    const fillRate = reducedMotion ? 1 : 1 - Math.exp(-0.7 * wallDt);
+    let stackMoving = false;
+    bypassTiers.forEach((t, i) => {
+      const prev = t.built;
+      t.built = lerp(t.built, wantTier[i] ? 1 : 0, buildRate);
+      if (Math.abs(t.built - (wantTier[i] ? 1 : 0)) < 0.004) t.built = wantTier[i] ? 1 : 0;
+      t.grp.visible = t.built > 0.01;
+      t.grp.scale.y = Math.max(0.001, smoothstep(0, 1, t.built));
+      t.fill = lerp(t.fill, wantTier[i] && t.built >= 1 ? 1 : 0, wantTier[i] ? fillRate : 1);
+      t.jam.setFill(t.fill > 0.01 ? t.fill : 0);
+      if (t.built !== prev) stackMoving = true;
+    });
+    hwyFill = lerp(hwyFill, jamMode ? 1 : 0, jamMode ? fillRate : 1);
+    hwyJam.setFill(hwyFill > 0.01 ? hwyFill : 0);
+    if (stackMoving) sunLight.shadow.needsUpdate = true;
 
     greenFactor = lerp(greenFactor, targetGreen, damp);
     morphFactor = lerp(morphFactor, targetMorph, damp);
@@ -857,6 +988,7 @@ export function createManifestoScene() {
     dashMat.opacity = lerp(0.82, 0.20, morphFactor);
 
     highwayCars.forEach((hc) => {
+      hc.visible = hwyFill < 0.02;
       hc.position.z += hc.userData.dir * hc.userData.speed * dt * speedMult;
       if (hc.position.z < -240) hc.position.z = 74;
       if (hc.position.z > 74) hc.position.z = -240;
@@ -958,6 +1090,11 @@ export function createManifestoScene() {
 
     camPosCurve.getPointAt(s, tmpPos);
     camLookCurve.getPointAt(s, tmpLook);
+    simBlend = lerp(simBlend, simOn ? 1 : 0, reducedMotion ? 1 : 1 - Math.exp(-4.0 * wallDt));
+    if (simBlend > 0.002) {
+      tmpPos.lerp(simPos, simBlend);
+      tmpLook.lerp(simLook, simBlend);
+    }
 
     if (introState === 'waiting') {
       camera.position.copy(introCamPos);
