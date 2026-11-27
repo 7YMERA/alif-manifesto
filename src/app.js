@@ -242,4 +242,19 @@ export function initApp(ManifestoScene) {
       renderStamp();
     });
   }
+
+  // ── Scroll-reveal (animation-on-scroll skill) ──────────────────────────
+  // Pauses animation until element enters viewport, then fires once.
+  const _scrollRevealIO = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-revealed');
+        _scrollRevealIO.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -6% 0px' });
+
+  document.querySelectorAll('.animate-on-scroll').forEach((el) => {
+    _scrollRevealIO.observe(el);
+  });
 }
