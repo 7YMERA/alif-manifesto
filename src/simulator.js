@@ -10,6 +10,11 @@ export function initSimulator() {
   if (!section || !canvas) return;
 
   const ctx = canvas.getContext('2d');
+  const reducedQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let inView = true;
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(([entry]) => { inView = entry.isIntersecting; }, { rootMargin: '200px' }).observe(section);
+  }
 
   // ── Design tokens ─────────────────────────────────────────────
   const C = {
@@ -175,6 +180,7 @@ export function initSimulator() {
   const METRIC_MAX = { pph:14000, journey:60, noise:95, co2:260 };
   const METRIC_UNIT = { pph:'', journey:' min', noise:' dB', co2:' g/km' };
   const METRIC_INVERT = { pph:false, journey:true, noise:true, co2:true };
+  let metricCur  = { ...SCENARIOS.base.metrics };
   let metricFrom = { ...SCENARIOS.base.metrics };
   let metricTarg = { ...SCENARIOS.base.metrics };
   let metricT = 1;
@@ -241,6 +247,7 @@ export function initSimulator() {
     // Button states
     document.querySelectorAll('.sim-btn').forEach(b => {
       b.classList.toggle('sim-btn--active', b.dataset.scenario === key);
+      b.setAttribute('aria-pressed', String(b.dataset.scenario === key));
     });
 
     respawn();
@@ -311,12 +318,16 @@ export function initSimulator() {
 
   function render(now) {
     requestAnimationFrame(render);
-    const dt = Math.min((now - lastNow) / 1000, 0.05);
+    const rawDt = Math.min((now - lastNow) / 1000, 0.05);
     lastNow = now;
+    if (!inView) return;
+    const dt = reducedQuery.matches ? 0 : rawDt;
 
     // Advance transitions
-    if (transT < 1) transT = Math.min(1, transT + dt * 1.3);
-    tickMetrics(dt);
+    // Scenario changes snap instantly under reduced motion; vehicles stand still (dt = 0).
+    const tDt = reducedQuery.matches ? 1 : dt;
+    if (transT < 1) transT = Math.min(1, transT + tDt * 1.3);
+    tickMetrics(tDt);
 
     const W = canvas.offsetWidth;
     const H = canvas.offsetHeight;
@@ -473,6 +484,7 @@ export function initSimulator() {
   if (ins) ins.innerHTML = SCENARIOS.base.insight;
   const yr = document.getElementById('sim-year');
   if (yr) yr.textContent = '2026 — Status Quo';
+  document.querySelectorAll('.sim-btn').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.scenario === 'base')));
   document.querySelector('[data-scenario="base"]')?.classList.add('sim-btn--active');
 
   renderMetrics();

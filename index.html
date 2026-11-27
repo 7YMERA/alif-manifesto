@@ -10,6 +10,9 @@
   <meta property="og:type" content="website">
   <meta property="og:locale" content="en_MY">
   <meta name="theme-color" content="#0047ab">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Alif Najmi · A Country Built for People, Not Just Highways">
+  <meta name="twitter:description" content="An interactive 3D civic manifesto for Malaysia, 2026–2036: bus lanes, rail, greened highways and shaded sidewalks.">
   <link rel="icon" type="image/png" href="./assets/icons/github-avatar.png">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,6 +20,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap">
 </head>
 <body class="is-gated">
+  <noscript><p class="noscript-note">This manifesto is an interactive 3D experience and needs JavaScript. The story: enforce RapidKL bus lanes, run rail more often, keep and green existing highways, and build continuous shaded sidewalks by 2036.</p></noscript>
   <a class="skip-link" href="#main-content">Skip to manifesto</a>
 
   <!-- Opening Gate: Click the 3D RapidKL 750 Bus or Press to Go -->
@@ -59,13 +63,13 @@
       </nav>
 
       <div class="topbar-controls">
-        <button class="ctrl-btn" id="sound-toggle" type="button" aria-pressed="false" aria-label="Toggle scroll-driven street audio">
+        <button class="ctrl-btn" id="sound-toggle" type="button" aria-pressed="false">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
             <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
             <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
           </svg>
-          <span>Sound Off</span>
+          <span>Sound</span>
         </button>
       </div>
     </div>
@@ -90,7 +94,7 @@
 
   <!-- End-of-Scroll Interactive Timelapse Transformation Bar -->
   <div class="compare-dock" id="compare-dock" role="region" aria-label="2026 to 2036 city timelapse transformation">
-    <button class="timelapse-play" id="timelapse-play" type="button" aria-pressed="false">
+    <button class="timelapse-play" id="timelapse-play" type="button">
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <polygon points="6 4 20 12 6 20 6 4"></polygon>
       </svg>
@@ -103,7 +107,7 @@
   </div>
 
   <!-- Main Editorial Blog Story -->
-  <main id="main-content">
+  <main id="main-content" tabindex="-1">
     <!-- Hero Spacer so user sees the 2026 gridlock & scroll cue first -->
     <div class="hero-spacer" aria-hidden="true"></div>
 
@@ -133,7 +137,7 @@
           You can add a bus every second — if it shares congestion with cars, what's the point?
         </p>
 
-        <div class="audit-compare" aria-label="RapidKL 750 commute comparison">
+        <div class="audit-compare" role="group" aria-label="RapidKL 750 commute comparison">
           <div class="audit-col audit-col--jam">
             <div class="audit-tag">Today · Shared Jam</div>
             <div class="audit-big">40 min</div>
@@ -157,29 +161,29 @@
           </header>
 
           <div class="jam-sim__stage">
-            <div class="jam-sim__year" id="sim-year">2026 &#x2014; Status Quo</div>
-            <canvas id="sim-canvas" class="jam-sim__canvas" aria-label="Road corridor cross-section animation"></canvas>
+            <div class="jam-sim__year sr-only" id="sim-year" role="status">2026 &#x2014; Status Quo</div>
+            <canvas id="sim-canvas" class="jam-sim__canvas" role="img" aria-label="Top-down animation of the Shah Alam to KL corridor. The selected scenario and its results are described in the text below."></canvas>
           </div>
 
           <div class="jam-sim__controls" role="group" aria-label="Choose a scenario">
-            <button class="sim-btn" id="sim-btn-base" data-scenario="base">
-              <span class="sim-btn__icon">&#x1F6A6;</span>
+            <button type="button" class="sim-btn" id="sim-btn-base" data-scenario="base">
+              <span class="sim-btn__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="20" rx="3"/><circle cx="12" cy="7" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="17" r="1.4"/></svg></span>
               <span class="sim-btn__label">Today&#x2019;s Jam</span>
               <span class="sim-btn__sub">Status quo &middot; 2026</span>
             </button>
-            <button class="sim-btn sim-btn--bad" id="sim-btn-lanes" data-scenario="lanes">
-              <span class="sim-btn__icon">&#x1F6E3;&#xFE0F;</span>
+            <button type="button" class="sim-btn sim-btn--bad" id="sim-btn-lanes" data-scenario="lanes">
+              <span class="sim-btn__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3 5 21M15 3l4 18M12 4v3M12 11v3M12 18v3"/></svg></span>
               <span class="sim-btn__label">Add Car Lanes</span>
               <span class="sim-btn__sub">The old answer</span>
             </button>
-            <button class="sim-btn sim-btn--good" id="sim-btn-transit" data-scenario="transit">
-              <span class="sim-btn__icon">&#x1F68C;</span>
+            <button type="button" class="sim-btn sim-btn--good" id="sim-btn-transit" data-scenario="transit">
+              <span class="sim-btn__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="14" rx="2"/><path d="M4 11h16"/><circle cx="8" cy="20" r="1.4"/><circle cx="16" cy="20" r="1.4"/></svg></span>
               <span class="sim-btn__label">Add Transit</span>
               <span class="sim-btn__sub">The right answer</span>
             </button>
           </div>
 
-          <div class="jam-sim__outcomes" aria-label="Outcome metrics">
+          <div class="jam-sim__outcomes" role="group" aria-label="Outcome metrics">
             <div class="sim-metric">
               <span class="sim-metric__label">People moved / hr</span>
               <div class="sim-metric__track"><div class="sim-metric__fill" id="sim-b-pph"></div></div>
@@ -202,7 +206,7 @@
             </div>
           </div>
 
-          <p class="jam-sim__insight" id="sim-insight"></p>
+          <p class="jam-sim__insight" id="sim-insight" aria-live="polite"></p>
         </div>
       </section>
       <!-- 02 · PRAGMATIC URBANISM · KEEP & GREEN HIGHWAYS -->
@@ -311,7 +315,7 @@
           play the live <strong>2026 &rarr; 2036 Timelapse</strong> below.
         </p>
 
-        <div class="charter-grid" aria-label="Six-point people's mobility and civic manifesto">
+        <div class="charter-grid" role="group" aria-label="Six-point people's mobility and civic manifesto">
           <div class="charter-card">
             <div class="charter-num">PILLAR 01</div>
             <h3>Railways as the National Backbone</h3>
@@ -350,7 +354,7 @@
           </blockquote>
           <div class="creed-footer">
             <span class="creed-sign">— Muhammad Alif Najmi · Written Nov 2026</span>
-            <button class="pledge-btn" id="pledge-btn" type="button" aria-pressed="false">
+            <button class="pledge-btn" id="pledge-btn" type="button">
               Witness This 10-Year Pledge
             </button>
           </div>

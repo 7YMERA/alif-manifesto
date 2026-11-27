@@ -28,21 +28,25 @@ If you are an AI agent picking up this repo to polish or extend it, follow these
 
 ## Project Architecture & File Map
 
-Plain HTML5, Vanilla CSS, Vanilla JS + Three.js (`r128` via jsDelivr CDN). **Zero build step, zero bundler, zero npm dependencies** — deploys directly to Vercel.
+Plain HTML5, Vanilla CSS, Vanilla JS (ES modules) + Three.js `0.128.0` from npm, bundled by **Vite**. No framework. `npm run build` outputs `dist/`, which Vercel serves.
 
 | File | Responsibility |
 |---|---|
 | `index.html` | Semantic HTML5 structure, `Press to Go` opening pill, top nav with real logos, 7 scroll chapters (`00`–`06`) + full-bleed bottom `#city-showcase`, floating `Before / After` dock (`#compare-dock`), and `↑ Top` button. |
 | `styles.css` | RapidKL Red & Blue light/dark design system, compact side-mounted cards with 6px accent ribbons & `<mark class="hl">` highlights, bottom chapter dock, top scroll hairline, kinetic year watermark, and responsive breakpoints. |
-| `scene.js` | Complete Three.js 3D Malaysian metropolis engine (see breakdown below). |
-| `app.js` | `Press to Go` opening handoff, scroll progress → `ManifestoScene.setScrollProgress()`, `IntersectionObserver` chapter rail & HUD sync, **Auto-Cruise** hands-free scroll mode, Daylight / Golden Hour & Light / Dark toggles, **End-of-Scroll Before / After** slider (`setCompareRatio`), and local **Witness This 10-Year Pledge** stamp. |
+| `src/main.js` | Entry point: boots the scene, the app bridge and the simulator. |
+| `src/scene.js` | Complete Three.js 3D Malaysian metropolis engine (see breakdown below). |
+| `src/simulator.js` | Induced-demand corridor simulator (Canvas 2D). Pauses off-screen; vehicles stand still under reduced motion. |
+| `src/audio.js` | Scroll-driven Web Audio soundscape. |
+| `src/mirage/env.js` | Golden-hour PMREM environment map. |
+| `src/app.js` | `Press to Go` opening handoff, rAF-throttled scroll progress → `ManifestoScene.setScrollProgress()`, sound toggle, skip-link focus handling, **End-of-Scroll Before / After** slider + timelapse (`setCompareRatio`), and local **Witness This 10-Year Pledge** stamp. Smooth scrolling and the timelapse respect `prefers-reduced-motion`. |
 | `vercel.json` | Clean URLs and security headers for static Vercel deployment. |
 | `assets/city/*` | Real 3D Kuala Lumpur landmark JSON models (`klcc.json`, `menara_kl.json`, `merdeka118.json`, `exchange106.json`), terrain textures (`terrain_color.jpg`, `terrain_ao.jpg`, `terrain_h.json`), and building facade textures (`facade_glass.jpg`, `facade_night.jpg`) imported from `7YMERA/7ymera.github.io`. |
 | `assets/icons/*` | `github-avatar.png` (GitHub profile logo), `kakilima-logo.svg` (custom shaded sidewalk + tropical leaf emblem), `portfolio-logo.svg` (glossy mirror chrome `\7` monogram). |
 
 ---
 
-## 3D Scene Architecture (`scene.js`)
+## 3D Scene Architecture (`src/scene.js`)
 
 1. **Interactive `Press to Go` Opening**:
    - Camera opens directly behind a detailed **RapidKL 750** bus (`W 750 MY`, glowing amber `750 · KL SENTRAL` canvas LED matrix, dual red brake lights, roof AC pod) parked in lane `-2.4` at `z = 48.5`.
@@ -71,14 +75,19 @@ Plain HTML5, Vanilla CSS, Vanilla JS + Three.js (`r128` via jsDelivr CDN). **Zer
 8. **Ugliness → Shared Spaces + End-of-Scroll Before/After (`f0aac9c`)**: Made sky haze, sidewalks, shophouses, awnings, and towers progressively transform from drab 2026 grey to vibrant 2036 colors, and added the end-of-scroll Before/After slider.
 9. **`Press to Go` Opening, Underground LRT, KLCC Ring Road & Logos (`d7c87f9`, `dcb509d`, `a2c17da`)**: Replaced the opening modal with the interactive `Press to Go` behind-the-bus opening (zoom-in → pull-back with frozen zero-clipping jam), smoothed camera angles to a straight forward glide, routed the LRT underground into a tunnel portal before KLCC, added a curved KLCC perimeter ring road, and added the GitHub avatar, custom KakiLima SVG, and glossy mirror `\7` portfolio logo.
 
+10. **Polish pass (2026-11-27)**: Fixed a `metricCur is not defined` crash in the simulator, removed the duplicate scenario label and emoji icons (now outline SVG), made reduced-motion honoured across scroll, intro, simulator and timelapse, raised tap targets to 44 px, darkened small red text for contrast, fixed the skip link to move focus, removed the unreferenced legacy root `app.js`/`scene.js`/`audio.js`, and added twitter meta and a `<noscript>` summary.
+
 ---
 
 ## Run Locally & Deploy to Vercel
 
 ```bash
-python3 -m http.server 8765
+npm ci
+npm run dev        # Vite dev server
+npm run build      # outputs dist/
+npm run preview    # serves dist/ on :4173
 ```
 
-Open `http://localhost:8765`.
+**Deploy on Vercel**: Import `7YMERA/alif-manifesto` → Framework Preset: **Vite** (settings come from `vercel.json`: `npm run build`, output `dist`).
 
-**Deploy on Vercel**: Import `7YMERA/alif-manifesto` at [vercel.com/new](https://vercel.com/new) → Framework Preset: **Other** → Deploy (no build command required).
+**Before pushing**: `node --check src/*.js`, `npm run build` with zero errors, and look at a real frame at 1300 px and 390 px (light theme).

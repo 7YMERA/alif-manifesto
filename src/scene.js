@@ -952,7 +952,7 @@ export function createManifestoScene() {
     }
 
     if (introState === 'departing') {
-      introT = Math.min(1, introT + dt / 2.2);
+      introT = Math.min(1, introT + dt / (reducedMotion ? 0.4 : 2.2));
       if (introT >= 1) introState = 'active';
     }
 
