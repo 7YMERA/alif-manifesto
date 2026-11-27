@@ -20,6 +20,21 @@ Master Blender source: [`blender/alif_mirage_assets.blend`](../../blender/alif_m
 | `kl_jejantas_bridge.glb` | `703.1 KB` | `33.80m × 9.81m × 9.63m` | `y=0`, spans along `X`, **clear roadway span `~26.4m`** (`x=-13.2..+13.2`), **bottom deck clearance `y >= 5.75m`** | `concrete`, `paving_terracotta`, `timber_warm`, `metal_silver`, `metal_dark`, `paint_blue`, `glass_dark`, `emissive_cabin`, `emissive_amber`, `bark_warm`, `foliage_emerald`, `foliage_bright`, `flower_crimson`, `flower_coral`, `flower_gold`, `flower_white` |
 | `roadside_flower_planter.glb` | `107.1 KB` | `1.79m × 1.45m × 8.15m` | `y=0`, modular `8.0m` length along `Z` for roadsides & medians | `concrete`, `timber_warm`, `metal_dark`, `bark_warm`, `foliage_emerald`, `foliage_bright`, `flower_crimson`, `flower_coral`, `flower_gold`, `flower_white` |
 | `shared_space_plaza.glb` *(optional Ch 05)* | `269.4 KB` | `28.00m × 6.45m × 22.00m` | `y=0`, centered `X/Z`, facing `+Z` | `concrete`, `paving_terracotta`, `timber_warm`, `metal_dark`, `metal_silver`, `emissive_amber`, `bark_warm`, `foliage_emerald`, `flower_gold` |
+| `kl_city_map.glb` *(Real KL OSM Map)* | `997.7 KB` | `440.00m × 8.23m × 570.00m` | `y≈0`, bounds `X: -220..220`, `Z: -430..140`; aligned to KLCC/Menara KL/Merdeka 118/Exchange 106 | `terrain_grass`, `asphalt_road`, `concrete`, `road_marking`, `paint_blue`, `water_river`, `foliage_emerald`, `metal_silver` |
+
+---
+
+## Real-World Kuala Lumpur OSM Map & Routing Data (Standalone Reference Package)
+Built from real OpenStreetMap Kuala Lumpur geometry in the exact `+Y`-up scene coordinate frame (`origin: 3.1500°N, 101.7090°E`, `scale: 0.065937`, `rot: -3.56°`, aligned to `klcc`, `menara_kl`, `merdeka118`, and `exchange106`) so external agents (e.g. Claude) can inspect or build directly on real KL roads:
+
+- **`assets/models/kl_city_map.glb`** (`997.7 KB`) & **`blender/kl_city_map.blend`** (dedicated Blender 5.3 source, kept separate from `blender/alif_mirage_assets.blend`):
+  - 13 batched architectural meshes: `KL_Terrain`, `KL_River_Embankment`, `KL_River_SungaiKlang`, `KL_Parks` (KLCC Park, Bukit Nanas, etc.), `KL_Roads_Motorway`, `KL_Roads_Primary`, `KL_Roads_Secondary`, `KL_Roads_Roundabouts`, `KL_Sidewalks_Primary`, `KL_Roads_BusLanes` (cobalt priority strips), `KL_Road_Markings`, `KL_Rail_ViaductDeck`, `KL_Rail_Corridors`.
+- **`assets/models/road_paths.json`**:
+  - `bus_routes`: 6 continuous stitched real KL corridors (`jalan_ampang_corridor`, `jalan_tun_razak_loop`, `jalan_sultan_ismail_corridor`, `jalan_syed_putra_corridor`, `akleh_express_corridor`, `kl_central_loop`), each `[[x, y, z], ...]` at `y = 0.07`.
+  - `car_lanes`: 8 bidirectional multi-lane splines (`kl_lane_1`..`kl_lane_8`).
+  - `plaza_anchors`: `shared_spaces` (6 `[x, y, z, rotY]`), `bus_shelters` (8 `[x, y, z, rotY]`), `tree_clusters` (24 `[x, y, z, rotY]`).
+  - `viaduct_anchors`: 10 `[x, y, z, rotY]` anchors along the elevated AKLEH corridor.
+- **`assets/city/kl_real_roads.json`** (`151.1 KB`): Raw projected OpenStreetMap polylines (`roads.motorway`, `roads.primary`, `roads.secondary`, `roads.roundabout`, `river`, `rail`, `parks`).
 
 ---
 
