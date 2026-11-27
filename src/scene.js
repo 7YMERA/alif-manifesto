@@ -1006,6 +1006,25 @@ export function createManifestoScene() {
     renderer.render(scene, camera);
   }
 
-  requestAnimationFrame(animate);
+  // ── Pause RAF when the canvas is off-screen (optimize-web-animations skill) ──
+  // Zero GPU cost while the user has scrolled the canvas out of view.
+  let _canvasVisible = true;
+  const _visIO = new IntersectionObserver((entries) => {
+    _canvasVisible = entries[0].isIntersecting;
+  }, { threshold: 0 });
+  _visIO.observe(canvas);
+
+  document.addEventListener('visibilitychange', () => {
+    _canvasVisible = !document.hidden;
+  });
+
+  // Wrap the animate call so it short-circuits when off-screen
+  const _animateOuter = (now) => {
+    requestAnimationFrame(_animateOuter);
+    if (!_canvasVisible) return;
+    animate(now);
+  };
+
+  requestAnimationFrame(_animateOuter);
   return api;
 }

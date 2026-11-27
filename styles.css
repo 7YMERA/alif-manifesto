@@ -831,3 +831,17 @@ mark.hl--green { background: var(--green-soft); color: var(--green); }
 }
 [data-theme="light"] .sim-metric__track { background: rgba(0,0,0,0.08); }
 [data-theme="light"] .jam-sim__insight  { border-color: rgba(0,0,0,0.12); }
+/* ── Scroll-reveal (from animation-on-scroll skill) ──────────────── */
+.animate-on-scroll {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.75s cubic-bezier(0.4,0,0.2,1),
+              transform 0.75s cubic-bezier(0.4,0,0.2,1);
+}
+.animate-on-scroll.is-revealed {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-on-scroll { opacity: 1; transform: none; transition: none; }
+}
