@@ -6,7 +6,7 @@ An interactive, scroll-driven 3D Malaysian civic & political manifesto for **Muh
 
 ## Agent Handoff & Owner Rules (Read First!)
 
-If you are an AI agent picking up this repo to polish or extend it, follow these non-negotiable rules from the owner:
+Read [`docs/CLAUDE-LOG.md`](docs/CLAUDE-LOG.md) and `7YMERA/skills/project-skills/alif-manifesto/SKILL.md` first, and update `docs/CLAUDE-LOG.md` + this `README.md` in the same commit. Follow these non-negotiable rules from the owner:
 
 1. **Privacy (Public Repo)**:
    - Personal manifesto only — never publish any employer or company names, client details, or colleagues' info.
