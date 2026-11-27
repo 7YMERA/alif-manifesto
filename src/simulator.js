@@ -16,20 +16,20 @@ const SCENARIOS = {
       ['Ground roads', 'Full', 'bad'],
     ],
     metrics: { pph: 1800, journey: 40, noise: 82, co2: 210 },
-    insight: `Bypass 1 already exists, and it is <mark class="hl hl--red">full</mark>. The ground roads crawl beneath it. Measured on the RapidKL 750: <mark class="hl hl--blue">18 km in 40 minutes</mark>, because the bus sits in the same traffic as everyone else.`,
+    insight: `<mark class="hl hl--red">Cars cause congestion. Not people.</mark> Each car is one or two people taking up a whole lane. Bypass 1 is full, the ground roads crawl, and the RapidKL 750 bus is stuck in the same jam: <mark class="hl hl--blue">18 km in 40 minutes</mark>.`,
   },
   bypass2: {
-    status: 'Bypass 2, built on top of Bypass 1',
+    status: 'Bypass 2: another tangle of flyovers',
     legend: [
       ['Bypass 2', 'Full', 'bad'],
       ['Bypass 1', 'Full', 'bad'],
       ['Ground roads', 'Full', 'bad'],
     ],
     metrics: { pph: 2100, journey: 40, noise: 86, co2: 240 },
-    insight: `Bypass 2 opens and, for a while, it flows. So more people drive. Then <mark class="hl hl--red">Bypass 1 and Bypass 2 are both full</mark>. Studies of US cities find traffic rises roughly in step with road capacity (Duranton &amp; Turner, 2011). More road invites more cars.`,
+    insight: `Bypass 2: ramps, loops and flyovers that make no sense. For a while it flows, so more cars arrive. Then <mark class="hl hl--red">both bypasses are full</mark>. More road invites more cars; studies of US cities find traffic rises roughly in step with road capacity (Duranton &amp; Turner, 2011).`,
   },
   bypass3: {
-    status: 'Bypass 3, built on top of Bypass 2',
+    status: 'Bypass 3: even more flyovers',
     legend: [
       ['Bypass 3', 'Full', 'bad'],
       ['Bypass 2', 'Full', 'bad'],
@@ -37,7 +37,7 @@ const SCENARIOS = {
       ['Ground roads', 'Full', 'bad'],
     ],
     metrics: { pph: 2200, journey: 41, noise: 89, co2: 265 },
-    insight: `So build Bypass 3. Same result: <mark class="hl hl--red">all three are full</mark> and the ground roads still crawl. Bypass 4? Every one of these is a road for cars, so every one of them fills up. There is no last bypass.`,
+    insight: `Bypass 3: another knot of concrete spaghetti, and <mark class="hl hl--red">every deck is full</mark>. The cars fill whatever you build. Bypass 4? Bypass 5? <mark class="hl hl--red">There is no last bypass.</mark>`,
   },
   rail: {
     status: 'Mass rail instead',
@@ -48,7 +48,7 @@ const SCENARIOS = {
       ['Mass rail', 'Running', 'rail'],
     ],
     metrics: { pph: 12800, journey: 20, noise: 64, co2: 38 },
-    insight: `Take people off the road instead. <mark class="hl hl--blue">Mass rail</mark> moves far more people per hour on a strip a fraction as wide, and it does not fill up by inviting more cars. The money for Bypass 2 and 3 builds the line.`,
+    insight: `<mark class="hl hl--blue">Mass transit fixes congestion because it takes the cars off the road.</mark> Trains do not sit in traffic and they move far more people on a strip a fraction as wide. <mark class="hl hl--blue">It is not too late for Malaysia.</mark> Stop the bypasses and build the line.`,
   },
 };
 

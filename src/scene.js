@@ -291,7 +291,6 @@ export function createManifestoScene() {
     0xdadfe5, 0x3b4856, 0x9aa5b1, 0x1e4c8a, 0xb8352e,
     0xc4a46c, 0x2b333d, 0x4b7466, 0xe8e4dc
   ];
-  const TIER_GAP = 8.6;
   const HWY_X = -16.5;
   const JAM_LANES = [-2.4, 0, 2.4];          // lane offsets from the deck centre
   const JAM_Z_FROM = 52, JAM_Z_TO = -128, JAM_STEP = 5.6;
@@ -352,34 +351,181 @@ export function createManifestoScene() {
 
   const hwyJam = makeJamTraffic(highwayGroup, 7.81, 0);
 
-  const bypassTiers = [1, 2].map((k) => {
-    const grp = new THREE.Group();
-    const dy = TIER_GAP * k;
-    const deck = new THREE.Mesh(new THREE.BoxGeometry(8.8, 1.05, 316), concreteMat);
-    deck.position.set(HWY_X, 7.2 + dy, -84);
-    deck.castShadow = true; deck.receiveShadow = true;
-    const road = new THREE.Mesh(new THREE.BoxGeometry(7.8, 0.12, 316), asphaltMat);
-    road.position.set(HWY_X, 7.75 + dy, -84);
-    road.receiveShadow = true;
-    grp.add(deck, road);
-    [-20.6, -12.4].forEach((rx) => {
-      const rail = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.65, 316), concreteMat);
-      rail.position.set(rx, 8.05 + dy, -84);
-      grp.add(rail);
-    });
-    for (let pz = 64; pz >= -232; pz -= 28) {
-      [-19.2, -13.8].forEach((px) => {
-        const pier = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.95, TIER_GAP, 10), concreteMat);
-        pier.position.set(px, 7.2 + dy - TIER_GAP / 2, pz);
-        pier.castShadow = true;
-        grp.add(pier);
+  // Malaysian-style interchange spaghetti: flyovers that loop, cross and stack for no
+  // visible reason. Each ribbon is a curved elevated road with piers and its own jam.
+  const RIBBON_W = 2.3;          // half width: two lanes
+  const RIBBON_T = 0.9;          // deck thickness
+  const RIBBON_SEGS = 120;
+  const RIBBON_CAR_STEP = 5.4;
+  const PIER_STEP = 15;
+  const ribbonMat = concreteMat.clone();
+  ribbonMat.side = THREE.DoubleSide; // own material: the shared highway material stays single-sided
+  const ribbonUp = new THREE.Vector3(0, 1, 0);
+  const rbA = new THREE.Vector3(), rbT = new THREE.Vector3(), rbS = new THREE.Vector3(), rbU = new THREE.Vector3();
+  const rbQ = new THREE.Matrix4(), rbLocal = new THREE.Matrix4();
+  const rbPier = new THREE.CylinderGeometry(0.7, 0.85, 1, 8);
+  rbPier.translate(0, 0.5, 0);
+
+  function helixPoints(cx, cz, R, turns, dir, drift, y0, y1, a0 = 0) {
+    const pts = [];
+    for (let k = 0; k <= 44; k++) {
+      const t = k / 44;
+      const a = a0 + dir * Math.PI * 2 * turns * t;
+      const y = y0 + (y1 - y0) * t * t * (3 - 2 * t);
+      pts.push(new THREE.Vector3(cx + R * Math.cos(a), y, cz + drift * t + R * Math.sin(a)));
+    }
+    return pts;
+  }
+
+  function weavePoints(zFrom, zTo, xAt, y0, y1) {
+    const pts = [];
+    for (let k = 0; k <= 40; k++) {
+      const t = k / 40;
+      const z = zFrom + (zTo - zFrom) * t;
+      pts.push(new THREE.Vector3(xAt(z), y0 + (y1 - y0) * t, z));
+    }
+    return pts;
+  }
+
+  function makeRibbon(points, seed) {
+    const curve = new THREE.CatmullRomCurve3(points, false, 'catmullrom', 0.5);
+    const len = curve.getLength();
+
+    // Deck: four faces per segment so edges stay crisp. Index order follows the path, so
+    // drawRange grows the road from its start to its end.
+    const pos = [], nor = [], idx = [];
+    for (let k = 0; k <= RIBBON_SEGS; k++) {
+      const u = k / RIBBON_SEGS;
+      curve.getPointAt(u, rbA);
+      curve.getTangentAt(u, rbT);
+      rbS.crossVectors(ribbonUp, rbT).normalize();
+      rbU.crossVectors(rbT, rbS).normalize();
+      const corner = (sx, ud) => [rbA.x + rbS.x * RIBBON_W * sx + rbU.x * ud, rbA.y + rbS.y * RIBBON_W * sx + rbU.y * ud, rbA.z + rbS.z * RIBBON_W * sx + rbU.z * ud];
+      const tl = corner(-1, 0), tr = corner(1, 0), br = corner(1, -RIBBON_T), bl = corner(-1, -RIBBON_T);
+      // top, right, bottom, left (each face has two vertices per ring)
+      [[tl, tr, rbU, 1], [tr, br, rbS, 1], [br, bl, rbU, -1], [bl, tl, rbS, -1]].forEach(([a, b, n, sg]) => {
+        pos.push(...a, ...b);
+        nor.push(n.x * sg, n.y * sg, n.z * sg, n.x * sg, n.y * sg, n.z * sg);
       });
     }
-    const jam = makeJamTraffic(grp, 7.81 + dy, k * 11);
+    for (let k = 0; k < RIBBON_SEGS; k++) {
+      for (let f = 0; f < 4; f++) {
+        const a = k * 8 + f * 2, b = a + 1, c = a + 8, d = a + 9;
+        if (f === 1 || f === 3) idx.push(a, c, b, b, c, d);
+        else idx.push(a, b, c, b, d, c);
+      }
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    geo.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+    geo.setIndex(idx);
+    const deck = new THREE.Mesh(geo, ribbonMat);
+    deck.castShadow = true;
+    deck.receiveShadow = true;
+    deck.frustumCulled = false;
+
+    // Piers, one every PIER_STEP along the road.
+    const pierCount = Math.max(2, Math.floor(len / PIER_STEP));
+    const piers = new THREE.InstancedMesh(rbPier, concreteMat, pierCount);
+    for (let k = 0; k < pierCount; k++) {
+      curve.getPointAt((k + 0.5) / pierCount, rbA);
+      const h = Math.max(0.5, rbA.y - RIBBON_T);
+      jamTmp.position.set(rbA.x, 0, rbA.z);
+      jamTmp.rotation.set(0, 0, 0);
+      jamTmp.scale.set(1, h, 1);
+      jamTmp.updateMatrix();
+      piers.setMatrixAt(k, jamTmp.matrix);
+    }
+    jamTmp.scale.set(1, 1, 1);
+    piers.instanceMatrix.needsUpdate = true;
+    piers.castShadow = true;
+    piers.frustumCulled = false;
+    piers.count = 0;
+
+    // Jam: two lanes of cars nose to tail along the whole road.
+    const rows = Math.max(2, Math.floor(len / RIBBON_CAR_STEP));
+    const n = rows * 2;
+    const body = new THREE.InstancedMesh(jamBodyGeo, jamBodyMat, n);
+    const cabin = new THREE.InstancedMesh(jamCabinGeo, jamCabinMat, n);
+    const tail = new THREE.InstancedMesh(jamTailGeo, jamTailMat, n);
+    let ci = 0;
+    for (let r = 0; r < rows; r++) {
+      const u = Math.min(0.999, (r + 0.5) / rows);
+      curve.getPointAt(u, rbA);
+      curve.getTangentAt(u, rbT);
+      rbS.crossVectors(ribbonUp, rbT).normalize();
+      for (let lane = 0; lane < 2; lane++) {
+        const off = lane === 0 ? -1.15 : 1.15;
+        jamTmp.position.set(rbA.x + rbS.x * off, rbA.y + rbS.y * off, rbA.z + rbS.z * off);
+        jamTmp.up.copy(ribbonUp);
+        jamTmp.lookAt(jamTmp.position.x + rbT.x, jamTmp.position.y + rbT.y, jamTmp.position.z + rbT.z);
+        jamTmp.updateMatrix();
+        rbQ.copy(jamTmp.matrix);
+        // front is +z after lookAt, so the brake lights sit at -z
+        rbLocal.makeTranslation(0, 0.5, 0); body.setMatrixAt(ci, rbLocal.premultiply(rbQ));
+        rbLocal.makeTranslation(0, 1.13, -0.1); cabin.setMatrixAt(ci, rbLocal.premultiply(rbQ));
+        rbLocal.makeTranslation(0, 0.57, -2.06); tail.setMatrixAt(ci, rbLocal.premultiply(rbQ));
+        jamCol.setHex(SEDAN_COLORS[(ci * 7 + seed) % SEDAN_COLORS.length]);
+        body.setColorAt(ci, jamCol);
+        cabin.setColorAt(ci, jamCol.multiplyScalar(0.62));
+        ci++;
+      }
+    }
+    [body, cabin, tail].forEach((m) => {
+      m.instanceMatrix.needsUpdate = true;
+      m.frustumCulled = false;
+      m.count = 0;
+    });
+    body.instanceColor.needsUpdate = true;
+    cabin.instanceColor.needsUpdate = true;
+    jamTmp.position.set(0, 0, 0);
+    jamTmp.quaternion.identity();
+
+    const group = new THREE.Group();
+    group.add(deck, piers, body, cabin, tail);
+    return {
+      group,
+      // grown: 0..1 of the road built; filled: 0..1 of its cars present
+      set(grown, filled) {
+        const segs = Math.floor(RIBBON_SEGS * clamp(grown, 0, 1));
+        geo.setDrawRange(0, segs * 24);
+        deck.visible = segs > 0;
+        piers.count = Math.floor(pierCount * clamp(grown, 0, 1));
+        const c = Math.floor(n * clamp(grown, 0, 1) * clamp(filled, 0, 1));
+        body.count = cabin.count = tail.count = c;
+        body.visible = cabin.visible = tail.visible = c > 0;
+      }
+    };
+  }
+
+  // Bypass 2 and Bypass 3. Deliberately illogical: loops that return to where they started,
+  // roads that cross over each other at three heights, ramps that end in the sky.
+  const SPAGHETTI = [
+    [
+      helixPoints(-14, 32, 10, 1.25, 1, -35, 13, 22),
+      helixPoints(-6, -22, 12, 1.5, -1, -40, 15, 25, 1.2),
+      weavePoints(56, -118, (z) => -12 + 12 * Math.sin(z / 16), 17, 21),
+      helixPoints(-20, -72, 9, 1.3, 1, -30, 14, 24, 2.4),
+    ],
+    [
+      weavePoints(52, -112, (z) => -4 + 14 * Math.sin(z / 12 + 1.2), 27, 31),
+      helixPoints(-10, 10, 13, 1.6, -1, -50, 26, 36, 0.6),
+      helixPoints(-18, -45, 11, 1.4, 1, -30, 28, 38, 3.4),
+      helixPoints(2, -80, 10, 1.5, -1, -25, 27, 37, 2.0),
+      weavePoints(42, -100, (z) => -20 + 9 * Math.cos(z / 10), 35, 29),
+    ],
+  ];
+
+  const bypassTiers = SPAGHETTI.map((paths, k) => {
+    const grp = new THREE.Group();
+    const ribbons = paths.map((pts, j) => {
+      const rb = makeRibbon(pts, k * 13 + j * 5);
+      grp.add(rb.group);
+      return rb;
+    });
     grp.visible = false;
-    grp.scale.y = 0.001;
     world.add(grp);
-    return { grp, jam, built: 0, fill: 0 };
+    return { grp, ribbons, built: 0, fill: 0 };
   });
 
   // =========================================================================
@@ -847,8 +993,8 @@ export function createManifestoScene() {
   let hwyFill = 0;
   // Simulator camera: high and to the right of the stack, looking down the corridor,
   // so every deck's traffic is visible between the title card and the control panel.
-  const simPos = new THREE.Vector3(26, 34, 70);
-  const simLook = new THREE.Vector3(-14, 17, -60);
+  const simPos = new THREE.Vector3(32, 44, 92);
+  const simLook = new THREE.Vector3(-12, 20, -55);
   let introState = 'waiting';
   let introT = 0;
   const raycaster = new THREE.Raycaster();
@@ -955,17 +1101,22 @@ export function createManifestoScene() {
       jamMode && (simKey === 'bypass2' || simKey === 'bypass3'),
       jamMode && simKey === 'bypass3'
     ];
-    const buildRate = reducedMotion ? 1 : 1 - Math.exp(-1.6 * wallDt);
     const fillRate = reducedMotion ? 1 : 1 - Math.exp(-0.7 * wallDt);
     let stackMoving = false;
     bypassTiers.forEach((t, i) => {
       const prev = t.built;
-      t.built = lerp(t.built, wantTier[i] ? 1 : 0, buildRate);
-      if (Math.abs(t.built - (wantTier[i] ? 1 : 0)) < 0.004) t.built = wantTier[i] ? 1 : 0;
-      t.grp.visible = t.built > 0.01;
-      t.grp.scale.y = Math.max(0.001, smoothstep(0, 1, t.built));
-      t.fill = lerp(t.fill, wantTier[i] && t.built >= 1 ? 1 : 0, wantTier[i] ? fillRate : 1);
-      t.jam.setFill(t.fill > 0.01 ? t.fill : 0);
+      const goal = wantTier[i] ? 1 : 0;
+      // Roads are laid at a steady pace (about 4 s per bypass); removal is quicker.
+      const step = reducedMotion ? 1 : wallDt * (goal ? 0.26 : 0.9);
+      t.built = t.built < goal ? Math.min(goal, t.built + step) : Math.max(goal, t.built - step);
+      t.grp.visible = t.built > 0.001;
+      t.fill = lerp(t.fill, goal && t.built >= 1 ? 1 : 0, goal ? fillRate : 1);
+      const n = t.ribbons.length;
+      t.ribbons.forEach((rb, j) => {
+        // ribbons start one after another with some overlap
+        const grown = clamp((t.built * (n + 1.2) - j) / 1.2, 0, 1);
+        rb.set(grown, t.fill > 0.01 ? t.fill : 0);
+      });
       if (t.built !== prev) stackMoving = true;
     });
     hwyFill = lerp(hwyFill, jamMode ? 1 : 0, jamMode ? fillRate : 1);
