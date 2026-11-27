@@ -10,7 +10,9 @@ function createAudioEngine() {
       start: () => false,
       toggle: () => false,
       setProgress: () => {},
-      isEnabled: () => false
+      isEnabled: () => false,
+      playChime: () => {},
+      playHorn: () => {}
     };
   }
 
@@ -80,6 +82,90 @@ function createAudioEngine() {
     osc2.start(now);
     osc1.stop(now + dur + 0.02);
     osc2.stop(now + dur + 0.02);
+    osc1.onended = () => {
+      osc1.disconnect();
+      osc2.disconnect();
+      f.disconnect();
+      g.disconnect();
+    };
+  }
+
+  function canPlaySfx() {
+    return Boolean(enabled && ctx && masterGain && !document.hidden && ctx.state === 'running');
+  }
+
+  function playPledgeChime() {
+    const now = ctx.currentTime;
+    // Warm 3-note rising Malaysian LRT/MRT station chime (C5 -> E5 -> G5)
+    const notes = [523.25, 659.25, 783.99];
+    const step = 0.13;
+
+    notes.forEach((freq, i) => {
+      const t0 = now + i * step;
+      const dur = i === notes.length - 1 ? 0.68 : 0.42;
+
+      const oscFund = ctx.createOscillator();
+      const oscOver = ctx.createOscillator();
+      const fundGain = ctx.createGain();
+      const overGain = ctx.createGain();
+      const noteGain = ctx.createGain();
+
+      oscFund.type = 'sine';
+      oscFund.frequency.setValueAtTime(freq, t0);
+
+      oscOver.type = 'triangle';
+      oscOver.frequency.setValueAtTime(freq * 2, t0);
+
+      fundGain.gain.value = 0.82;
+      overGain.gain.value = 0.18;
+
+      noteGain.gain.setValueAtTime(0.0001, t0);
+      noteGain.gain.linearRampToValueAtTime(0.06, t0 + 0.015);
+      noteGain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+
+      oscFund.connect(fundGain);
+      oscOver.connect(overGain);
+      fundGain.connect(noteGain);
+      overGain.connect(noteGain);
+      noteGain.connect(masterGain);
+
+      oscFund.start(t0);
+      oscOver.start(t0);
+      oscFund.stop(t0 + dur + 0.03);
+      oscOver.stop(t0 + dur + 0.03);
+      oscFund.onended = () => {
+        oscFund.disconnect();
+        oscOver.disconnect();
+        fundGain.disconnect();
+        overGain.disconnect();
+        noteGain.disconnect();
+      };
+    });
+  }
+
+  function playTickChime() {
+    const now = ctx.currentTime;
+    const dur = 0.035;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(640, now);
+    osc.frequency.exponentialRampToValueAtTime(420, now + dur);
+
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.linearRampToValueAtTime(0.025, now + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+
+    osc.connect(g);
+    g.connect(masterGain);
+
+    osc.start(now);
+    osc.stop(now + dur + 0.01);
+    osc.onended = () => {
+      osc.disconnect();
+      g.disconnect();
+    };
   }
 
   function clearAmbientTimers() {
@@ -273,6 +359,18 @@ function createAudioEngine() {
     },
     isEnabled() {
       return enabled;
+    },
+    playChime(kind) {
+      if (!canPlaySfx()) return;
+      if (kind === 'pledge') {
+        playPledgeChime();
+      } else if (kind === 'tick') {
+        playTickChime();
+      }
+    },
+    playHorn() {
+      if (!canPlaySfx()) return;
+      playDistantHorn(0.85);
     }
   };
 }

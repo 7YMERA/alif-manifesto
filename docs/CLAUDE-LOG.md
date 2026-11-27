@@ -4,10 +4,10 @@
 
 ## Current state (2026-11-27)
 
-- **Branch / deploy**: `main` builds with Vite (`npm run build` → `dist/`) and deploys automatically to Vercel.
+- **Branch / deploy**: `main` builds with Vite (`npm run build` → `dist/`, split `three` `524.20 kB` + `motion` `93.92 kB` vendor chunks) and deploys automatically to Vercel with immutable `/assets/*` caching and hardened security headers (`vercel.json`).
 - **Stack**: Vanilla HTML/CSS/ES modules + Three.js `0.128.0` + `lenis` + `gsap` (`ScrollTrigger`) + Web Audio API. (Per the Vercel experiment rule in `7YMERA/skills`, focused bundled libraries are allowed here even though `7ymera.github.io` stays zero-bundler.)
-- **Checks**: `npm run check` passes (`road network connectivity`, `real-KL city: 1100 buildings kept / 214 cleared`, `camera path: max turn rate 238, 0 backwards steps`), `node --check src/*.js` passes, `npm run build` succeeds with 0 errors.
-- **Browser audit (2026-11-27)**: Verified in headless Chromium at `1300×820` and `390×844` — 0 console/page errors, `overflowX: 0`, Lenis + GSAP ScrollTrigger active, masked word-by-word headlines, kinetic Year HUD (`2026 → 2036`), scroll-drawn rail-map beams, RapidKL 750 rolling stat tickers, 21st.dev border-spotlight + 3D tilt, and interactive Grid ↔ 3D Deck Charter view all verified visually.
+- **Checks**: `npm run check` passes (`road network connectivity`, `real-KL city: 1100 buildings kept / 214 cleared`, `camera path: max turn rate 238, 0 backwards steps`), `node --check src/*.js` and `vite.config.js` pass, `npm run build` succeeds in `1.34s` with 0 errors, `dist/assets/og-card.png` verified (`1200×630`).
+- **Browser audit (2026-11-27)**: Verified in headless Chrome across Desktop `1300×820`, Mobile `390×844`, and `prefers-reduced-motion: reduce` (24/24 assertions, 0 console/page errors, `overflowX: 0`) — interactive Klang Valley Route Map drawer (9 stops, all `>= 44px`), route jumps to `#phase-4`, Charter Grid keyboard `Enter`/`Space` + 3D Deck `ArrowRight` & `44×44px` dots, Witness Pledge stamp + 28-piece RapidKL-palette confetti cleanup (disabled under reduced motion), Share Manifesto toast floating clear of `#compare-dock`, and `H` jam-horn easter egg all verified visually.
 
 ## Handoff
 
@@ -22,17 +22,21 @@ Nothing in progress. Both `alif-manifesto` (`main`) and `7YMERA/skills` (`main`,
 
 ## Map (path → what)
 
-- `index.html` — `Press to Go` intro gate, top bar, 7 chapters (`00`–`06`), 3D Induced Demand simulator panel, full-bleed `#city-showcase`, Before/After timelapse dock.
-- `styles.css` — RapidKL Cobalt Blue (`#0047AB`), Signal Red (`#D92332`), Tropical Emerald (`#0E7C59`) design system; compact alternating 455 px cards; rail-map connectors; staggered `.animate-on-scroll`; mobile compositing trim; `.no-webgl` fallback.
-- `src/main.js` — Boots `createManifestoScene`, `initApp`, `initSimulator`.
+- `index.html` — `Press to Go` intro gate, top bar, OG/Twitter `1200×630` card meta, interactive `#year-hud` + 9-stop `#route-drawer`, 7 chapters (`00`–`06`), keyboard-accessible Charter cards & 3D Deck, `.creed-actions` (`#pledge-btn` + `#share-btn`), `#share-toast`, 3D Induced Demand simulator panel, full-bleed `#city-showcase`, Before/After timelapse dock.
+- `styles.css` — RapidKL Cobalt Blue (`#0047AB`), Signal Red (`#D92332`), Tropical Emerald (`#0E7C59`) design system; compact alternating 455 px cards; rail-map connectors; Klang Valley Route Drawer; `>= 44px` tap targets (`.view-pill`, `.btn`, `.deck-dot`, `.route-stop`); high-contrast `:focus-visible`; staggered `.animate-on-scroll`; mobile compositing trim; `.no-webgl` fallback.
+- `src/main.js` — Boots `createManifestoScene`, `initApp`, `initWhimsy`, `initSimulator`.
 - `src/scene.js` — Three.js KL corridor, intro bus departure, traffic/train/walkers, bypass spaghetti stacks, sunlit 2036 breeze motes, portrait FOV pullback, reactive reduced motion, `webglcontextlost`/`restored`, true RAF cancel/restart.
 - `src/camera/path.js` — Pure `cameraPose(s)` curve + turn-rate & collision oracle.
 - `src/post.js` — Desktop HDR bloom, NaN sanitizer, ACES filmic grade, vignette, HiDPI MSAA scaling (`dpr > 1.25 ? 2 : 4`), slow-frame auto-fallback.
-- `src/app.js` — Lenis smooth scroll, scroll → scene bridge, SVG rail-map connectors, `.animate-on-scroll` observer, timelapse/Before-After slider, localStorage pledge stamp, `.no-webgl` un-gate fallback.
-- `src/audio.js` — Scroll-driven Web Audio soundscape (`cancelScheduledValues` before `setTargetAtTime`, pauses timers & suspends context when muted or tab hidden).
-- `src/simulator.js` — Induced Demand Test UI driving `ManifestoScene.setSimScenario`.
+- `src/app.js` — Lenis smooth scroll, scroll → scene bridge, interactive Route Drawer jump/keyboard/scroll-sync + `dataset.realStage` hook, Charter Grid/Deck keyboard nav, SVG rail-map connectors, `.animate-on-scroll` observer, timelapse/Before-After slider, localStorage pledge stamp, `.no-webgl` un-gate fallback.
+- `src/audio.js` — Scroll-driven Web Audio soundscape (`cancelScheduledValues` before `setTargetAtTime`, pauses timers & suspends context when muted or tab hidden), plus `playChime('pledge' | 'tick')` and `playHorn()`.
+- `src/whimsy.js` & `src/whimsy.css` — Witness Pledge LRT chime + 28-piece self-cleaning RapidKL confetti burst (respects reduced motion), `#share-btn` mobile Web Share / desktop clipboard + `#share-toast` (clears `#compare-dock`), tactile CTA sheen sweep, transit control `'tick'` wiring, and `H` key Bus 750 jam-horn easter egg.
+- `src/simulator.js` — Induced Demand Test UI driving `ManifestoScene.setSimScenario` + `'tick'` micro-SFX on scenario change.
 - `src/city/{layout,network,roadMesh,clearance,osmCity,skyline,community}.js` — Checked KL road graph, 1,100 real OSM buildings, Bukit Nanas, pocket park + basketball court, KL Sentral-style glass hub.
 - `src/mirage/env.js` — Procedural golden-hour PMREM environment map.
+- `assets/og-card.png` — `1200×630` RapidKL-palette Klang Valley social share OG/Twitter card.
+- `vercel.json` — Clean URLs, immutable `/assets/*` cache header, and hardened security headers (`X-Frame-Options`, `Permissions-Policy`, `X-Content-Type-Options`, `Referrer-Policy`).
+- `vite.config.js` — Vite build config splitting `three` and `motion` (`gsap`, `lenis`) vendor chunks + static `assets/` copy plugin.
 - `tools/{check-city,camera-report}.mjs` — `npm run check` oracle.
 
 ## Decisions (don't re-litigate)
@@ -53,6 +57,7 @@ Nothing in progress. Both `alif-manifesto` (`main`) and `7YMERA/skills` (`main`,
 
 ## Log (newest first)
 
+- **2026-11-27** · `main` (Antigravity swarm) — Iteration 17 polish, a11y, perf & civic whimsy pass: added `vercel.json` immutable `/assets/*` cache + `X-Frame-Options: DENY` + `Permissions-Policy`; split `motion` (`gsap`, `lenis`) vendor chunk in `vite.config.js`; generated `1200×630` RapidKL-palette social card (`assets/og-card.png`) wired to `og:image`/`twitter:image`; turned `#year-hud` into an interactive 9-stop Klang Valley Route Map drawer (`#route-drawer`, all stops `>= 44px`, Escape/Arrow/outside-click + live `aria-current="location"`); upgraded Charter a11y (`Enter`/`Space` grid cards, `ArrowLeft`/`ArrowRight` 3D Deck, `44×44px` `.deck-dot` & `>= 44px` `.view-pill`/`.btn`, high-contrast `:focus-visible`); added `src/whimsy.js` + `src/whimsy.css` + Web Audio `playChime('pledge'|'tick')` & `playHorn()` (pledge LRT chime + 28-piece self-cleaning confetti, `#share-btn` + `#share-toast` positioned above `#compare-dock`, tactile sheen sweeps, and `H` Bus 750 jam-horn easter egg). Verified 24/24 headless Chrome checks across `1300×820`, `390×844`, and `prefers-reduced-motion: reduce`.
 - **2026-11-27** · `main` (Antigravity) — High-visibility cinematic & 21st.dev upgrade: added GSAP ScrollTrigger masked word-by-word headlines, staggered station cascades, RapidKL 750 rolling stat tickers, scroll-drawn rail-map SVG beams with glowing interchange pulses, floating Kinetic Year & Transit Line HUD (`2026 → 2036`), 21st.dev border-spotlight + 3D tilt + interactive Grid ↔ 3D Deck Charter switcher, and stronger 2026 overcast smog → 2036 golden-hour 3D sky/sun-halo/motes/bloom contrast.
 - **2026-11-27** · `94c121c` (Antigravity) — Created `docs/CLAUDE-LOG.md` handoff log; merged `7YMERA/skills` branch `claude/bold-mayer-ia1sl2` (reorganized `agent-skills/`, `project-skills/`, `exported/` obsidian + 21st.dev ports) into `7YMERA/skills` `main` (`d749267`) and synced `alif-manifesto` handoff pointers; verified `claude/optimistic-allen-qal8zv` had 0 unmerged commits.
 - **2026-11-27** · `afd774c` (Antigravity) — Applied `7YMERA/skills` upgrades: added Lenis smooth scroll (gated on intro/visibility/reduced-motion), wired `.animate-on-scroll` onto chapters/charter/creed, true RAF cancel/restart + `webglcontextlost`/`restored`, portrait FOV pullback, reactive reduced motion, mobile resize DPR cap, sunlit 2036 breeze motes (`cloud-pass`), Web Audio `cancelScheduledValues` + timer pause, HiDPI MSAA scaling, hidden scroll-cue pause, mobile `backdrop-filter` trim + opaque topbar + flush mobile `.rail-link`, and `.no-webgl` fallback. Updated `7YMERA/skills` with Vercel experiment bypass rule (`d42ca9c`).

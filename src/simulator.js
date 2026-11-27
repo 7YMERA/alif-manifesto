@@ -8,6 +8,8 @@
  * figure on the page is the RapidKL 750 audit (18 km, 40 min).
  */
 
+import { ManifestoAudio } from './audio.js';
+
 const SCENARIOS = {
   base: {
     status: 'Today · status quo',
@@ -117,6 +119,7 @@ export function initSimulator(ManifestoScene) {
 
   function switchTo(key) {
     if (key === activeKey) return;
+    ManifestoAudio.playChime('tick');
     activeKey = key;
     const sc = SCENARIOS[key];
 

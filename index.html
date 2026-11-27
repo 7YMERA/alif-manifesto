@@ -9,10 +9,15 @@
   <meta property="og:description" content="Click to explore an interactive 3D showcase of Malaysia's mobility future — RapidKL buses, LRT/MRT railways, greened concrete, and walkable shared spaces by 2036.">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="en_MY">
+  <meta property="og:image" content="./assets/og-card.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Alif Najmi 10-Year Civic Manifesto (2026–2036) — A Country Built for People, Not Just Highways">
   <meta name="theme-color" content="#0047ab">
-  <meta name="twitter:card" content="summary">
+  <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Alif Najmi · A Country Built for People, Not Just Highways">
   <meta name="twitter:description" content="An interactive 3D civic manifesto for Malaysia, 2026–2036: bus lanes, rail, greened highways and shaded sidewalks.">
+  <meta name="twitter:image" content="./assets/og-card.png">
   <link rel="icon" type="image/png" href="./assets/icons/github-avatar.png">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -88,14 +93,116 @@
     </svg>
   </a>
 
-  <!-- Floating Kinetic Year & Transit Line HUD (2026 -> 2036) -->
-  <aside class="year-hud" id="year-hud" aria-live="polite" aria-label="Current manifesto year and transit line">
-    <span class="year-hud__dot" id="year-hud-dot" aria-hidden="true"></span>
-    <span class="year-hud__year" id="year-hud-year">2026</span>
-    <span class="year-hud__sep" aria-hidden="true"></span>
-    <span class="year-hud__stage" id="year-hud-stage">Shah Alam Gridlock</span>
-    <span class="year-hud__track" aria-hidden="true"><span class="year-hud__fill" id="year-hud-fill"></span></span>
-  </aside>
+  <!-- Floating Kinetic Year & Transit Line HUD + Klang Valley Route Map Drawer -->
+  <div class="year-hud-wrap" id="year-hud-wrap">
+    <nav class="route-drawer" id="route-drawer" aria-label="Klang Valley transit route chapters" data-lenis-prevent hidden>
+      <div class="route-drawer__header">
+        <span class="route-drawer__title">Klang Valley Route Map</span>
+        <span class="route-drawer__range">2026 &rarr; 2036</span>
+      </div>
+      <ol class="route-drawer__list">
+        <li>
+          <button type="button" class="route-stop" data-target="#opening" data-line="red" aria-current="location">
+            <span class="route-stop__dot" aria-hidden="true"></span>
+            <span class="route-stop__code">00</span>
+            <span class="route-stop__sep" aria-hidden="true">&middot;</span>
+            <span class="route-stop__label">2026 Gridlock</span>
+            <span class="route-stop__badge" aria-hidden="true">Now</span>
+          </button>
+        </li>
+        <li>
+          <button type="button" class="route-stop" data-target="#frustration" data-line="red">
+            <span class="route-stop__dot" aria-hidden="true"></span>
+            <span class="route-stop__code">01</span>
+            <span class="route-stop__sep" aria-hidden="true">&middot;</span>
+            <span class="route-stop__label">RapidKL 750</span>
+            <span class="route-stop__badge" aria-hidden="true">Now</span>
+          </button>
+        </li>
+        <li>
+          <button type="button" class="route-stop" data-target="#jam-simulator" data-line="red">
+            <span class="route-stop__dot" aria-hidden="true"></span>
+            <span class="route-stop__code">Sim</span>
+            <span class="route-stop__sep" aria-hidden="true">&middot;</span>
+            <span class="route-stop__label">Induced Demand</span>
+            <span class="route-stop__badge" aria-hidden="true">Now</span>
+          </button>
+        </li>
+        <li>
+          <button type="button" class="route-stop" data-target="#highways-reimagined" data-line="green">
+            <span class="route-stop__dot" aria-hidden="true"></span>
+            <span class="route-stop__code">02</span>
+            <span class="route-stop__sep" aria-hidden="true">&middot;</span>
+            <span class="route-stop__label">Green Highways</span>
+            <span class="route-stop__badge" aria-hidden="true">Now</span>
+          </button>
+        </li>
+        <li>
+          <button type="button" class="route-stop" data-target="#phase-1" data-line="blue">
+            <span class="route-stop__dot" aria-hidden="true"></span>
+            <span class="route-stop__code">Line 01</span>
+            <span class="route-stop__sep" aria-hidden="true">&middot;</span>
+            <span class="route-stop__label">2026–2027</span>
+            <span class="route-stop__badge" aria-hidden="true">Now</span>
+          </button>
+        </li>
+        <li>
+          <button type="button" class="route-stop" data-target="#phase-2" data-line="red">
+            <span class="route-stop__dot" aria-hidden="true"></span>
+            <span class="route-stop__code">Line 02</span>
+            <span class="route-stop__sep" aria-hidden="true">&middot;</span>
+            <span class="route-stop__label">2028–2029</span>
+            <span class="route-stop__badge" aria-hidden="true">Now</span>
+          </button>
+        </li>
+        <li>
+          <button type="button" class="route-stop" data-target="#phase-3" data-line="green">
+            <span class="route-stop__dot" aria-hidden="true"></span>
+            <span class="route-stop__code">Line 03</span>
+            <span class="route-stop__sep" aria-hidden="true">&middot;</span>
+            <span class="route-stop__label">2030–2031</span>
+            <span class="route-stop__badge" aria-hidden="true">Now</span>
+          </button>
+        </li>
+        <li>
+          <button type="button" class="route-stop" data-target="#phase-4" data-line="blue">
+            <span class="route-stop__dot" aria-hidden="true"></span>
+            <span class="route-stop__code">06</span>
+            <span class="route-stop__sep" aria-hidden="true">&middot;</span>
+            <span class="route-stop__label">2036 Charter</span>
+            <span class="route-stop__badge" aria-hidden="true">Now</span>
+          </button>
+        </li>
+        <li>
+          <button type="button" class="route-stop" data-target="#city-showcase" data-line="gold">
+            <span class="route-stop__dot" aria-hidden="true"></span>
+            <span class="route-stop__code">Finale</span>
+            <span class="route-stop__sep" aria-hidden="true">&middot;</span>
+            <span class="route-stop__label">Before / After</span>
+            <span class="route-stop__badge" aria-hidden="true">Now</span>
+          </button>
+        </li>
+      </ol>
+    </nav>
+
+    <button
+      type="button"
+      class="year-hud"
+      id="year-hud"
+      aria-expanded="false"
+      aria-controls="route-drawer"
+      aria-label="Toggle Klang Valley route map"
+    >
+      <span class="year-hud__dot" id="year-hud-dot" aria-hidden="true"></span>
+      <span class="year-hud__year" id="year-hud-year">2026</span>
+      <span class="year-hud__sep" aria-hidden="true"></span>
+      <span class="year-hud__stage" id="year-hud-stage" data-real-stage="Shah Alam Gridlock">Shah Alam Gridlock</span>
+      <svg class="year-hud__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="18 15 12 9 6 15"></polyline>
+      </svg>
+      <span class="year-hud__track" aria-hidden="true"><span class="year-hud__fill" id="year-hud-fill"></span></span>
+    </button>
+  </div>
 
   <!-- Subtle Floating Copyright & Back-to-Top Button (No White Footer Bar) -->
   <div class="corner-copy">&copy; 2026 Muhammad Alif Najmi</div>
@@ -332,32 +439,32 @@
         </p>
 
         <div class="charter-grid" id="charter-grid" role="group" aria-label="Six-point people's mobility and civic manifesto">
-          <div class="charter-card animate-on-scroll" data-spotlight data-pillar="0" style="--card-accent: #0047ab;">
+          <div class="charter-card animate-on-scroll" data-spotlight data-pillar="0" role="button" tabindex="0" aria-pressed="false" style="--card-accent: #0047ab;">
             <div class="charter-num">PILLAR 01 · RAIL BACKBONE</div>
             <h3>Railways as the National Backbone</h3>
             <p>High-frequency LRT, MRT, reliable KTM Komuter, and intercity ETS rail connecting towns nationwide with seamless fare and walkway integration.</p>
           </div>
-          <div class="charter-card animate-on-scroll" data-spotlight data-pillar="1" style="--card-accent: #d92332;">
+          <div class="charter-card animate-on-scroll" data-spotlight data-pillar="1" role="button" tabindex="0" aria-pressed="false" style="--card-accent: #d92332;">
             <div class="charter-num">PILLAR 02 · BUS PRIORITY</div>
             <h3>Enforced Bus Lanes Over New Highways</h3>
             <p>Halt urban mega-highway rubber-stamping. Physically enforce dedicated bus corridors like RapidKL 750 so buses beat private cars every morning.</p>
           </div>
-          <div class="charter-card animate-on-scroll" data-spotlight data-pillar="2" style="--card-accent: #0e7c59;">
+          <div class="charter-card animate-on-scroll" data-spotlight data-pillar="2" role="button" tabindex="0" aria-pressed="false" style="--card-accent: #0e7c59;">
             <div class="charter-num">PILLAR 03 · KAKI LIMA</div>
             <h3>Green Existing Concrete &amp; Shaded Kaki Lima</h3>
             <p>Keep existing highways but wrap concrete pillars in tropical greenery, and build continuous tree-shaded sidewalks across Selangor and Malaysia.</p>
           </div>
-          <div class="charter-card animate-on-scroll" data-spotlight data-pillar="3" style="--card-accent: #d98218;">
+          <div class="charter-card animate-on-scroll" data-spotlight data-pillar="3" role="button" tabindex="0" aria-pressed="false" style="--card-accent: #d98218;">
             <div class="charter-num">PILLAR 04 · SAFE CROSSINGS</div>
             <h3>Elderly-First Safe Crossings</h3>
             <p>Raised zebra crossings, generous pedestrian signal timings, and curb ramps so seniors, wheelchair users, and children cross without fear.</p>
           </div>
-          <div class="charter-card animate-on-scroll" data-spotlight data-pillar="4" style="--card-accent: #0e7c59;">
+          <div class="charter-card animate-on-scroll" data-spotlight data-pillar="4" role="button" tabindex="0" aria-pressed="false" style="--card-accent: #0e7c59;">
             <div class="charter-num">PILLAR 05 · SHARED SPACES</div>
             <h3>Vibrant Shared Spaces &amp; Cycling</h3>
             <p>Protected bike lanes, colorful neighborhood shops, and safe public plazas where families take kids out and communities grow together.</p>
           </div>
-          <div class="charter-card animate-on-scroll" data-spotlight data-pillar="5" style="--card-accent: #0047ab;">
+          <div class="charter-card animate-on-scroll" data-spotlight data-pillar="5" role="button" tabindex="0" aria-pressed="false" style="--card-accent: #0047ab;">
             <div class="charter-num">PILLAR 06 · INTEGRITY</div>
             <h3>Clean, Accountable Public Service</h3>
             <p>Zero tolerance for stealing public money. Open project tracking and leadership judged strictly by whether daily life improves on the street.</p>
@@ -367,7 +474,7 @@
         <div class="deck-nav" id="charter-deck-nav" hidden>
           <button type="button" class="deck-nav__btn" id="deck-prev" aria-label="Previous pillar">&larr; Prev</button>
           <div class="deck-nav__dots" id="deck-dots" role="tablist" aria-label="Select pillar"></div>
-          <span class="deck-nav__count" id="deck-count">01 / 06</span>
+          <span class="deck-nav__count" id="deck-count" aria-live="polite" aria-atomic="true">01 / 06</span>
           <button type="button" class="deck-nav__btn" id="deck-next" aria-label="Next pillar">Next &rarr;</button>
         </div>
 
@@ -377,9 +484,21 @@
           </blockquote>
           <div class="creed-footer">
             <span class="creed-sign">— Muhammad Alif Najmi · Written Nov 2026</span>
-            <button class="pledge-btn" id="pledge-btn" type="button">
-              Witness This 10-Year Pledge
-            </button>
+            <div class="creed-actions">
+              <button class="pledge-btn" id="pledge-btn" type="button">
+                Witness This 10-Year Pledge
+              </button>
+              <button class="share-btn" id="share-btn" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="18" cy="5" r="3"></circle>
+                  <circle cx="6" cy="12" r="3"></circle>
+                  <circle cx="18" cy="19" r="3"></circle>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                </svg>
+                <span>Share Manifesto</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -395,6 +514,8 @@
     <!-- Full-Bleed 100vh Unobstructed 3D Kuala Lumpur Finale Showcase -->
     <section class="city-showcase" id="city-showcase" aria-label="Full 3D Kuala Lumpur City Showcase"></section>
   </main>
+
+  <div class="share-toast" id="share-toast" role="status" aria-live="polite" hidden></div>
 
   <script type="module" src="/src/main.js"></script>
 </body>

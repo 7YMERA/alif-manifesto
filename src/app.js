@@ -14,11 +14,14 @@ export function initApp(ManifestoScene) {
   const backToTopBtn = document.getElementById('back-to-top');
   const progressBar = document.getElementById('scroll-progress-bar');
 
+  const yearHudWrap = document.getElementById('year-hud-wrap');
   const yearHud = document.getElementById('year-hud');
   const yearHudDot = document.getElementById('year-hud-dot');
   const yearHudYear = document.getElementById('year-hud-year');
   const yearHudStage = document.getElementById('year-hud-stage');
   const yearHudFill = document.getElementById('year-hud-fill');
+  const routeDrawer = document.getElementById('route-drawer');
+  const routeStops = routeDrawer ? Array.from(routeDrawer.querySelectorAll('.route-stop')) : [];
 
   const compareDock = document.getElementById('compare-dock');
   const compareSlider = document.getElementById('compare-slider');
@@ -139,19 +142,24 @@ export function initApp(ManifestoScene) {
     }
   });
 
+  function scrollToSection(targetEl) {
+    if (!targetEl) return;
+    if (lenis && !reducedQuery.matches) {
+      lenis.scrollTo(targetEl, { offset: -76 });
+    } else {
+      targetEl.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
+    }
+    if (!targetEl.hasAttribute('tabindex')) targetEl.setAttribute('tabindex', '-1');
+    targetEl.focus({ preventScroll: true });
+  }
+
   document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
     anchor.addEventListener('click', (e) => {
       const targetId = anchor.getAttribute('href').slice(1);
       const targetEl = document.getElementById(targetId);
       if (!targetEl) return;
       e.preventDefault();
-      if (lenis && !reducedQuery.matches) {
-        lenis.scrollTo(targetEl, { offset: -76 });
-      } else {
-        targetEl.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
-      }
-      if (!targetEl.hasAttribute('tabindex')) targetEl.setAttribute('tabindex', '-1');
-      targetEl.focus({ preventScroll: true });
+      scrollToSection(targetEl);
     });
   });
 
@@ -165,7 +173,7 @@ export function initApp(ManifestoScene) {
     });
   }
 
-  // ── Kinetic Year & Transit Line HUD (anchored to real on-screen chapters) ──
+  // ── Kinetic Year & Transit Line HUD + Klang Valley Route Drawer ────────
   const HUD_CHAPTERS = [
     { id: 'opening',             year: '2026',      stage: 'Shah Alam Gridlock',   line: 'red' },
     { id: 'frustration',         year: '2026',      stage: 'RapidKL 750 · 40 min', line: 'red' },
@@ -174,9 +182,99 @@ export function initApp(ManifestoScene) {
     { id: 'phase-1',             year: '2026–2027', stage: 'Line 01 · Foundation', line: 'blue' },
     { id: 'phase-2',             year: '2028–2029', stage: 'Line 02 · Buses & Rail', line: 'red' },
     { id: 'phase-3',             year: '2030–2031', stage: 'Line 03 · Shared Spaces', line: 'green' },
-    { id: 'phase-4',             year: '2036',      stage: '2036 · All Lines Merge', line: 'gold' },
+    { id: 'phase-4',             year: '2036',      stage: '2036 · All Lines Merge', line: 'blue' },
     { id: 'city-showcase',       year: '2036',      stage: '2036 · Shared KL',     line: 'gold' },
   ].map((c) => ({ ...c, el: document.getElementById(c.id) }));
+
+  function isRouteDrawerOpen() {
+    return Boolean(routeDrawer && !routeDrawer.hidden);
+  }
+
+  function openRouteDrawer() {
+    if (!routeDrawer || !yearHud) return;
+    routeDrawer.hidden = false;
+    yearHud.setAttribute('aria-expanded', 'true');
+    if (yearHudWrap) yearHudWrap.classList.add('is-open');
+  }
+
+  function closeRouteDrawer({ restoreFocus = false } = {}) {
+    if (!routeDrawer || !yearHud || routeDrawer.hidden) return;
+    routeDrawer.hidden = true;
+    yearHud.setAttribute('aria-expanded', 'false');
+    if (yearHudWrap) yearHudWrap.classList.remove('is-open');
+    if (restoreFocus) yearHud.focus();
+  }
+
+  let currentActiveStopId = 'opening';
+  function syncActiveRouteStop(activeId) {
+    if (!routeStops.length || currentActiveStopId === activeId) return;
+    currentActiveStopId = activeId;
+    const selector = `#${activeId}`;
+    routeStops.forEach((stop) => {
+      if (stop.dataset.target === selector) {
+        stop.setAttribute('aria-current', 'location');
+      } else {
+        stop.removeAttribute('aria-current');
+      }
+    });
+  }
+
+  function setYearHudStage(stage) {
+    if (!yearHudStage) return;
+    yearHudStage.dataset.realStage = stage;
+    if (!yearHudStage.dataset.honkActive) {
+      yearHudStage.textContent = stage;
+    }
+  }
+
+  if (yearHud && routeDrawer) {
+    yearHud.addEventListener('click', () => {
+      if (isRouteDrawerOpen()) {
+        closeRouteDrawer();
+      } else {
+        openRouteDrawer();
+      }
+    });
+
+    routeStops.forEach((stop, idx) => {
+      stop.addEventListener('click', () => {
+        const targetSelector = stop.dataset.target;
+        const targetEl = targetSelector ? document.querySelector(targetSelector) : null;
+        closeRouteDrawer({ restoreFocus: false });
+        if (targetEl) {
+          syncActiveRouteStop(targetEl.id);
+          scrollToSection(targetEl);
+        }
+      });
+
+      stop.addEventListener('keydown', (e) => {
+        if (!isRouteDrawerOpen()) return;
+        let nextIdx = -1;
+        if (e.key === 'ArrowDown') nextIdx = (idx + 1) % routeStops.length;
+        else if (e.key === 'ArrowUp') nextIdx = (idx - 1 + routeStops.length) % routeStops.length;
+        else if (e.key === 'Home') nextIdx = 0;
+        else if (e.key === 'End') nextIdx = routeStops.length - 1;
+        if (nextIdx >= 0) {
+          e.preventDefault();
+          routeStops[nextIdx].focus();
+        }
+      });
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && isRouteDrawerOpen()) {
+        e.preventDefault();
+        closeRouteDrawer({ restoreFocus: true });
+      }
+    });
+
+    document.addEventListener('pointerdown', (e) => {
+      if (!isRouteDrawerOpen()) return;
+      if (yearHudWrap && e.target instanceof Node && !yearHudWrap.contains(e.target)) {
+        closeRouteDrawer({ restoreFocus: false });
+      }
+    });
+  }
 
   function updateYearHud(progress, overrideRatio = null) {
     if (!yearHud) return;
@@ -185,9 +283,10 @@ export function initApp(ManifestoScene) {
       const isAfter = overrideRatio >= 0.5;
       yearHud.dataset.line = isAfter ? 'gold' : 'red';
       if (yearHudYear) yearHudYear.textContent = String(yr);
-      if (yearHudStage) yearHudStage.textContent = isAfter ? 'After · Shared KL' : 'Before · 2026 Jam';
+      setYearHudStage(isAfter ? 'After · Shared KL' : 'Before · 2026 Jam');
       if (yearHudFill) yearHudFill.style.transform = `scaleX(${Math.max(0.04, overrideRatio).toFixed(3)})`;
       if (yearHudDot) yearHudDot.dataset.line = yearHud.dataset.line;
+      syncActiveRouteStop('city-showcase');
       return;
     }
     const triggerY = window.innerHeight * 0.55;
@@ -201,8 +300,9 @@ export function initApp(ManifestoScene) {
     yearHud.dataset.line = active.line;
     if (yearHudDot) yearHudDot.dataset.line = active.line;
     if (yearHudYear) yearHudYear.textContent = active.year;
-    if (yearHudStage) yearHudStage.textContent = active.stage;
+    setYearHudStage(active.stage);
     if (yearHudFill) yearHudFill.style.transform = `scaleX(${Math.max(0.04, progress).toFixed(3)})`;
+    syncActiveRouteStop(active.id);
   }
 
   // Timelapse Transformation Controls (2026 <-> 2036)
@@ -301,6 +401,7 @@ export function initApp(ManifestoScene) {
       if (backToTopBtn) backToTopBtn.classList.remove('is-shown');
       if (compareDock) compareDock.classList.remove('is-shown');
       if (yearHud) yearHud.classList.remove('is-shown');
+      closeRouteDrawer({ restoreFocus: false });
       return;
     }
 
@@ -324,7 +425,13 @@ export function initApp(ManifestoScene) {
     if (progressBar) progressBar.style.width = `${(progress * 100).toFixed(2)}%`;
     if (scrollCue) scrollCue.classList.toggle('is-shown', progress < 0.03);
     if (backToTopBtn) backToTopBtn.classList.toggle('is-shown', progress > 0.14);
-    if (yearHud) yearHud.classList.toggle('is-shown', progress > 0.02);
+    if (yearHud) {
+      const showHud = progress > 0.02;
+      yearHud.classList.toggle('is-shown', showHud);
+      if (!showHud || document.body.classList.contains('is-sim') || (progress > 0.86 && window.innerWidth <= 720)) {
+        closeRouteDrawer({ restoreFocus: false });
+      }
+    }
 
     if (compareDock) {
       const atEnd = progress > 0.86;
@@ -660,6 +767,7 @@ export function initApp(ManifestoScene) {
   }
 
   // ── 21st.dev Interactive 3D Charter Deck (Grid <-> 3D Spring Deck) ─────
+  const phase4Section = document.getElementById('phase-4');
   const charterGrid = document.getElementById('charter-grid');
   const deckNav = document.getElementById('charter-deck-nav');
   const deckDots = document.getElementById('deck-dots');
@@ -678,9 +786,18 @@ export function initApp(ManifestoScene) {
         const dot = document.createElement('button');
         dot.type = 'button';
         dot.className = 'deck-dot';
+        dot.setAttribute('role', 'tab');
+        dot.setAttribute('aria-selected', String(idx === 0));
         dot.setAttribute('aria-label', `Pillar ${idx + 1}`);
         dot.addEventListener('click', () => setDeckIndex(idx));
         deckDots.appendChild(dot);
+      });
+    }
+
+    function syncCharterPressed() {
+      cards.forEach((c, i) => {
+        const pressed = isDeck ? i === activeIdx : c.classList.contains('is-pinned');
+        c.setAttribute('aria-pressed', String(pressed));
       });
     }
 
@@ -692,6 +809,7 @@ export function initApp(ManifestoScene) {
           c.style.zIndex = '';
           c.classList.remove('is-deck-front', 'is-deck-behind');
         });
+        syncCharterPressed();
         return;
       }
       const n = cards.length;
@@ -710,7 +828,21 @@ export function initApp(ManifestoScene) {
         card.classList.toggle('is-deck-front', offset === 0);
         card.classList.toggle('is-deck-behind', offset > 0);
       });
-      if (deckCount) deckCount.textContent = `${String(activeIdx + 1).padStart(2, '0')} / ${String(n).padStart(2, '0')}`;
+      syncCharterPressed();
+      if (deckCount) {
+        const activeTitle = cards[activeIdx]?.querySelector('h3')?.textContent?.trim() || '';
+        const visibleCount = `${String(activeIdx + 1).padStart(2, '0')} / ${String(n).padStart(2, '0')}`;
+        deckCount.textContent = '';
+        const visSpan = document.createElement('span');
+        visSpan.setAttribute('aria-hidden', 'true');
+        visSpan.textContent = visibleCount;
+        const srSpan = document.createElement('span');
+        srSpan.className = 'sr-only';
+        srSpan.textContent = activeTitle
+          ? `Pillar ${activeIdx + 1} of ${n}: ${activeTitle}`
+          : `Pillar ${activeIdx + 1} of ${n}`;
+        deckCount.append(visSpan, srSpan);
+      }
       if (deckDots) {
         deckDots.querySelectorAll('.deck-dot').forEach((d, idx) => {
           d.classList.toggle('is-active', idx === activeIdx);
@@ -725,15 +857,42 @@ export function initApp(ManifestoScene) {
       applyDeckLayout();
     }
 
+    function activateCharterCard(card, idx) {
+      if (isDeck) {
+        setDeckIndex(idx === activeIdx ? activeIdx + 1 : idx);
+      } else {
+        const nextPinned = !card.classList.contains('is-pinned');
+        cards.forEach((c) => {
+          const pinned = c === card && nextPinned;
+          c.classList.toggle('is-pinned', pinned);
+          c.setAttribute('aria-pressed', String(pinned));
+        });
+      }
+    }
+
     cards.forEach((card, idx) => {
-      card.addEventListener('click', () => {
-        if (isDeck) {
-          setDeckIndex(idx === activeIdx ? activeIdx + 1 : idx);
-        } else {
-          cards.forEach((c) => c.classList.toggle('is-pinned', c === card && !card.classList.contains('is-pinned')));
+      card.addEventListener('click', () => activateCharterCard(card, idx));
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          activateCharterCard(card, idx);
         }
       });
     });
+
+    if (phase4Section) {
+      phase4Section.addEventListener('keydown', (e) => {
+        if (!isDeck) return;
+        if (e.target instanceof Element && e.target.closest('input, textarea, select')) return;
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          setDeckIndex(activeIdx - 1);
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          setDeckIndex(activeIdx + 1);
+        }
+      });
+    }
 
     if (deckPrev) deckPrev.addEventListener('click', () => setDeckIndex(activeIdx - 1));
     if (deckNext) deckNext.addEventListener('click', () => setDeckIndex(activeIdx + 1));

@@ -26,7 +26,8 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          three: ['three']
+          three: ['three'],
+          motion: ['gsap', 'lenis']
         }
       }
     }
