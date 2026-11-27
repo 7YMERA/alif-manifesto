@@ -1069,8 +1069,8 @@ export function createManifestoScene() {
   const uglyFogCol = new THREE.Color(0xd2c7b8);
   const tmpColor = new THREE.Color();
 
+  // Scheduled by _animateOuter below, which also pauses it while the canvas is off-screen.
   function animate(now) {
-    requestAnimationFrame(animate);
     const wallDt = Math.min((now - lastTime) / 1000, 0.5); // real elapsed time, for the simulator's timed steps
     const dt = Math.min((now - lastTime) / 1000, 0.05);
     const elapsed = now * 0.001;
