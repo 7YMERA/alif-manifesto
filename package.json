@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview --port 4173"
+    "preview": "vite preview --port 4173",
+    "check": "node tools/check-city.mjs && node tools/camera-report.mjs"
   },
   "dependencies": {
     "three": "0.128.0"

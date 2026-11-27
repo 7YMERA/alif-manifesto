@@ -1,6 +1,11 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { createGoldenHourPMREM } from './mirage/env.js';
+import { buildGroundRoads, buildHighwayRamps, applyHorizonFade, deckRibbonGeometry } from './city/roadMesh.js';
+import { BASIN } from './city/layout.js';
+import { buildSkyline, buildBukitNanas } from './city/skyline.js';
+import { cameraPose } from './camera/path.js';
+import { createPost } from './post.js';
 
 export function createManifestoScene() {
   const canvas = document.getElementById('scene-canvas');
@@ -33,8 +38,9 @@ export function createManifestoScene() {
   renderer.shadowMap.type = window.innerWidth <= 820
     ? THREE.PCFShadowMap
     : THREE.PCFSoftShadowMap;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.12;
+  // With post-processing the filmic curve runs after bloom (src/post.js); without it the renderer does it.
+  let post = null;
 
   const scene = new THREE.Scene();
   scene.environment = createGoldenHourPMREM(renderer);
@@ -56,6 +62,9 @@ export function createManifestoScene() {
 
   const camera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 1.5, 2000);
   camera.position.set(-2.4, 2.05, 61.2);
+
+  post = createPost(renderer, scene, camera);
+  renderer.toneMapping = post ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping;
 
   const hemiLight = new THREE.HemisphereLight(
     GOLDEN_PALETTE.hemiSky,
@@ -128,15 +137,8 @@ export function createManifestoScene() {
   scene.add(world);
 
   const texLoader = new THREE.TextureLoader();
-  function wrapTex(t, rx, ry) {
-    t.wrapS = THREE.RepeatWrapping;
-    t.wrapT = THREE.RepeatWrapping;
-    t.repeat.set(rx, ry);
-    return t;
-  }
   const terrColorTex = texLoader.load('./assets/city/terrain_color.jpg');
   const terrAOTex = texLoader.load('./assets/city/terrain_ao.jpg');
-  const facadeDayTex = wrapTex(texLoader.load('./assets/city/facade_glass.jpg'), 2, 3);
 
   const terrGeo = new THREE.PlaneGeometry(1800, 1800, 48, 48);
   terrGeo.rotateX(-Math.PI / 2);
@@ -146,8 +148,8 @@ export function createManifestoScene() {
     const vz = tPos.getZ(i);
     const dist = Math.hypot(vx, vz + 160);
     let y = -0.15;
-    if (dist > 400) {
-      const k = smoothstep(400, 820, dist);
+    if (dist > BASIN.flatRadius) {
+      const k = smoothstep(BASIN.flatRadius, BASIN.flatRadius + 380, dist);
       const ang = Math.atan2(vz + 160, vx);
       const ridge =
         Math.sin(ang * 3 + 0.6) * 26 +
@@ -175,32 +177,30 @@ export function createManifestoScene() {
   // =========================================================================
 
   const asphaltMat = new THREE.MeshStandardMaterial({ color: 0x333a44, roughness: 0.88 });
-  const roadSlab = new THREE.Mesh(new THREE.BoxGeometry(17.6, 0.12, 330), asphaltMat);
-  roadSlab.position.set(0, 0.06, -90);
+  const farAsphaltMat = applyHorizonFade(asphaltMat.clone(), 385, 480); // boulevard and cross streets melt into the haze
+  const roadSlab = new THREE.Mesh(new THREE.BoxGeometry(17.6, 0.12, 585), farAsphaltMat);
+  roadSlab.position.set(0, 0.06, 37.5); // z 330 (horizon) to -255 (KLCC junction)
   roadSlab.receiveShadow = true;
   world.add(roadSlab);
 
-  // Curved KLCC perimeter ring road around Petronas Twin Towers
-  const ringRoad = new THREE.Mesh(new THREE.RingGeometry(24, 38, 48), asphaltMat);
-  ringRoad.rotation.x = -Math.PI / 2;
-  ringRoad.position.set(18, 0.07, -295);
-  ringRoad.receiveShadow = true;
-  world.add(ringRoad);
+  // KLCC ring road, the arterials that leave it, and the connector from the boulevard.
+  // All defined in src/city/network.js; tools/check-city.mjs proves none of them dead-ends.
+  world.add(buildGroundRoads());
 
   const uglySidewalkCol = new THREE.Color(0x88857e);
   const prettySidewalkCol = new THREE.Color(0xe6d8c0);
   const sidewalkMat = new THREE.MeshStandardMaterial({ color: uglySidewalkCol.clone(), roughness: 0.86 });
 
   [-11.2, 11.2].forEach((sx) => {
-    const sw = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.24, 330), sidewalkMat);
-    sw.position.set(sx, 0.14, -90);
+    const sw = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.24, 562), sidewalkMat);
+    sw.position.set(sx, 0.14, 49); // z 330 to -232
     sw.receiveShadow = true;
     world.add(sw);
   });
 
   // Cross-streets
   [-12, -96, -182].forEach((cz) => {
-    const cross = new THREE.Mesh(new THREE.BoxGeometry(110, 0.10, 11.5), asphaltMat);
+    const cross = new THREE.Mesh(new THREE.BoxGeometry(940, 0.10, 11.5), farAsphaltMat);
     cross.position.set(0, 0.05, cz);
     cross.receiveShadow = true;
     world.add(cross);
@@ -281,6 +281,12 @@ export function createManifestoScene() {
     pier.castShadow = true;
     highwayGroup.add(pier);
   }
+  // Both ends of the elevated highway come down and land on roads instead of stopping in mid-air.
+  const rampConcrete = concreteMat.clone();
+  rampConcrete.side = THREE.DoubleSide;
+  const rampAsphalt = asphaltMat.clone();
+  rampAsphalt.side = THREE.DoubleSide;
+  highwayGroup.add(buildHighwayRamps(rampConcrete, rampAsphalt));
   world.add(highwayGroup);
 
   // -------------------------------------------------------------------------
@@ -359,7 +365,7 @@ export function createManifestoScene() {
   const RIBBON_CAR_STEP = 5.4;
   const PIER_STEP = 15;
   const ribbonMat = concreteMat.clone();
-  ribbonMat.side = THREE.DoubleSide; // own material: the shared highway material stays single-sided
+  // own material so the bypass decks can be tinted without touching the highway
   const ribbonUp = new THREE.Vector3(0, 1, 0);
   const rbA = new THREE.Vector3(), rbT = new THREE.Vector3(), rbS = new THREE.Vector3(), rbU = new THREE.Vector3();
   const rbQ = new THREE.Matrix4(), rbLocal = new THREE.Matrix4();
@@ -391,34 +397,7 @@ export function createManifestoScene() {
     const curve = new THREE.CatmullRomCurve3(points, false, 'catmullrom', 0.5);
     const len = curve.getLength();
 
-    // Deck: four faces per segment so edges stay crisp. Index order follows the path, so
-    // drawRange grows the road from its start to its end.
-    const pos = [], nor = [], idx = [];
-    for (let k = 0; k <= RIBBON_SEGS; k++) {
-      const u = k / RIBBON_SEGS;
-      curve.getPointAt(u, rbA);
-      curve.getTangentAt(u, rbT);
-      rbS.crossVectors(ribbonUp, rbT).normalize();
-      rbU.crossVectors(rbT, rbS).normalize();
-      const corner = (sx, ud) => [rbA.x + rbS.x * RIBBON_W * sx + rbU.x * ud, rbA.y + rbS.y * RIBBON_W * sx + rbU.y * ud, rbA.z + rbS.z * RIBBON_W * sx + rbU.z * ud];
-      const tl = corner(-1, 0), tr = corner(1, 0), br = corner(1, -RIBBON_T), bl = corner(-1, -RIBBON_T);
-      // top, right, bottom, left (each face has two vertices per ring)
-      [[tl, tr, rbU, 1], [tr, br, rbS, 1], [br, bl, rbU, -1], [bl, tl, rbS, -1]].forEach(([a, b, n, sg]) => {
-        pos.push(...a, ...b);
-        nor.push(n.x * sg, n.y * sg, n.z * sg, n.x * sg, n.y * sg, n.z * sg);
-      });
-    }
-    for (let k = 0; k < RIBBON_SEGS; k++) {
-      for (let f = 0; f < 4; f++) {
-        const a = k * 8 + f * 2, b = a + 1, c = a + 8, d = a + 9;
-        if (f === 1 || f === 3) idx.push(a, c, b, b, c, d);
-        else idx.push(a, b, c, b, d, c);
-      }
-    }
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-    geo.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
-    geo.setIndex(idx);
+    const geo = deckRibbonGeometry(curve, RIBBON_SEGS, RIBBON_W, RIBBON_T);
     const deck = new THREE.Mesh(geo, ribbonMat);
     deck.castShadow = true;
     deck.receiveShadow = true;
@@ -537,16 +516,16 @@ export function createManifestoScene() {
   const rapidBlueMat = new THREE.MeshStandardMaterial({ color: 0x0047ab, roughness: 0.45 });
   const rapidRedMat = new THREE.MeshStandardMaterial({ color: 0xd92332, roughness: 0.45 });
 
-  const viaductBeam = new THREE.Mesh(new THREE.BoxGeometry(5.8, 1.25, 256), viaductMat);
-  viaductBeam.position.set(17.8, 8.4, -68);
+  const viaductBeam = new THREE.Mesh(new THREE.BoxGeometry(5.8, 1.25, 446), viaductMat);
+  viaductBeam.position.set(17.8, 8.4, 27); // z 250 to -196
   viaductBeam.castShadow = true;
   railGroup.add(viaductBeam);
 
-  const viaductTrim = new THREE.Mesh(new THREE.BoxGeometry(5.96, 0.26, 256), rapidBlueMat);
-  viaductTrim.position.set(17.8, 8.95, -68);
+  const viaductTrim = new THREE.Mesh(new THREE.BoxGeometry(5.96, 0.26, 446), rapidBlueMat);
+  viaductTrim.position.set(17.8, 8.95, 27);
   railGroup.add(viaductTrim);
 
-  for (let rz = 52; rz >= -188; rz -= 24) {
+  for (let rz = 244; rz >= -188; rz -= 24) {
     const rPier = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.9, 8.4, 10), viaductMat);
     rPier.position.set(17.8, 4.2, rz);
     rPier.castShadow = true;
@@ -562,6 +541,15 @@ export function createManifestoScene() {
   const portalArch = new THREE.Mesh(new THREE.BoxGeometry(7.4, 5.2, 6.0), viaductMat);
   portalArch.position.set(17.8, 2.5, -236);
   railGroup.add(portalArch);
+
+  // Shah Alam end: the viaduct dives underground too (z 250 -> 292), so it never just stops
+  const tunnelRampNear = new THREE.Mesh(new THREE.BoxGeometry(5.8, 1.25, 42), viaductMat);
+  tunnelRampNear.position.set(17.8, 4.2, 271);
+  tunnelRampNear.rotation.x = -0.207;
+  railGroup.add(tunnelRampNear);
+  const portalNear = new THREE.Mesh(new THREE.BoxGeometry(7.4, 5.2, 6.0), viaductMat);
+  portalNear.position.set(17.8, 2.5, 292);
+  railGroup.add(portalNear);
 
   // LRT Station Canopy at z = -102
   const stRoof = new THREE.Mesh(
@@ -602,12 +590,7 @@ export function createManifestoScene() {
   // =========================================================================
 
   const klGroup = new THREE.Group();
-  const bukitNanas = new THREE.Mesh(
-    new THREE.ConeGeometry(34, 15, 18),
-    new THREE.MeshStandardMaterial({ color: 0x2c6e44, roughness: 0.92 })
-  );
-  bukitNanas.position.set(-62, 6.2, -262);
-  klGroup.add(bukitNanas);
+  klGroup.add(buildBukitNanas(-62, -262));
 
   const LANDMARK_MATERIALS = {
     klcc: {
@@ -652,6 +635,13 @@ export function createManifestoScene() {
     }
   };
 
+  // glass sits on the same surface as the body in the source meshes: pull it forward so it stops z-fighting
+  Object.values(LANDMARK_MATERIALS).forEach(({ glass }) => {
+    glass.polygonOffset = true;
+    glass.polygonOffsetFactor = -2;
+    glass.polygonOffsetUnits = -2;
+  });
+
   const LANDMARK_SCALE = 86 / 444.138;
   function loadPortfolioModel(url, x, y, z, rotY, matPair) {
     fetch(url)
@@ -671,6 +661,11 @@ export function createManifestoScene() {
           geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
           geo.setIndex(new THREE.BufferAttribute(b64(d[key], Uint16Array), 1));
           geo.computeVertexNormals();
+          // degenerate triangles in the source meshes leave NaN normals: those render as black specks
+          const nrm = geo.attributes.normal;
+          for (let i = 0; i < nrm.count; i++) {
+            if (!Number.isFinite(nrm.getX(i) + nrm.getY(i) + nrm.getZ(i))) nrm.setXYZ(i, 0, 1, 0);
+          }
           const mesh = new THREE.Mesh(geo, mat);
           mesh.castShadow = true;
           mesh.receiveShadow = true;
@@ -690,30 +685,13 @@ export function createManifestoScene() {
   loadPortfolioModel('./assets/city/exchange106.json', 72, 0, -198, 0.22, LANDMARK_MATERIALS.exchange106);
   world.add(klGroup);
 
-  // Malaysian Skyline & Shophouse Context Blocks (2026 drab -> 2036 warm colors)
+  // Background skyline: rule-placed buildings (src/city/skylineLayout.js proves none sits on a road).
+  // 2026 drab grey -> 2036 warm colours through the same material colour morph as before.
   const uglyTowerCol = new THREE.Color(0x8a9096);
   const colorfulTowerMats = [];
-  const towerSpecs = [
-    [-44, -36, 14, 34, 14, 0x3b6e9c], [-52, -138, 16, 42, 16, 0xc77d3b],
-    [-46, -210, 18, 48, 18, 0x2c6e58], [44, -32, 15, 36, 14, 0x456b8c],
-    [48, -142, 16, 44, 16, 0xb8523e], [44, -220, 18, 52, 18, 0x2f5f8a],
-    [-110, -240, 22, 56, 22, 0x3d688a], [115, -255, 24, 62, 22, 0x4d7362],
-    [-125, -145, 20, 48, 20, 0x9e7d56], [120, -135, 22, 50, 20, 0x42617d]
-  ];
-  towerSpecs.forEach((b) => {
-    const mat = new THREE.MeshStandardMaterial({
-      color: uglyTowerCol.clone(),
-      map: facadeDayTex,
-      roughness: 0.62,
-      metalness: 0.22
-    });
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(b[2], b[3], b[4]), mat);
-    mesh.position.set(b[0], b[3] / 2, b[1]);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    world.add(mesh);
-    colorfulTowerMats.push({ mat, dayCol: new THREE.Color(b[5]) });
-  });
+  const skyline = buildSkyline(uglyTowerCol);
+  world.add(skyline.group);
+  skyline.mats.forEach((m) => colorfulTowerMats.push(m));
 
   // =========================================================================
   // 6. Hero Blender .glb Assets (Vehicles, Viaduct Greenery, Shelters, Trees)
@@ -963,27 +941,7 @@ export function createManifestoScene() {
   // 7. Calm Straight-Axis Camera Choreography & Press-to-Go Opening
   // =========================================================================
 
-  const camPosCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(-0.6, 7.2, 66.0),
-    new THREE.Vector3(0.4, 7.8, 18.0),
-    new THREE.Vector3(-0.8, 11.4, -24.0),
-    new THREE.Vector3(1.2, 11.0, -74.0),
-    new THREE.Vector3(2.2, 11.4, -124.0),
-    new THREE.Vector3(0.5, 14.5, -178.0),
-    new THREE.Vector3(1.5, 24.0, -135.0),
-    new THREE.Vector3(0.0, 38.0, -35.0)
-  ]);
-
-  const camLookCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(-1.0, 3.2, -25.0),
-    new THREE.Vector3(-1.2, 3.0, -50.0),
-    new THREE.Vector3(-4.5, 6.5, -90.0),
-    new THREE.Vector3(1.0, 6.5, -165.0),
-    new THREE.Vector3(4.0, 7.5, -205.0),
-    new THREE.Vector3(4.0, 14.0, -265.0),
-    new THREE.Vector3(4.0, 18.0, -265.0),
-    new THREE.Vector3(4.0, 18.0, -265.0)
-  ]);
+  // Camera path, gaze highlights and field of view live in src/camera/path.js (checked by tools/check-city.mjs).
 
   let scrollProgress = 0;
   let smoothScroll = 0;
@@ -1034,6 +992,12 @@ export function createManifestoScene() {
     }
   });
 
+  // ?debug exposes a free camera for screenshots and the layout checks (see tools/check-city.mjs)
+  let debugCam = null;
+  if (new URLSearchParams(window.location.search).has('debug')) {
+    window.__stage = { scene, camera, renderer, setCam: (a) => { debugCam = a; } };
+  }
+
   const api = {
     setScrollProgress(p) {
       scrollProgress = clamp(p, 0, 1);
@@ -1054,6 +1018,7 @@ export function createManifestoScene() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+    if (post) post.setSize(window.innerWidth, window.innerHeight, nextDpr);
   });
 
   // =========================================================================
@@ -1239,8 +1204,8 @@ export function createManifestoScene() {
       if (introT >= 1) introState = 'active';
     }
 
-    camPosCurve.getPointAt(s, tmpPos);
-    camLookCurve.getPointAt(s, tmpLook);
+    const pathFov = cameraPose(s, tmpPos, tmpLook);
+    if (Math.abs(camera.fov - pathFov) > 0.02) { camera.fov = pathFov; camera.updateProjectionMatrix(); }
     simBlend = lerp(simBlend, simOn ? 1 : 0, reducedMotion ? 1 : 1 - Math.exp(-4.0 * wallDt));
     if (simBlend > 0.002) {
       tmpPos.lerp(simPos, simBlend);
@@ -1264,11 +1229,6 @@ export function createManifestoScene() {
         camera.lookAt(tmpIntroLook);
       }
     } else {
-      if (s > 0.90 && !reducedMotion) {
-        const orbitBlend = smoothstep(0.90, 1.0, s);
-        tmpPos.x += Math.sin(elapsed * 0.18) * 18 * orbitBlend;
-        tmpPos.y += Math.cos(elapsed * 0.15) * 1.6 * orbitBlend;
-      }
       camera.position.copy(tmpPos);
       camera.lookAt(tmpLook);
     }
@@ -1291,7 +1251,22 @@ export function createManifestoScene() {
     const camMoved = Math.abs(camera.position.z - _lastCamZ) > 0.4;
     if (camMoved) { sunLight.shadow.needsUpdate = true; _lastCamZ = camera.position.z; }
 
-    renderer.render(scene, camera);
+    if (debugCam) {
+      scene.fog.density = 0.0003; // clear air so overhead frames show the whole layout
+      camera.position.set(debugCam[0], debugCam[1], debugCam[2]);
+      camera.lookAt(debugCam[3], debugCam[4], debugCam[5]);
+      if (debugCam[6]) { camera.fov = debugCam[6]; camera.updateProjectionMatrix(); }
+    }
+
+    const frameMs = wallDt * 1000;
+    if (!(post && post.render(frameMs))) {
+      if (post && renderer.toneMapping === THREE.NoToneMapping) {
+        // post-processing gave up (slow machine): hand the filmic curve back to the renderer
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        scene.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => { m.needsUpdate = true; }); });
+      }
+      renderer.render(scene, camera);
+    }
   }
 
   requestAnimationFrame(animate);

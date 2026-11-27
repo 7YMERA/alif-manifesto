@@ -38,6 +38,15 @@ Plain HTML5, Vanilla CSS, Vanilla JS (ES modules) + Three.js `0.128.0` from npm,
 | `src/scene.js` | Complete Three.js 3D Malaysian metropolis engine (see breakdown below). |
 | `src/simulator.js` | Induced Demand Test: the control panel and metrics. It drives the live 3D city (`ManifestoScene.setSimScenario`) while its section is on screen. Four steps: status quo, Bypass 2 (more flyovers), Bypass 3 (even more), mass rail instead. The copy's position: cars cause congestion, not people; mass transit fixes it; it is not too late for Malaysia. Metrics are an illustrative model and say so on the page. |
 | `src/audio.js` | Scroll-driven Web Audio soundscape. |
+| `src/city/layout.js` | Shared constants: boulevard, KLCC ring, landmark footprints, corridor. Pure data. |
+| `src/city/network.js` | The road network as a graph (nodes + roads). Every road ends at another road, a tunnel portal, a ramp landing, or a horizon node. Pure data. |
+| `src/city/roadMesh.js` | Builds ground roads (lane-marked strips that fade into the haze), curved deck ramps and piers from the network. |
+| `src/city/skylineLayout.js` | Rule-based, seeded placement of ~110 background buildings that avoid roads, ramps, landmarks and the corridor. Pure data. |
+| `src/city/skyline.js` | The skyline as six merged meshes with a window-grid facade, plus the Bukit Nanas hill and canopy. |
+| `src/camera/path.js` | The scroll camera: one forward glide that climbs over KL, with the gaze easing onto each landmark. A pure function of scroll. |
+| `src/post.js` | Desktop post-processing: HDR bloom, filmic tone map, grade, vignette. Falls back automatically on slow machines. |
+| `tools/check-city.mjs` | Oracle: `npm run check`. Fails if a road dead-ends, a ramp misses its landing, a building overlaps a road or landmark, the camera turns too fast, reverses, or clips a building. |
+| `tools/camera-report.mjs` | Prints turn rate and backward steps of the old camera next to the new one. |
 | `src/mirage/env.js` | Golden-hour PMREM environment map. |
 | `src/app.js` | `Press to Go` opening handoff, rAF-throttled scroll progress → `ManifestoScene.setScrollProgress()`, sound toggle, skip-link focus handling, **End-of-Scroll Before / After** slider + timelapse (`setCompareRatio`), and local **Witness This 10-Year Pledge** stamp. Smooth scrolling and the timelapse respect `prefers-reduced-motion`. |
 | `vercel.json` | Clean URLs and security headers for static Vercel deployment. |
@@ -77,6 +86,7 @@ Plain HTML5, Vanilla CSS, Vanilla JS (ES modules) + Three.js `0.128.0` from npm,
 
 10. **Polish pass (2026-11-27)**: Fixed a `metricCur is not defined` crash in the simulator, removed the duplicate scenario label and emoji icons (now outline SVG), made reduced-motion honoured across scroll, intro, simulator and timelapse, raised tap targets to 44 px, darkened small red text for contrast, fixed the skip link to move focus, removed the unreferenced legacy root `app.js`/`scene.js`/`audio.js`, and added twitter meta and a `<noscript>` summary.
 11. **Induced Demand Test in 3D (2026-11-27)**: The simulator is now a full-bleed section whose stage is the 3D city itself. Each bypass grows as a tangle of looping, crossing flyovers (Malaysian interchange spaghetti, built as curved ribbons with instanced piers) and floods with bumper-to-bumper traffic (instanced cars, 3 draw calls per ribbon); "Mass rail" collapses the stack and plays the existing 2036 transformation. Removed the 2D canvas, the invented "2028/2032" years and the unsourced stats, and corrected the old 48-minute journey to the measured 40.
+12. **Real-KL network, skyline and camera (2026-11-27)**: Roads are now a checked graph: the boulevard joins the KLCC ring through a curved connector, four arterials (Ampang, Tun Razak, Sultan Ismail, Pantai-bound) leave the ring and run off into the haze, cross-streets run to the horizon, both ends of the elevated highway come down and land on roads, and the rail viaduct dives into a tunnel at each end. Grey boxes became a rule-placed CBD skyline with window facades; Bukit Nanas is a real hill with trees. The camera is one forward glide with landmark highlights (old camera: up to 3,446 deg per unit of scroll and backward motion in 224 of 600 steps; new: 238 and none). Desktop gets HDR bloom, filmic grade and vignette.
 
 ---
 
@@ -91,4 +101,6 @@ npm run preview    # serves dist/ on :4173
 
 **Deploy on Vercel**: Import `7YMERA/alif-manifesto` → Framework Preset: **Vite** (settings come from `vercel.json`: `npm run build`, output `dist`).
 
-**Before pushing**: `node --check src/*.js`, `npm run build` with zero errors, and look at a real frame at 1300 px and 390 px (light theme).
+**Before pushing**: `npm run check` (city and camera oracle), `node --check src/*.js`, `npm run build` with zero errors, and look at a real frame at 1300 px and 390 px (light theme).
+
+**Debug**: add `?debug` to expose `window.__stage` (`scene`, `camera`, `renderer`, `setCam([x,y,z, lx,ly,lz, fov])`) for overhead layout shots. `?post=off` / `?post=on` forces post-processing off or on.
