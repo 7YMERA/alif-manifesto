@@ -26,11 +26,13 @@ export function createManifestoScene() {
     return null;
   }
 
-  const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+  const dpr = Math.min(window.devicePixelRatio || 1, window.innerWidth <= 820 ? 1.0 : 1.5);
   renderer.setPixelRatio(dpr);
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.type = window.innerWidth <= 820
+    ? THREE.PCFShadowMap
+    : THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.12;
 
@@ -136,7 +138,7 @@ export function createManifestoScene() {
   const terrAOTex = texLoader.load('./assets/city/terrain_ao.jpg');
   const facadeDayTex = wrapTex(texLoader.load('./assets/city/facade_glass.jpg'), 2, 3);
 
-  const terrGeo = new THREE.PlaneGeometry(1800, 1800, 92, 92);
+  const terrGeo = new THREE.PlaneGeometry(1800, 1800, 48, 48);
   terrGeo.rotateX(-Math.PI / 2);
   const tPos = terrGeo.attributes.position;
   for (let i = 0; i < tPos.count; i++) {
@@ -812,6 +814,7 @@ export function createManifestoScene() {
   let greenFactor = 0;
   let prettyFactor = 0;
   let lastTime = performance.now();
+  let _lastCamZ = 999;
   const tmpPos = new THREE.Vector3();
   const tmpLook = new THREE.Vector3();
   const tmpIntroPos = new THREE.Vector3();
@@ -995,6 +998,10 @@ export function createManifestoScene() {
     const sunZ = Math.round((camera.position.z - 45) / 6) * 6;
     sunLight.target.position.set(0, 0, sunZ);
     sunLight.position.copy(sunLight.target.position).add(SUN_OFFSET);
+
+    // Skip shadow-map update when camera is barely moving (saves ~4 ms/frame at idle)
+    const camMoved = Math.abs(camera.position.z - _lastCamZ) > 0.4;
+    if (camMoved) { sunLight.shadow.needsUpdate = true; _lastCamZ = camera.position.z; }
 
     renderer.render(scene, camera);
   }

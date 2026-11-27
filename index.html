@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en" data-theme="light">
 <head>
   <meta charset="utf-8">
@@ -147,6 +147,64 @@
         </div>
       </section>
 
+      <!-- INDUCED DEMAND SIMULATOR -->
+      <section class="jam-sim" id="jam-simulator" aria-label="Induced Demand Corridor Simulator">
+        <div class="jam-sim__inner">
+          <header class="jam-sim__header">
+            <span class="eyebrow eyebrow--red">Interactive Simulator</span>
+            <h2 class="jam-sim__title">The <mark class="hl hl--red">Induced Demand</mark> Test</h2>
+            <p class="jam-sim__sub">Shah Alam &#x2192; KL &middot; 18 km corridor. What happens when we give it more space?</p>
+          </header>
+
+          <div class="jam-sim__stage">
+            <div class="jam-sim__year" id="sim-year">2026 &#x2014; Status Quo</div>
+            <canvas id="sim-canvas" class="jam-sim__canvas" aria-label="Road corridor cross-section animation"></canvas>
+          </div>
+
+          <div class="jam-sim__controls" role="group" aria-label="Choose a scenario">
+            <button class="sim-btn" id="sim-btn-base" data-scenario="base">
+              <span class="sim-btn__icon">&#x1F6A6;</span>
+              <span class="sim-btn__label">Today&#x2019;s Jam</span>
+              <span class="sim-btn__sub">Status quo &middot; 2026</span>
+            </button>
+            <button class="sim-btn sim-btn--bad" id="sim-btn-lanes" data-scenario="lanes">
+              <span class="sim-btn__icon">&#x1F6E3;&#xFE0F;</span>
+              <span class="sim-btn__label">Add Car Lanes</span>
+              <span class="sim-btn__sub">The old answer</span>
+            </button>
+            <button class="sim-btn sim-btn--good" id="sim-btn-transit" data-scenario="transit">
+              <span class="sim-btn__icon">&#x1F68C;</span>
+              <span class="sim-btn__label">Add Transit</span>
+              <span class="sim-btn__sub">The right answer</span>
+            </button>
+          </div>
+
+          <div class="jam-sim__outcomes" aria-label="Outcome metrics">
+            <div class="sim-metric">
+              <span class="sim-metric__label">People moved / hr</span>
+              <div class="sim-metric__track"><div class="sim-metric__fill" id="sim-b-pph"></div></div>
+              <span class="sim-metric__value" id="sim-m-pph">1,800</span>
+            </div>
+            <div class="sim-metric">
+              <span class="sim-metric__label">Journey time</span>
+              <div class="sim-metric__track"><div class="sim-metric__fill" id="sim-b-journey"></div></div>
+              <span class="sim-metric__value" id="sim-m-journey">48 min</span>
+            </div>
+            <div class="sim-metric">
+              <span class="sim-metric__label">Noise level</span>
+              <div class="sim-metric__track"><div class="sim-metric__fill" id="sim-b-noise"></div></div>
+              <span class="sim-metric__value" id="sim-m-noise">82 dB</span>
+            </div>
+            <div class="sim-metric">
+              <span class="sim-metric__label">CO&#x2082; per person</span>
+              <div class="sim-metric__track"><div class="sim-metric__fill" id="sim-b-co2"></div></div>
+              <span class="sim-metric__value" id="sim-m-co2">210 g/km</span>
+            </div>
+          </div>
+
+          <p class="jam-sim__insight" id="sim-insight"></p>
+        </div>
+      </section>
       <!-- 02 · PRAGMATIC URBANISM · KEEP & GREEN HIGHWAYS -->
       <section class="blog-section" id="highways-reimagined" aria-labelledby="highways-title">
         <div class="section-meta">
