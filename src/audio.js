@@ -82,11 +82,22 @@ function createAudioEngine() {
     osc2.stop(now + dur + 0.02);
   }
 
+  function clearAmbientTimers() {
+    clearTimeout(hornTimer);
+    clearTimeout(birdTimer);
+    hornTimer = null;
+    birdTimer = null;
+  }
+
   function scheduleHorn() {
     clearTimeout(hornTimer);
+    hornTimer = null;
+    if (!enabled || document.hidden) return;
     const delay = 2600 + Math.random() * 4200;
     hornTimer = setTimeout(() => {
-      if (enabled && ctx && ctx.state === 'running' && currentLevel < 0.42) {
+      hornTimer = null;
+      if (!enabled || document.hidden) return;
+      if (ctx && ctx.state === 'running' && currentLevel < 0.42) {
         playDistantHorn(1 - currentLevel / 0.42);
       }
       scheduleHorn();
@@ -122,13 +133,31 @@ function createAudioEngine() {
 
   function scheduleBird() {
     clearTimeout(birdTimer);
+    birdTimer = null;
+    if (!enabled || document.hidden) return;
     const delay = 2400 + Math.random() * 3800;
     birdTimer = setTimeout(() => {
-      if (enabled && ctx && ctx.state === 'running' && currentLevel > 0.52) {
+      birdTimer = null;
+      if (!enabled || document.hidden) return;
+      if (ctx && ctx.state === 'running' && currentLevel > 0.52) {
         playGentleBird((currentLevel - 0.52) / 0.48);
       }
       scheduleBird();
     }, delay);
+  }
+
+  function syncTimers() {
+    if (enabled && started && !document.hidden) {
+      if (!hornTimer) scheduleHorn();
+      if (!birdTimer) scheduleBird();
+    } else {
+      clearAmbientTimers();
+    }
+  }
+
+  function setSmoothParam(param, value, now, tau) {
+    param.cancelScheduledValues(now);
+    param.setTargetAtTime(value, now, tau);
   }
 
   function initGraph() {
@@ -193,8 +222,16 @@ function createAudioEngine() {
     hum1.start();
     hum2.start();
 
-    scheduleHorn();
-    scheduleBird();
+    document.addEventListener('visibilitychange', () => {
+      if (!ctx || !started) return;
+      if (document.hidden) {
+        clearAmbientTimers();
+        if (ctx.state === 'running') ctx.suspend();
+      } else {
+        if (enabled && ctx.state === 'suspended') ctx.resume();
+        syncTimers();
+      }
+    });
   }
 
   function applyMix() {
@@ -202,30 +239,32 @@ function createAudioEngine() {
     const now = ctx.currentTime;
     const t = clamp(currentLevel, 0, 1);
 
-    masterGain.gain.setTargetAtTime(enabled ? 0.85 : 0.0001, now, 0.12);
+    setSmoothParam(masterGain.gain, enabled ? 0.85 : 0.0001, now, 0.12);
     const trafficVol = 0.34 * (1 - t * 0.82);
     const cutoffHz = 820 - t * 620;
-    trafficGain.gain.setTargetAtTime(trafficVol, now, 0.18);
-    trafficFilter.frequency.setTargetAtTime(cutoffHz, now, 0.18);
+    setSmoothParam(trafficGain.gain, trafficVol, now, 0.18);
+    setSmoothParam(trafficFilter.frequency, cutoffHz, now, 0.18);
 
-    breezeGain.gain.setTargetAtTime(0.065 * t, now, 0.25);
-    calmGain.gain.setTargetAtTime(0.75 * t, now, 0.25);
+    setSmoothParam(breezeGain.gain, 0.065 * t, now, 0.25);
+    setSmoothParam(calmGain.gain, 0.75 * t, now, 0.25);
   }
 
   return {
     start() {
       initGraph();
-      if (ctx.state === 'suspended') ctx.resume();
+      if (ctx.state === 'suspended' && !document.hidden) ctx.resume();
       enabled = true;
       started = true;
       applyMix();
+      syncTimers();
       return enabled;
     },
     toggle() {
       if (!started) return this.start();
-      if (ctx && ctx.state === 'suspended') ctx.resume();
+      if (ctx && ctx.state === 'suspended' && !document.hidden) ctx.resume();
       enabled = !enabled;
       applyMix();
+      syncTimers();
       return enabled;
     },
     setProgress(prettyRatio) {

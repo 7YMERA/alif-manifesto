@@ -1,3 +1,5 @@
+import Lenis from 'lenis';
+import 'lenis/dist/lenis.css';
 import { ManifestoAudio } from './audio.js';
 
 export function initApp(ManifestoScene) {
@@ -17,6 +19,69 @@ export function initApp(ManifestoScene) {
   const reducedQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
   const scrollBehavior = () => (reducedQuery.matches ? 'auto' : 'smooth');
 
+  // ── Lenis Smooth Scroll (cinematic-scroll-storytelling skill) ──────────
+  // Native scroll stays the deterministic source of truth; disabled under reduced motion,
+  // paused while gated or when the tab is hidden.
+  let lenis = null;
+  let lenisRaf = 0;
+
+  const stopLenisRaf = () => {
+    if (!lenisRaf) return;
+    cancelAnimationFrame(lenisRaf);
+    lenisRaf = 0;
+  };
+
+  const startLenisRaf = () => {
+    if (!lenis || lenisRaf || document.hidden) return;
+    const tick = (time) => {
+      lenisRaf = 0;
+      if (!lenis || document.hidden) return;
+      lenis.raf(time);
+      lenisRaf = requestAnimationFrame(tick);
+    };
+    lenisRaf = requestAnimationFrame(tick);
+  };
+
+  function syncLenis() {
+    if (reducedQuery.matches) {
+      stopLenisRaf();
+      if (lenis) {
+        lenis.destroy();
+        lenis = null;
+      }
+      return;
+    }
+    if (!lenis) {
+      lenis = new Lenis({
+        lerp: 0.09,
+        smoothWheel: true,
+        wheelMultiplier: 0.92,
+        syncTouch: false,
+      });
+      lenis.on('scroll', () => {
+        if (typeof queueUpdate === 'function') queueUpdate();
+      });
+    }
+    if (document.body.classList.contains('is-gated')) {
+      lenis.stop();
+      stopLenisRaf();
+    } else if (!document.hidden) {
+      lenis.start();
+      startLenisRaf();
+    }
+  }
+
+  if (reducedQuery.addEventListener) {
+    reducedQuery.addEventListener('change', syncLenis);
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stopLenisRaf();
+    } else if (lenis && !document.body.classList.contains('is-gated')) {
+      startLenisRaf();
+    }
+  });
+
   function syncSoundBtn(on) {
     if (!soundBtn) return;
     soundBtn.setAttribute('aria-pressed', String(!!on));
@@ -35,8 +100,9 @@ export function initApp(ManifestoScene) {
     setTimeout(() => {
       document.body.classList.remove('is-gated');
       window.scrollTo({ top: 0, behavior: 'auto' });
+      syncLenis();
       updateScroll();
-    }, 1150);
+    }, reducedQuery.matches ? 250 : 1150);
   };
 
   function startFromBus() {
@@ -45,6 +111,13 @@ export function initApp(ManifestoScene) {
     } else {
       window.onBusIntroStart();
     }
+  }
+
+  // Graceful fallback if WebGL failed to initialize (build-threejs-scroll-worlds skill)
+  if (!ManifestoScene) {
+    document.body.classList.add('no-webgl');
+    document.body.classList.remove('is-gated');
+    if (busOverlay) busOverlay.classList.add('is-hidden');
   }
 
   if (busTrigger) busTrigger.addEventListener('click', startFromBus);
@@ -62,7 +135,11 @@ export function initApp(ManifestoScene) {
       const targetEl = document.getElementById(targetId);
       if (!targetEl) return;
       e.preventDefault();
-      targetEl.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
+      if (lenis && !reducedQuery.matches) {
+        lenis.scrollTo(targetEl, { offset: -76 });
+      } else {
+        targetEl.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
+      }
       if (!targetEl.hasAttribute('tabindex')) targetEl.setAttribute('tabindex', '-1');
       targetEl.focus({ preventScroll: true });
     });
@@ -70,7 +147,11 @@ export function initApp(ManifestoScene) {
 
   if (backToTopBtn) {
     backToTopBtn.addEventListener('click', () => {
-      window.scrollTo({ top: 0, behavior: scrollBehavior() });
+      if (lenis && !reducedQuery.matches) {
+        lenis.scrollTo(0);
+      } else {
+        window.scrollTo({ top: 0, behavior: scrollBehavior() });
+      }
     });
   }
 
@@ -217,6 +298,7 @@ export function initApp(ManifestoScene) {
   window.addEventListener('scroll', queueUpdate, { passive: true });
   window.addEventListener('resize', queueUpdate, { passive: true });
   updateScroll();
+  syncLenis();
 
   const pledgeBtn = document.getElementById('pledge-btn');
   if (pledgeBtn) {
@@ -302,16 +384,21 @@ export function initApp(ManifestoScene) {
 
   // ── Scroll-reveal (animation-on-scroll skill) ──────────────────────────
   // Pauses animation until element enters viewport, then fires once.
-  const _scrollRevealIO = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('is-revealed');
-        _scrollRevealIO.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.08, rootMargin: '0px 0px -6% 0px' });
+  const revealEls = document.querySelectorAll('.animate-on-scroll');
+  if (!('IntersectionObserver' in window) || reducedQuery.matches) {
+    revealEls.forEach((el) => el.classList.add('is-revealed'));
+  } else {
+    const _scrollRevealIO = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-revealed');
+          _scrollRevealIO.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -6% 0px' });
 
-  document.querySelectorAll('.animate-on-scroll').forEach((el) => {
-    _scrollRevealIO.observe(el);
-  });
+    revealEls.forEach((el) => {
+      _scrollRevealIO.observe(el);
+    });
+  }
 }

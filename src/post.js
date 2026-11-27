@@ -83,7 +83,7 @@ export function createPost(renderer, scene, camera) {
     target = new THREE.WebGLMultisampleRenderTarget(w * pr, h * pr, {
       type: THREE.HalfFloatType, format: THREE.RGBAFormat, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter,
     });
-    target.samples = 4;
+    target.samples = pr > 1.25 ? 2 : 4;
   } catch {
     return null;
   }

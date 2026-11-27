@@ -19,7 +19,11 @@ export function createManifestoScene() {
     };
   }
 
-  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reducedQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let reducedMotion = reducedQuery.matches;
+  if (reducedQuery.addEventListener) {
+    reducedQuery.addEventListener('change', (e) => { reducedMotion = e.matches; });
+  }
 
   let renderer;
   try {
@@ -1091,13 +1095,51 @@ export function createManifestoScene() {
   window.ManifestoScene = api;
 
   window.addEventListener('resize', () => {
-    const nextDpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    const nextDpr = Math.min(window.devicePixelRatio || 1, window.innerWidth <= 820 ? 1.0 : 1.5);
     renderer.setPixelRatio(nextDpr);
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
     if (post) post.setSize(window.innerWidth, window.innerHeight, nextDpr);
   });
+
+  // ── Sunlit 2036 breeze motes (inspired by cloud-pass skill) ──────────────
+  // Tiny warm pollen/sunlight particles that fade in only as the city greens.
+  const moteCount = window.innerWidth <= 820 ? 110 : 240;
+  const motePos = new Float32Array(moteCount * 3);
+  const moteSeed = new Float32Array(moteCount * 3);
+  for (let i = 0; i < moteCount; i++) {
+    moteSeed[i * 3] = (Math.random() - 0.5) * 62;       // x offset around camera
+    moteSeed[i * 3 + 1] = (Math.random() - 0.15) * 20;  // y band
+    moteSeed[i * 3 + 2] = Math.random() * 88;           // depth slice in front of camera
+  }
+  const moteGeo = new THREE.BufferGeometry();
+  moteGeo.setAttribute('position', new THREE.BufferAttribute(motePos, 3));
+  const moteCanvas = document.createElement('canvas');
+  moteCanvas.width = 32;
+  moteCanvas.height = 32;
+  const mctx = moteCanvas.getContext('2d');
+  const mgrad = mctx.createRadialGradient(16, 16, 1, 16, 16, 15);
+  mgrad.addColorStop(0, 'rgba(255, 245, 214, 1)');
+  mgrad.addColorStop(0.45, 'rgba(255, 214, 140, 0.55)');
+  mgrad.addColorStop(1, 'rgba(255, 214, 140, 0)');
+  mctx.fillStyle = mgrad;
+  mctx.fillRect(0, 0, 32, 32);
+  const moteTex = new THREE.CanvasTexture(moteCanvas);
+  const moteMat = new THREE.PointsMaterial({
+    map: moteTex,
+    size: 0.42,
+    sizeAttenuation: true,
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    color: 0xffe6b3,
+  });
+  const motePoints = new THREE.Points(moteGeo, moteMat);
+  motePoints.frustumCulled = false;
+  motePoints.renderOrder = 10;
+  scene.add(motePoints);
 
   // =========================================================================
   // 8. Animation Loop (Golden Hour Atmosphere + Corridor Transformation)
@@ -1303,7 +1345,9 @@ export function createManifestoScene() {
       if (introT >= 1) introState = 'active';
     }
 
-    const pathFov = cameraPose(s, tmpPos, tmpLook);
+    // Portrait/mobile FOV pullback override (build-threejs-scroll-worlds skill)
+    const portraitBoost = camera.aspect < 0.85 ? clamp((0.85 - camera.aspect) * 26, 0, 10) : 0;
+    const pathFov = cameraPose(s, tmpPos, tmpLook) + portraitBoost;
     if (Math.abs(camera.fov - pathFov) > 0.02) { camera.fov = pathFov; camera.updateProjectionMatrix(); }
     simBlend = lerp(simBlend, simOn ? 1 : 0, reducedMotion ? 1 : 1 - Math.exp(-4.0 * wallDt));
     if (simBlend > 0.002) {
@@ -1330,6 +1374,28 @@ export function createManifestoScene() {
     } else {
       camera.position.copy(tmpPos);
       camera.lookAt(tmpLook);
+    }
+
+    // Update sunlit 2036 breeze motes in a corridor ahead of the camera
+    const moteAlpha = reducedMotion ? 0 : smoothstep(0.22, 0.85, prettyFactor) * 0.52;
+    motePoints.visible = moteAlpha > 0.01;
+    if (motePoints.visible) {
+      moteMat.opacity = moteAlpha;
+      const cx = camera.position.x;
+      const cy = Math.max(3, camera.position.y * 0.72);
+      const cz = camera.position.z;
+      const posArr = moteGeo.attributes.position.array;
+      for (let i = 0; i < moteCount; i++) {
+        const idx = i * 3;
+        const sx = moteSeed[idx];
+        const sy = moteSeed[idx + 1];
+        const sz = moteSeed[idx + 2];
+        const driftZ = (sz + elapsed * 1.45) % 88;
+        posArr[idx] = cx + sx + Math.sin(elapsed * 0.65 + sz) * 1.4;
+        posArr[idx + 1] = Math.max(1.2, cy + sy + Math.cos(elapsed * 0.8 + sx) * 0.75);
+        posArr[idx + 2] = cz - 6 - driftZ;
+      }
+      moteGeo.attributes.position.needsUpdate = true;
     }
 
     tmpColor.copy(uglySkyTop).lerp(GOLDEN_PALETTE.skyTop, prettyFactor);
@@ -1368,25 +1434,55 @@ export function createManifestoScene() {
     }
   }
 
-  // ── Pause RAF when the canvas is off-screen (optimize-web-animations skill) ──
-  // Zero GPU cost while the user has scrolled the canvas out of view.
-  let _canvasVisible = true;
-  const _visIO = new IntersectionObserver((entries) => {
-    _canvasVisible = entries[0].isIntersecting;
-  }, { threshold: 0 });
-  _visIO.observe(canvas);
+  // ── True RAF pause when off-screen, hidden, or context lost (optimize-web-animations) ──
+  let _inView = true;
+  let _tabHidden = document.hidden;
+  let _contextLost = false;
+  let _rafId = 0;
 
-  document.addEventListener('visibilitychange', () => {
-    _canvasVisible = !document.hidden;
-  });
-
-  // Wrap the animate call so it short-circuits when off-screen
-  const _animateOuter = (now) => {
-    requestAnimationFrame(_animateOuter);
-    if (!_canvasVisible) return;
+  const _tick = (now) => {
+    _rafId = 0;
+    if (!_inView || _tabHidden || _contextLost) return;
     animate(now);
+    _rafId = requestAnimationFrame(_tick);
   };
 
-  requestAnimationFrame(_animateOuter);
+  const _syncLoop = () => {
+    const shouldRun = _inView && !_tabHidden && !_contextLost;
+    canvas.dataset.animationActive = String(shouldRun);
+    if (shouldRun && !_rafId) {
+      lastTime = performance.now();
+      _rafId = requestAnimationFrame(_tick);
+    } else if (!shouldRun && _rafId) {
+      cancelAnimationFrame(_rafId);
+      _rafId = 0;
+    }
+  };
+
+  if ('IntersectionObserver' in window) {
+    const _visIO = new IntersectionObserver((entries) => {
+      _inView = entries[0].isIntersecting;
+      _syncLoop();
+    }, { threshold: 0 });
+    _visIO.observe(canvas);
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    _tabHidden = document.hidden;
+    _syncLoop();
+  });
+
+  canvas.addEventListener('webglcontextlost', (e) => {
+    e.preventDefault();
+    _contextLost = true;
+    _syncLoop();
+  });
+
+  canvas.addEventListener('webglcontextrestored', () => {
+    _contextLost = false;
+    _syncLoop();
+  });
+
+  _syncLoop();
   return api;
 }
