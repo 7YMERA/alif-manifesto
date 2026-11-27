@@ -102,6 +102,14 @@ export function createPost(renderer, scene, camera) {
   return {
     get enabled() { return on; },
     setExposure(v) { grade.uniforms.uExposure.value = v; },
+    setMood(pretty) {
+      const p = Math.max(0, Math.min(1, pretty));
+      grade.uniforms.uSat.value = 0.80 + 0.42 * p;
+      grade.uniforms.uContrast.value = 1.04 + 0.10 * p;
+      grade.uniforms.uVig.value = 0.30 - 0.13 * p;
+      bloom.strength = 0.12 + 0.24 * p;
+      bloom.threshold = 1.85 - 0.50 * p;
+    },
     setSize(width, height, pixelRatio) {
       composer.setPixelRatio(pixelRatio);
       composer.setSize(width, height);

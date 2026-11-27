@@ -88,6 +88,15 @@
     </svg>
   </a>
 
+  <!-- Floating Kinetic Year & Transit Line HUD (2026 -> 2036) -->
+  <aside class="year-hud" id="year-hud" aria-live="polite" aria-label="Current manifesto year and transit line">
+    <span class="year-hud__dot" id="year-hud-dot" aria-hidden="true"></span>
+    <span class="year-hud__year" id="year-hud-year">2026</span>
+    <span class="year-hud__sep" aria-hidden="true"></span>
+    <span class="year-hud__stage" id="year-hud-stage">Shah Alam Gridlock</span>
+    <span class="year-hud__track" aria-hidden="true"><span class="year-hud__fill" id="year-hud-fill"></span></span>
+  </aside>
+
   <!-- Subtle Floating Copyright & Back-to-Top Button (No White Footer Bar) -->
   <div class="corner-copy">&copy; 2026 Muhammad Alif Najmi</div>
   <button class="back-to-top" id="back-to-top" type="button" aria-label="Back to top">&uarr; Top</button>
@@ -113,12 +122,12 @@
 
     <article class="blog-column">
       <!-- 00 · THE REALITY · 2026 -->
-      <section class="blog-section blog-section--left animate-on-scroll" id="opening" aria-labelledby="hero-title">
+      <section class="blog-section blog-section--left animate-on-scroll" data-spotlight id="opening" aria-labelledby="hero-title">
         <div class="section-meta">
           <span class="eyebrow eyebrow--red">00 · The Reality · 2026</span>
           <span class="meta-tag">Shah Alam &rarr; KL</span>
         </div>
-        <h1 id="hero-title">Every morning moves at the speed of <mark class="hl hl--red">gridlock</mark>.</h1>
+        <h1 id="hero-title" data-split-reveal>Every morning moves at the speed of <mark class="hl hl--red">gridlock</mark>.</h1>
         <p>
           I am Muhammad Alif Najmi. Right now, walking even 1 km in Selangor feels punishing — bare concrete,
           broken sidewalks, and endless tail lights stretching toward Kuala Lumpur.
@@ -126,12 +135,12 @@
       </section>
 
       <!-- 01 · THE INTERSECTION · RAPIDKL 750 -->
-      <section class="blog-section blog-section--right animate-on-scroll" id="frustration" aria-labelledby="frustration-title">
+      <section class="blog-section blog-section--right animate-on-scroll" data-spotlight id="frustration" aria-labelledby="frustration-title">
         <div class="section-meta">
           <span class="eyebrow eyebrow--red">01 · The Intersection</span>
           <span class="meta-tag">RapidKL 750 · 18 km</span>
         </div>
-        <h2 id="frustration-title">Even <mark class="hl hl--red">RapidKL 750</mark> is trapped in the same jam.</h2>
+        <h2 id="frustration-title" data-split-reveal>Even <mark class="hl hl--red">RapidKL 750</mark> is trapped in the same jam.</h2>
         <p>
           Section 13, Shah Alam to Mid Valley is <strong>18 km in 40 minutes (2.22 min/km)</strong>.
           You can add a bus every second — if it shares congestion with cars, what's the point?
@@ -140,12 +149,12 @@
         <div class="audit-compare" role="group" aria-label="RapidKL 750 commute comparison">
           <div class="audit-col audit-col--jam">
             <div class="audit-tag">Today · Shared Jam</div>
-            <div class="audit-big">40 min</div>
+            <div class="audit-big" data-count-to="40" data-suffix=" min">40 min</div>
             <div class="audit-sub">2.22 min/km · 27 km/h</div>
           </div>
           <div class="audit-col audit-col--vision">
             <div class="audit-tag">2036 · Enforced Lane</div>
-            <div class="audit-big">22 min</div>
+            <div class="audit-big" data-count-to="22" data-suffix=" min">22 min</div>
             <div class="audit-sub">1.22 min/km · 49 km/h</div>
           </div>
         </div>
@@ -205,12 +214,12 @@
     <article class="blog-column blog-column--after">
 
       <!-- 02 · PRAGMATIC URBANISM · KEEP & GREEN HIGHWAYS -->
-      <section class="blog-section blog-section--right animate-on-scroll" id="highways-reimagined" aria-labelledby="highways-title">
+      <section class="blog-section blog-section--right animate-on-scroll" data-spotlight id="highways-reimagined" aria-labelledby="highways-title">
         <div class="section-meta">
           <span class="eyebrow eyebrow--green">02 · Pragmatic Urbanism</span>
           <span class="meta-tag">Keep &amp; Decorate</span>
         </div>
-        <h2 id="highways-title">Destroy highways? <mark class="hl hl--red">NO.</mark> Decorate them with <mark class="hl hl--green">flowers &amp; greenery</mark>.</h2>
+        <h2 id="highways-title" data-split-reveal>Destroy highways? <mark class="hl hl--red">NO.</mark> Decorate them with <mark class="hl hl--green">flowers &amp; greenery</mark>.</h2>
         <p>
           What has already been built stays active with cars and trucks moving on top. We simply
           <strong>stop building new urban mega-highways</strong>, and wrap existing grey concrete in
@@ -220,12 +229,12 @@
       </section>
 
       <!-- 03 · PHASE I (2026–2027) -->
-      <section class="blog-section blog-section--left animate-on-scroll" id="phase-1" aria-labelledby="p1-title">
+      <section class="blog-section blog-section--left animate-on-scroll" data-spotlight id="phase-1" aria-labelledby="p1-title">
         <div class="section-meta">
           <span class="eyebrow">LINE 01 · 2026–2027</span>
           <span class="meta-tag">Foundation Line</span>
         </div>
-        <h2 id="p1-title">Build <mark class="hl">financial independence</mark> &amp; master real systems.</h2>
+        <h2 id="p1-title" data-split-reveal>Build <mark class="hl">financial independence</mark> &amp; master real systems.</h2>
         <p>Steady baby steps first — so future public service is clean, skilled, and unbought.</p>
 
         <ol class="milestone-list">
@@ -251,12 +260,12 @@
       <div class="rail-link" data-from="blue" aria-hidden="true"></div>
 
       <!-- 04 · PHASE II (2028–2029) -->
-      <section class="blog-section blog-section--right animate-on-scroll" id="phase-2" aria-labelledby="p2-title">
+      <section class="blog-section blog-section--right animate-on-scroll" data-spotlight id="phase-2" aria-labelledby="p2-title">
         <div class="section-meta">
           <span class="eyebrow eyebrow--red">LINE 02 · 2028–2029</span>
           <span class="meta-tag">Mobility &amp; NGO Line</span>
         </div>
-        <h2 id="p2-title">Join NGOs. Fight loudly for <mark class="hl hl--red">buses &amp; rail</mark>.</h2>
+        <h2 id="p2-title" data-split-reveal>Join NGOs. Fight loudly for <mark class="hl hl--red">buses &amp; rail</mark>.</h2>
         <p>Connecting formal policy mastery with grassroots Malaysian transit coalitions.</p>
 
         <ol class="milestone-list milestone-list--red">
@@ -282,12 +291,12 @@
       <div class="rail-link" data-from="red" aria-hidden="true"></div>
 
       <!-- 05 · PHASE III (2030–2031) -->
-      <section class="blog-section blog-section--left animate-on-scroll" id="phase-3" aria-labelledby="p3-title">
+      <section class="blog-section blog-section--left animate-on-scroll" data-spotlight id="phase-3" aria-labelledby="p3-title">
         <div class="section-meta">
           <span class="eyebrow eyebrow--green">LINE 03 · 2030–2031</span>
           <span class="meta-tag">Community &amp; Influence</span>
         </div>
-        <h2 id="p3-title"><mark class="hl hl--green">Shared spaces</mark> where communities grow &amp; feel safe.</h2>
+        <h2 id="p3-title" data-split-reveal><mark class="hl hl--green">Shared spaces</mark> where communities grow &amp; feel safe.</h2>
         <p>Fewer private cars, more buses and rail, plus shade trees and flowers that soak up and scatter sound, make for quieter, calmer, safer neighbourhoods for families.</p>
 
         <ol class="milestone-list milestone-list--green">
@@ -308,48 +317,58 @@
       <div class="rail-link rail-link--fan" aria-hidden="true"></div>
 
       <!-- 06 · 2036 CHARTER -->
-      <section class="blog-section blog-section--wide blog-section--last animate-on-scroll" id="phase-4" aria-labelledby="p4-title">
+      <section class="blog-section blog-section--wide blog-section--last animate-on-scroll" data-spotlight id="phase-4" aria-labelledby="p4-title">
         <div class="section-meta">
           <span class="eyebrow">06 · 2036 · All Lines Converge</span>
-          <span class="meta-tag">Public Office</span>
+          <div class="charter-view-switch" role="group" aria-label="Charter layout view">
+            <button type="button" class="view-pill is-active" data-charter-view="grid" aria-pressed="true">Grid</button>
+            <button type="button" class="view-pill" data-charter-view="deck" aria-pressed="false">3D Deck</button>
+          </div>
         </div>
-        <h2 id="p4-title">2036: a Kuala Lumpur &amp; Malaysia built for everyone.</h2>
+        <h2 id="p4-title" data-split-reveal>2036: a Kuala Lumpur &amp; Malaysia built for <mark class="hl">everyone</mark>.</h2>
         <p>
           Keep scrolling past this charter for the unobstructed 3D Kuala Lumpur finale — and scrub or
           play the live <strong>2026 &rarr; 2036 Timelapse</strong> below.
         </p>
 
-        <div class="charter-grid" role="group" aria-label="Six-point people's mobility and civic manifesto">
-          <div class="charter-card animate-on-scroll">
-            <div class="charter-num">PILLAR 01</div>
+        <div class="charter-grid" id="charter-grid" role="group" aria-label="Six-point people's mobility and civic manifesto">
+          <div class="charter-card animate-on-scroll" data-spotlight data-pillar="0" style="--card-accent: #0047ab;">
+            <div class="charter-num">PILLAR 01 · RAIL BACKBONE</div>
             <h3>Railways as the National Backbone</h3>
             <p>High-frequency LRT, MRT, reliable KTM Komuter, and intercity ETS rail connecting towns nationwide with seamless fare and walkway integration.</p>
           </div>
-          <div class="charter-card animate-on-scroll">
-            <div class="charter-num">PILLAR 02</div>
+          <div class="charter-card animate-on-scroll" data-spotlight data-pillar="1" style="--card-accent: #d92332;">
+            <div class="charter-num">PILLAR 02 · BUS PRIORITY</div>
             <h3>Enforced Bus Lanes Over New Highways</h3>
             <p>Halt urban mega-highway rubber-stamping. Physically enforce dedicated bus corridors like RapidKL 750 so buses beat private cars every morning.</p>
           </div>
-          <div class="charter-card animate-on-scroll">
-            <div class="charter-num">PILLAR 03</div>
+          <div class="charter-card animate-on-scroll" data-spotlight data-pillar="2" style="--card-accent: #0e7c59;">
+            <div class="charter-num">PILLAR 03 · KAKI LIMA</div>
             <h3>Green Existing Concrete &amp; Shaded Kaki Lima</h3>
             <p>Keep existing highways but wrap concrete pillars in tropical greenery, and build continuous tree-shaded sidewalks across Selangor and Malaysia.</p>
           </div>
-          <div class="charter-card animate-on-scroll">
-            <div class="charter-num">PILLAR 04</div>
+          <div class="charter-card animate-on-scroll" data-spotlight data-pillar="3" style="--card-accent: #d98218;">
+            <div class="charter-num">PILLAR 04 · SAFE CROSSINGS</div>
             <h3>Elderly-First Safe Crossings</h3>
             <p>Raised zebra crossings, generous pedestrian signal timings, and curb ramps so seniors, wheelchair users, and children cross without fear.</p>
           </div>
-          <div class="charter-card animate-on-scroll">
-            <div class="charter-num">PILLAR 05</div>
+          <div class="charter-card animate-on-scroll" data-spotlight data-pillar="4" style="--card-accent: #0e7c59;">
+            <div class="charter-num">PILLAR 05 · SHARED SPACES</div>
             <h3>Vibrant Shared Spaces &amp; Cycling</h3>
             <p>Protected bike lanes, colorful neighborhood shops, and safe public plazas where families take kids out and communities grow together.</p>
           </div>
-          <div class="charter-card animate-on-scroll">
-            <div class="charter-num">PILLAR 06</div>
+          <div class="charter-card animate-on-scroll" data-spotlight data-pillar="5" style="--card-accent: #0047ab;">
+            <div class="charter-num">PILLAR 06 · INTEGRITY</div>
             <h3>Clean, Accountable Public Service</h3>
             <p>Zero tolerance for stealing public money. Open project tracking and leadership judged strictly by whether daily life improves on the street.</p>
           </div>
+        </div>
+
+        <div class="deck-nav" id="charter-deck-nav" hidden>
+          <button type="button" class="deck-nav__btn" id="deck-prev" aria-label="Previous pillar">&larr; Prev</button>
+          <div class="deck-nav__dots" id="deck-dots" role="tablist" aria-label="Select pillar"></div>
+          <span class="deck-nav__count" id="deck-count">01 / 06</span>
+          <button type="button" class="deck-nav__btn" id="deck-next" aria-label="Next pillar">Next &rarr;</button>
         </div>
 
         <div class="creed-box animate-on-scroll">

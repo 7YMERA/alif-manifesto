@@ -52,15 +52,15 @@ export function createManifestoScene() {
   scene.environment = createGoldenHourPMREM(renderer);
 
   const GOLDEN_PALETTE = {
-    skyTop: new THREE.Color(0x3b6799),
-    skyMid: new THREE.Color(0xe6ad72),
-    skyHorizon: new THREE.Color(0xf8d7ab),
-    fog: new THREE.Color(0xedd0a8),
+    skyTop: new THREE.Color(0x1e5aa8),
+    skyMid: new THREE.Color(0xf0a85c),
+    skyHorizon: new THREE.Color(0xffdfb0),
+    fog: new THREE.Color(0xf4cfa0),
     sun: new THREE.Color(0xffbe73),
-    sunInt: 1.72,
-    hemiSky: new THREE.Color(0xffe4bc),
+    sunInt: 1.98,
+    hemiSky: new THREE.Color(0xffe6bf),
     hemiGround: new THREE.Color(0x9c7e5c),
-    hemiInt: 0.86
+    hemiInt: 0.94
   };
 
   scene.background = GOLDEN_PALETTE.fog.clone();
@@ -112,13 +112,16 @@ export function createManifestoScene() {
   }
 
   // =========================================================================
-  // 1. Golden Hour Sky Dome & Sculpted Klang Valley Basin Terrain
+  // 1. Golden Hour Sky Dome, Sun Halo & Sculpted Klang Valley Basin Terrain
   // =========================================================================
 
+  const SUN_SKY_DIR = new THREE.Vector3(0.24, 0.21, -0.948).normalize();
   const skyUniforms = {
     uTop: { value: GOLDEN_PALETTE.skyTop.clone() },
     uMid: { value: GOLDEN_PALETTE.skyMid.clone() },
-    uHorizon: { value: GOLDEN_PALETTE.skyHorizon.clone() }
+    uHorizon: { value: GOLDEN_PALETTE.skyHorizon.clone() },
+    uSunDir: { value: SUN_SKY_DIR },
+    uSunGlow: { value: 0.0 }
   };
 
   const skyMat = new THREE.ShaderMaterial({
@@ -129,15 +132,48 @@ export function createManifestoScene() {
     vertexShader:
       'varying vec3 vWorldPos; void main() { vec4 wp = modelMatrix * vec4(position, 1.0); vWorldPos = wp.xyz; gl_Position = projectionMatrix * viewMatrix * wp; }',
     fragmentShader:
-      'uniform vec3 uTop; uniform vec3 uMid; uniform vec3 uHorizon; varying vec3 vWorldPos;' +
+      'uniform vec3 uTop; uniform vec3 uMid; uniform vec3 uHorizon; uniform vec3 uSunDir; uniform float uSunGlow; varying vec3 vWorldPos;' +
       'void main() {' +
-      '  float h = normalize(vWorldPos).y;' +
+      '  vec3 dir = normalize(vWorldPos);' +
+      '  float h = dir.y;' +
       '  vec3 col = mix(uHorizon, uMid, smoothstep(0.0, 0.28, max(h, 0.0)));' +
-      '  col = mix(col, uTop, smoothstep(0.22, 0.78, max(h, 0.0)));' +
+      '  col = mix(col, uTop, smoothstep(0.20, 0.76, max(h, 0.0)));' +
+      '  float sunDot = max(dot(dir, uSunDir), 0.0);' +
+      '  float halo = pow(sunDot, 10.0) * 0.42 + pow(sunDot, 96.0) * 0.85;' +
+      '  float disc = smoothstep(0.9982, 0.9994, sunDot) * 1.4;' +
+      '  col += vec3(1.0, 0.78, 0.46) * (halo + disc) * uSunGlow;' +
       '  gl_FragColor = vec4(col, 1.0);' +
       '}'
   });
   scene.add(new THREE.Mesh(new THREE.SphereGeometry(1500, 32, 20), skyMat));
+
+  // Warm golden lens-halo sprite behind KL skyline (mirage-study + cloud-pass skill)
+  const sunHaloCanvas = document.createElement('canvas');
+  sunHaloCanvas.width = 128;
+  sunHaloCanvas.height = 128;
+  const sctx = sunHaloCanvas.getContext('2d');
+  const sgrad = sctx.createRadialGradient(64, 64, 2, 64, 64, 62);
+  sgrad.addColorStop(0.0, 'rgba(255, 250, 232, 1.0)');
+  sgrad.addColorStop(0.18, 'rgba(255, 214, 140, 0.85)');
+  sgrad.addColorStop(0.45, 'rgba(255, 178, 89, 0.28)');
+  sgrad.addColorStop(0.75, 'rgba(255, 160, 72, 0.08)');
+  sgrad.addColorStop(1.0, 'rgba(255, 160, 72, 0.0)');
+  sctx.fillStyle = sgrad;
+  sctx.fillRect(0, 0, 128, 128);
+  const sunHaloMat = new THREE.SpriteMaterial({
+    map: new THREE.CanvasTexture(sunHaloCanvas),
+    color: 0xffd28a,
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+    fog: false,
+    blending: THREE.AdditiveBlending,
+    toneMapped: false
+  });
+  const sunHaloSprite = new THREE.Sprite(sunHaloMat);
+  sunHaloSprite.position.set(240, 185, -920);
+  sunHaloSprite.scale.set(290, 290, 1);
+  scene.add(sunHaloSprite);
 
   const world = new THREE.Group();
   scene.add(world);
@@ -1104,37 +1140,39 @@ export function createManifestoScene() {
   });
 
   // ── Sunlit 2036 breeze motes (inspired by cloud-pass skill) ──────────────
-  // Tiny warm pollen/sunlight particles that fade in only as the city greens.
-  const moteCount = window.innerWidth <= 820 ? 110 : 240;
+  // Warm golden pollen/sunlight bokeh particles that shimmer in as the city greens.
+  const moteCount = window.innerWidth <= 820 ? 130 : 280;
   const motePos = new Float32Array(moteCount * 3);
   const moteSeed = new Float32Array(moteCount * 3);
   for (let i = 0; i < moteCount; i++) {
-    moteSeed[i * 3] = (Math.random() - 0.5) * 62;       // x offset around camera
-    moteSeed[i * 3 + 1] = (Math.random() - 0.15) * 20;  // y band
-    moteSeed[i * 3 + 2] = Math.random() * 88;           // depth slice in front of camera
+    moteSeed[i * 3] = (Math.random() - 0.5) * 58;       // x offset around camera
+    moteSeed[i * 3 + 1] = (Math.random() - 0.12) * 22;  // y band
+    moteSeed[i * 3 + 2] = Math.random() * 82;           // depth slice in front of camera
   }
   const moteGeo = new THREE.BufferGeometry();
   moteGeo.setAttribute('position', new THREE.BufferAttribute(motePos, 3));
   const moteCanvas = document.createElement('canvas');
-  moteCanvas.width = 32;
-  moteCanvas.height = 32;
+  moteCanvas.width = 64;
+  moteCanvas.height = 64;
   const mctx = moteCanvas.getContext('2d');
-  const mgrad = mctx.createRadialGradient(16, 16, 1, 16, 16, 15);
-  mgrad.addColorStop(0, 'rgba(255, 245, 214, 1)');
-  mgrad.addColorStop(0.45, 'rgba(255, 214, 140, 0.55)');
-  mgrad.addColorStop(1, 'rgba(255, 214, 140, 0)');
+  const mgrad = mctx.createRadialGradient(32, 32, 2, 32, 32, 30);
+  mgrad.addColorStop(0, 'rgba(255, 252, 232, 1)');
+  mgrad.addColorStop(0.35, 'rgba(255, 222, 148, 0.82)');
+  mgrad.addColorStop(0.7, 'rgba(255, 186, 94, 0.25)');
+  mgrad.addColorStop(1, 'rgba(255, 186, 94, 0)');
   mctx.fillStyle = mgrad;
-  mctx.fillRect(0, 0, 32, 32);
+  mctx.fillRect(0, 0, 64, 64);
   const moteTex = new THREE.CanvasTexture(moteCanvas);
   const moteMat = new THREE.PointsMaterial({
     map: moteTex,
-    size: 0.42,
+    size: 1.15,
     sizeAttenuation: true,
     transparent: true,
     opacity: 0,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
-    color: 0xffe6b3,
+    toneMapped: false,
+    color: 0xffdf99,
   });
   const motePoints = new THREE.Points(moteGeo, moteMat);
   motePoints.frustumCulled = false;
@@ -1155,9 +1193,9 @@ export function createManifestoScene() {
   const tmpIntroPos = new THREE.Vector3();
   const tmpIntroLook = new THREE.Vector3();
 
-  const uglySkyTop = new THREE.Color(0x9ca0a4);
-  const uglySkyMid = new THREE.Color(0xc9bfb2);
-  const uglyFogCol = new THREE.Color(0xd2c7b8);
+  const uglySkyTop = new THREE.Color(0x6b737b);
+  const uglySkyMid = new THREE.Color(0x9b968e);
+  const uglyFogCol = new THREE.Color(0xb6aea4);
   const tmpColor = new THREE.Color();
 
   // Scheduled by _animateOuter below, which also pauses it while the canvas is off-screen.
@@ -1377,7 +1415,7 @@ export function createManifestoScene() {
     }
 
     // Update sunlit 2036 breeze motes in a corridor ahead of the camera
-    const moteAlpha = reducedMotion ? 0 : smoothstep(0.22, 0.85, prettyFactor) * 0.52;
+    const moteAlpha = reducedMotion ? 0 : smoothstep(0.18, 0.78, prettyFactor) * 0.78;
     motePoints.visible = moteAlpha > 0.01;
     if (motePoints.visible) {
       moteMat.opacity = moteAlpha;
@@ -1390,23 +1428,36 @@ export function createManifestoScene() {
         const sx = moteSeed[idx];
         const sy = moteSeed[idx + 1];
         const sz = moteSeed[idx + 2];
-        const driftZ = (sz + elapsed * 1.45) % 88;
-        posArr[idx] = cx + sx + Math.sin(elapsed * 0.65 + sz) * 1.4;
-        posArr[idx + 1] = Math.max(1.2, cy + sy + Math.cos(elapsed * 0.8 + sx) * 0.75);
-        posArr[idx + 2] = cz - 6 - driftZ;
+        const driftZ = (sz + elapsed * 1.65) % 82;
+        posArr[idx] = cx + sx + Math.sin(elapsed * 0.75 + sz) * 1.8;
+        posArr[idx + 1] = Math.max(1.2, cy + sy + Math.cos(elapsed * 0.9 + sx) * 0.95);
+        posArr[idx + 2] = cz - 5 - driftZ;
       }
       moteGeo.attributes.position.needsUpdate = true;
     }
 
     tmpColor.copy(uglySkyTop).lerp(GOLDEN_PALETTE.skyTop, prettyFactor);
-    skyUniforms.uTop.value.lerp(tmpColor, 0.06);
+    skyUniforms.uTop.value.lerp(tmpColor, 0.08);
     tmpColor.copy(uglySkyMid).lerp(GOLDEN_PALETTE.skyMid, prettyFactor);
-    skyUniforms.uMid.value.lerp(tmpColor, 0.06);
+    skyUniforms.uMid.value.lerp(tmpColor, 0.08);
     tmpColor.copy(uglyFogCol).lerp(GOLDEN_PALETTE.fog, prettyFactor);
-    skyUniforms.uHorizon.value.lerp(tmpColor, 0.06);
-    scene.background.lerp(tmpColor, 0.06);
-    scene.fog.color.lerp(tmpColor, 0.06);
-    scene.fog.density = lerp(scene.fog.density, lerp(0.0032, 0.0018, prettyFactor), 0.06);
+    skyUniforms.uHorizon.value.lerp(tmpColor, 0.08);
+    scene.background.lerp(tmpColor, 0.08);
+    scene.fog.color.lerp(tmpColor, 0.08);
+    scene.fog.density = lerp(scene.fog.density, lerp(0.0038, 0.00145, prettyFactor), 0.08);
+
+    // Sun breaks through 2026 exhaust haze into radiant 2036 golden hour
+    const sunAppear = smoothstep(0.16, 0.86, prettyFactor);
+    skyUniforms.uSunGlow.value = lerp(skyUniforms.uSunGlow.value, sunAppear, 0.08);
+    sunHaloMat.opacity = lerp(sunHaloMat.opacity, sunAppear * 0.85, 0.08);
+    sunHaloSprite.visible = sunHaloMat.opacity > 0.01;
+    if (sunHaloSprite.visible) {
+      const pulse = reducedMotion ? 1 : 1 + Math.sin(elapsed * 0.9) * 0.04;
+      sunHaloSprite.scale.set(300 * pulse, 300 * pulse, 1);
+    }
+    sunLight.intensity = lerp(sunLight.intensity, lerp(0.92, GOLDEN_PALETTE.sunInt, prettyFactor), 0.08);
+    hemiLight.intensity = lerp(hemiLight.intensity, lerp(0.68, GOLDEN_PALETTE.hemiInt, prettyFactor), 0.08);
+    if (post && post.setMood) post.setMood(prettyFactor);
 
     const sunZ = Math.round((camera.position.z - 45) / 6) * 6;
     sunLight.target.position.set(0, 0, sunZ);

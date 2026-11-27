@@ -93,7 +93,8 @@ body.is-gated main,
 body.is-gated .scroll-cue,
 body.is-gated .compare-dock,
 body.is-gated .back-to-top,
-body.is-gated .corner-copy {
+body.is-gated .corner-copy,
+body.is-gated .year-hud {
   opacity: 0 !important;
   pointer-events: none !important;
   visibility: hidden !important;
@@ -917,13 +918,292 @@ body.no-webgl .hero-spacer { height: 24vh; }
 
 /* Keep floating chrome off the simulator panel */
 .is-sim .back-to-top,
-.is-sim .corner-copy { opacity: 0; pointer-events: none; }
+.is-sim .corner-copy,
+.is-sim .year-hud { opacity: 0; pointer-events: none; }
+
+/* ── Floating Kinetic Year & Transit Line HUD (2026 -> 2036) ───────────────── */
+.year-hud {
+  position: fixed;
+  left: 20px;
+  bottom: 52px;
+  z-index: 38;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 15px 12px;
+  border-radius: 14px;
+  background: rgba(252, 249, 243, 0.92);
+  border: 1px solid rgba(16, 25, 38, 0.14);
+  box-shadow: var(--shadow-float);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--ink);
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+  overflow: hidden;
+  transition: opacity 0.35s var(--ease), transform 0.35s var(--ease);
+}
+.year-hud.is-shown {
+  opacity: 1;
+  transform: none;
+}
+.year-hud__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 0 3px rgba(217, 35, 50, 0.18);
+  flex-shrink: 0;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+.year-hud[data-line="blue"] .year-hud__dot {
+  background: var(--blue);
+  box-shadow: 0 0 0 3px rgba(0, 71, 171, 0.2);
+}
+.year-hud[data-line="green"] .year-hud__dot {
+  background: var(--green);
+  box-shadow: 0 0 0 3px rgba(14, 124, 89, 0.22);
+}
+.year-hud[data-line="gold"] .year-hud__dot {
+  background: #d98218;
+  box-shadow: 0 0 0 3px rgba(255, 178, 89, 0.32);
+}
+.year-hud__year {
+  font-family: var(--f-display);
+  font-weight: 800;
+  font-size: 1.08rem;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.year-hud__sep {
+  width: 1px;
+  height: 14px;
+  background: rgba(16, 25, 38, 0.16);
+}
+.year-hud__stage {
+  font-family: var(--f-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.year-hud__track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: rgba(16, 25, 38, 0.08);
+}
+.year-hud__fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: left center;
+  transform: scaleX(0.04);
+  background: linear-gradient(90deg, var(--red), var(--blue) 52%, var(--green) 80%, #d98218);
+  transition: transform 0.14s linear;
+}
+
+/* ── Masked Word-by-Word Kinetic Headlines (cinematic-scroll-storytelling) ── */
+.split-word-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  padding-bottom: 0.06em;
+  margin-bottom: -0.06em;
+}
+.split-word {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+mark.hl {
+  transition: box-shadow 0.45s var(--ease), background-color 0.45s var(--ease);
+}
+mark.hl.is-lit {
+  box-shadow: inset 0 -2px 0 rgba(0, 71, 171, 0.25);
+}
+mark.hl.hl--red.is-lit {
+  box-shadow: inset 0 -2px 0 rgba(217, 35, 50, 0.30);
+}
+mark.hl.hl--green.is-lit {
+  box-shadow: inset 0 -2px 0 rgba(14, 124, 89, 0.30);
+}
+
+/* ── 21st.dev Pointer-Tracked Border Spotlight & Subtle 3D Tilt ───────────── */
+[data-spotlight] {
+  position: relative;
+  --mx: 50%;
+  --my: 50%;
+}
+[data-spotlight]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    320px circle at var(--mx) var(--my),
+    rgba(255, 178, 89, 0.16),
+    rgba(0, 71, 171, 0.06) 45%,
+    transparent 72%
+  );
+  transition: opacity 0.28s ease;
+}
+[data-spotlight]:hover::after { opacity: 1; }
+/* Preserve the wide 2036 card's right-side 3-line rail bar */
+.blog-section--wide[data-spotlight]::after {
+  inset: auto;
+  border-radius: 3px;
+  opacity: 1;
+  background: linear-gradient(90deg, var(--blue) 0 6px, transparent 6px 12px, var(--red) 12px 18px, transparent 18px 24px, var(--green) 24px 30px);
+}
+
+/* Charter pillar cards: RapidKL accent ribbon, 3D tilt, spotlight & pinned state */
+.charter-card {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  border-top: 3.5px solid var(--card-accent, var(--blue));
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.32s ease,
+              border-color 0.25s ease;
+}
+.charter-card:hover {
+  transform: perspective(900px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) translateY(-4px);
+  box-shadow: 0 18px 34px rgba(16, 25, 38, 0.12);
+}
+.charter-card.is-pinned {
+  box-shadow: 0 0 0 2px var(--card-accent, var(--blue)), 0 20px 38px rgba(16, 25, 38, 0.14);
+}
+.charter-card .charter-num {
+  color: var(--card-accent, var(--blue));
+}
+
+/* ── Charter View Switcher (Grid <-> 3D Card Deck) ────────────────────────── */
+.charter-view-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(16, 25, 38, 0.06);
+  border: 1px solid rgba(16, 25, 38, 0.1);
+}
+.view-pill {
+  min-height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--f-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.view-pill.is-active {
+  background: var(--blue);
+  color: #ffffff;
+}
+
+/* 21st.dev Spring-Stacked 3D Card Deck mode */
+.charter-grid.is-deck {
+  display: block;
+  position: relative;
+  min-height: 258px;
+  margin-bottom: 18px;
+  perspective: 1100px;
+}
+.charter-grid.is-deck .charter-card {
+  position: absolute;
+  inset: 0 0 auto 0;
+  max-width: 640px;
+  margin: 0 auto;
+  min-height: 210px;
+  padding: 26px 28px;
+  background: var(--surface-solid);
+  box-shadow: 0 16px 38px rgba(16, 25, 38, 0.12);
+  transform-origin: center top;
+  transition: transform 0.52s cubic-bezier(0.22, 1, 0.36, 1),
+              opacity 0.42s ease,
+              box-shadow 0.35s ease;
+}
+.charter-grid.is-deck .charter-card h3 { font-size: 1.24rem; }
+.charter-grid.is-deck .charter-card p { font-size: 0.96rem; line-height: 1.62; }
+.charter-grid.is-deck .charter-card.is-deck-behind {
+  pointer-events: auto;
+}
+
+.deck-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin: 4px 0 22px;
+  flex-wrap: wrap;
+}
+.deck-nav[hidden] { display: none; }
+.deck-nav__btn {
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-solid);
+  color: var(--ink);
+  font-family: var(--f-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+.deck-nav__btn:hover {
+  border-color: var(--blue);
+  background: var(--blue);
+  color: #ffffff;
+}
+.deck-nav__dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.deck-dot {
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(16, 25, 38, 0.2);
+  cursor: pointer;
+  transition: width 0.25s var(--ease), background-color 0.25s ease;
+}
+.deck-dot.is-active {
+  width: 26px;
+  background: var(--blue);
+}
+.deck-nav__count {
+  font-family: var(--f-mono);
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
 
 .attrib { margin: 18px 0 0; font-size: 0.74rem; color: var(--muted); }
 
 @media (max-width: 980px) { .charter-grid { grid-template-columns: 1fr 1fr; } }
 
-/* ── Rail-map connectors between the phase cards ───────────────────────────── */
+/* ── Scroll-Drawn Rail-Map SVG Connectors between Phase Cards ──────────────── */
 .rail-link {
   position: relative;
   height: 16vh;
@@ -933,7 +1213,12 @@ body.no-webgl .hero-spacer { height: 24vh; }
 }
 .rail-link svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .rail-link path { fill: none; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
-.rail-link circle { fill: var(--surface-solid); stroke-width: 3.5; }
+.rail-link path.rail-track { opacity: 0.20; stroke-dasharray: 6 10; }
+.rail-link path.rail-beam { filter: drop-shadow(0 0 6px rgba(0, 71, 171, 0.25)); }
+.rail-link path.rail-beam.rl-red { filter: drop-shadow(0 0 6px rgba(217, 35, 50, 0.28)); }
+.rail-link path.rail-beam.rl-green { filter: drop-shadow(0 0 6px rgba(14, 124, 89, 0.28)); }
+.rail-link circle { fill: var(--surface-solid); stroke-width: 3.5; transition: transform 0.3s var(--ease), fill 0.3s ease; transform-box: fill-box; transform-origin: center; }
+.rail-link.is-arrived circle.rail-dot-end { transform: scale(1.22); }
 .rl-blue { stroke: var(--blue); }
 .rl-red { stroke: var(--red); }
 .rl-green { stroke: var(--green); }
@@ -964,6 +1249,7 @@ body.no-webgl .hero-spacer { height: 24vh; }
   .scroll-cue,
   .back-to-top,
   .compare-dock,
+  .year-hud,
   .jam-sim__chip,
   .jam-sim__legend,
   .jam-sim__panel {
@@ -973,7 +1259,8 @@ body.no-webgl .hero-spacer { height: 24vh; }
   .topbar,
   .scroll-cue,
   .back-to-top,
-  .compare-dock {
+  .compare-dock,
+  .year-hud {
     background: var(--surface-solid);
   }
   .blog-section,
@@ -986,6 +1273,23 @@ body.no-webgl .hero-spacer { height: 24vh; }
 
 @media (max-width: 720px) {
   .charter-grid { grid-template-columns: 1fr; }
+  .charter-grid.is-deck { min-height: 295px; }
   .rail-link { margin-top: -12vh; height: 12vh; min-height: 84px; }
   .rail-link--fan { margin-top: -12vh; height: 18vh; min-height: 120px; }
+  .year-hud {
+    top: auto;
+    bottom: 16px;
+    left: 12px;
+    max-width: calc(100vw - 110px);
+    padding: 7px 12px 10px;
+    gap: 7px;
+  }
+  .year-hud__year { font-size: 0.88rem; white-space: nowrap; }
+  .year-hud__stage { font-size: 0.64rem; overflow: hidden; text-overflow: ellipsis; }
+  body.is-compare .year-hud { opacity: 0; pointer-events: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .charter-card:hover { transform: none; }
+  .year-hud { transition: none; }
 }
