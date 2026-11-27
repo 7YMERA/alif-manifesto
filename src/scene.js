@@ -181,6 +181,7 @@ export function createManifestoScene() {
   const asphaltMat = new THREE.MeshStandardMaterial({ color: 0x333a44, roughness: 0.88 });
   const farAsphaltMat = applyHorizonFade(asphaltMat.clone(), 385, 480); // boulevard and cross streets melt into the haze
   const roadSlab = new THREE.Mesh(new THREE.BoxGeometry(17.6, 0.12, 585), farAsphaltMat);
+  roadSlab.renderOrder = -10; // transparent (it fades into the haze), so draw it before the lane overlays above it
   roadSlab.position.set(0, 0.06, 37.5); // z 330 (horizon) to -255 (KLCC junction)
   roadSlab.receiveShadow = true;
   world.add(roadSlab);
@@ -203,6 +204,7 @@ export function createManifestoScene() {
   // Cross-streets
   [-12, -96, -182].forEach((cz) => {
     const cross = new THREE.Mesh(new THREE.BoxGeometry(940, 0.10, 11.5), farAsphaltMat);
+    cross.renderOrder = -10;
     cross.position.set(0, 0.05, cz);
     cross.receiveShadow = true;
     world.add(cross);
@@ -213,16 +215,18 @@ export function createManifestoScene() {
     color: 0x0047ab,
     roughness: 0.52,
     transparent: true,
-    opacity: 0
+    opacity: 0,
+    depthWrite: false
   });
   const bikeLaneMat = new THREE.MeshStandardMaterial({
     color: 0x0e7c59,
     roughness: 0.6,
     transparent: true,
-    opacity: 0
+    opacity: 0,
+    depthWrite: false
   });
-  const zebraMat = new THREE.MeshBasicMaterial({ color: 0xf7f5ef, transparent: true, opacity: 0 });
-  const dashMat = new THREE.MeshBasicMaterial({ color: 0xe3dfd5, transparent: true, opacity: 0.82 });
+  const zebraMat = new THREE.MeshBasicMaterial({ color: 0xf7f5ef, transparent: true, opacity: 0, depthWrite: false });
+  const dashMat = new THREE.MeshBasicMaterial({ color: 0xe3dfd5, transparent: true, opacity: 0.82, depthWrite: false });
 
   [-2.4, 2.4].forEach((bx) => {
     const bl = new THREE.Mesh(new THREE.PlaneGeometry(3.1, 326), busLaneMat);
@@ -642,6 +646,15 @@ export function createManifestoScene() {
     }
   };
 
+  // The SketchUp exports have inconsistent face winding, so single-sided materials drop random faces and the towers
+  // look deformed and patchy. The portfolio draws them double-sided for the same reason.
+  Object.values(LANDMARK_MATERIALS).forEach(({ body, glass }) => {
+    body.side = THREE.DoubleSide;
+    glass.side = THREE.DoubleSide;
+  });
+  // TRX's faces are flipped at random, so smooth vertex normals come out crumpled; flat shading ignores face direction.
+  LANDMARK_MATERIALS.exchange106.body.flatShading = true;
+  LANDMARK_MATERIALS.exchange106.glass.flatShading = true;
   // glass sits on the same surface as the body in the source meshes: pull it forward so it stops z-fighting
   Object.values(LANDMARK_MATERIALS).forEach(({ glass }) => {
     glass.polygonOffset = true;
