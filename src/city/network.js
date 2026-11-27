@@ -123,11 +123,17 @@ export function roadCentreline(road, step = 6) {
 }
 
 /** Distance from (x, z) to the nearest ground road centreline, minus half its width. */
+const centrelineCache = new Map();
+function cachedCentreline(r) {
+  if (!centrelineCache.has(r.id)) centrelineCache.set(r.id, roadCentreline(r, 10));
+  return centrelineCache.get(r.id);
+}
+
 export function clearanceFromRoads(x, z) {
   let best = Infinity;
   for (const r of ROADS) {
     if (r.kind !== 'ground') continue;
-    const pts = roadCentreline(r, 10);
+    const pts = cachedCentreline(r);
     for (let i = 0; i < pts.length - 1; i++) {
       const [ax, az] = pts[i], [bx, bz] = pts[i + 1];
       const dx = bx - ax, dz = bz - az;

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { BUILDINGS } from './skylineLayout.js';
+import { MODEL_SCALE } from './layout.js';
 
 /**
  * A 24 m x 13.6 m facade tile: four floors of four windows, some lit, a slab band under each
@@ -38,60 +38,49 @@ function facadeTexture() {
   return t;
 }
 
-const M_U = 1 / 24, M_V = 1 / 13.6;
-
-/** Append an axis-aligned box (no bottom face) with UVs in metres so windows never stretch. */
-function addBox(buf, cx, y0, cz, w, h, d) {
-  const x0 = cx - w / 2, x1 = cx + w / 2, z0 = cz - d / 2, z1 = cz + d / 2, y1 = y0 + h;
-  const quad = (p, n, uvs) => {
-    const base = buf.pos.length / 3;
-    p.forEach((v, i) => { buf.pos.push(...v); buf.nor.push(...n); buf.uv.push(...uvs[i]); });
-    buf.idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
-  };
-  const v0 = y0 * M_V, v1 = y1 * M_V;
-  quad([[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]], [0, 0, 1], [[x0 * M_U, v0], [x1 * M_U, v0], [x1 * M_U, v1], [x0 * M_U, v1]]);
-  quad([[x1, y0, z0], [x0, y0, z0], [x0, y1, z0], [x1, y1, z0]], [0, 0, -1], [[x1 * M_U, v0], [x0 * M_U, v0], [x0 * M_U, v1], [x1 * M_U, v1]]);
-  quad([[x1, y0, z1], [x1, y0, z0], [x1, y1, z0], [x1, y1, z1]], [1, 0, 0], [[z1 * M_U, v0], [z0 * M_U, v0], [z0 * M_U, v1], [z1 * M_U, v1]]);
-  quad([[x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0]], [-1, 0, 0], [[z0 * M_U, v0], [z1 * M_U, v0], [z1 * M_U, v1], [z0 * M_U, v1]]);
-  const roof = [0.5, 0.03]; // inside the slab band: solid colour
-  quad([[x0, y1, z0], [x0, y1, z1], [x1, y1, z1], [x1, y1, z0]], [0, 1, 0], [roof, roof, roof, roof]);
-}
-
+// One facade tile is 24 m wide and 13.6 m tall (four floors); the city is in scene units.
+const M_U = 1 / (24 * MODEL_SCALE), M_V = 1 / (13.6 * MODEL_SCALE);
 const DAY_COLOURS = [0x3b6e9c, 0xc77d3b, 0x2c6e58, 0x456b8c, 0xb8523e, 0x9e7d56];
 
 /**
- * The background skyline as six merged meshes (one per palette). Returns the group and the
+ * The real-KL city (from osmCity.js) as six flat-shaded meshes, one per palette. Walls get
+ * window UVs in world units, roofs sample the solid slab colour. Returns the group and the
  * material list used by the 2026 -> 2036 colour morph in the animation loop.
  */
-export function buildSkyline(uglyColour) {
+export function buildSkyline(uglyColour, pos, indices, palettes) {
   const tex = facadeTexture();
-  const bufs = DAY_COLOURS.map(() => ({ pos: [], nor: [], uv: [], idx: [] }));
-  BUILDINGS.forEach((b) => {
-    const buf = bufs[b.palette];
-    if (b.podium) {
-      addBox(buf, b.x, 0, b.z, b.w + 5, b.podium, b.d + 5);
-      addBox(buf, b.x, b.podium, b.z, b.w, b.h - b.podium, b.d);
-    } else {
-      addBox(buf, b.x, 0, b.z, b.w, b.h, b.d);
-    }
-    if (b.crown) {
-      const ch = b.h * b.crown;
-      addBox(buf, b.x, b.h, b.z, b.w * 0.62, ch, b.d * 0.62);
-      addBox(buf, b.x, b.h + ch, b.z, b.w * 0.3, ch * 0.5, b.d * 0.3);
-    }
-  });
+  const bufs = DAY_COLOURS.map(() => ({ pos: [], nor: [], uv: [] }));
+  const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3(), n = new THREE.Vector3();
+  for (let t = 0; t < indices.length / 3; t++) {
+    const buf = bufs[palettes[t]];
+    a.fromArray(pos, indices[t * 3] * 3);
+    b.fromArray(pos, indices[t * 3 + 1] * 3);
+    c.fromArray(pos, indices[t * 3 + 2] * 3);
+    n.crossVectors(b.clone().sub(a), c.clone().sub(a));
+    if (n.lengthSq() < 1e-12) continue;
+    n.normalize();
+    const roof = Math.abs(n.y) > 0.6;
+    const alongZ = Math.abs(n.x) > Math.abs(n.z);
+    [a, b, c].forEach((v) => {
+      buf.pos.push(v.x, v.y, v.z);
+      buf.nor.push(n.x, n.y, n.z);
+      if (roof) buf.uv.push(0.5, 0.03);
+      else buf.uv.push((alongZ ? v.z : v.x) * M_U, v.y * M_V);
+    });
+  }
   const group = new THREE.Group();
   const mats = [];
   bufs.forEach((buf, i) => {
+    if (!buf.pos.length) return;
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.Float32BufferAttribute(buf.pos, 3));
     geo.setAttribute('normal', new THREE.Float32BufferAttribute(buf.nor, 3));
     geo.setAttribute('uv', new THREE.Float32BufferAttribute(buf.uv, 2));
-    geo.setIndex(buf.idx);
-    const mat = new THREE.MeshStandardMaterial({ map: tex, color: uglyColour.clone(), roughness: 0.42, metalness: 0.32 });
+    const mat = new THREE.MeshStandardMaterial({ map: tex, color: uglyColour.clone(), roughness: 0.45, metalness: 0.28 });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
+    mesh.frustumCulled = false;
     group.add(mesh);
     mats.push({ mat, dayCol: new THREE.Color(DAY_COLOURS[i]) });
   });

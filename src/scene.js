@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { createGoldenHourPMREM } from './mirage/env.js';
 import { buildGroundRoads, buildHighwayRamps, applyHorizonFade, deckRibbonGeometry } from './city/roadMesh.js';
-import { BASIN } from './city/layout.js';
+import { BASIN, MODEL_SCALE } from './city/layout.js';
+import { placeCity, selectBuildings } from './city/osmCity.js';
 import { buildSkyline, buildBukitNanas } from './city/skyline.js';
 import { cameraPose } from './camera/path.js';
 import { createPost } from './post.js';
@@ -481,17 +482,21 @@ export function createManifestoScene() {
   // roads that cross over each other at three heights, ramps that end in the sky.
   const SPAGHETTI = [
     [
-      helixPoints(-14, 32, 10, 1.25, 1, -35, 13, 22),
-      helixPoints(-6, -22, 12, 1.5, -1, -40, 15, 25, 1.2),
-      weavePoints(56, -118, (z) => -12 + 12 * Math.sin(z / 16), 17, 21),
-      helixPoints(-20, -72, 9, 1.3, 1, -30, 14, 24, 2.4),
+      // Bypass 2: sweeps well off the boulevard, over the shop rows on both sides
+      weavePoints(60, -122, (z) => 30 * Math.sin(z / 22), 19, 24),
+      weavePoints(44, -112, (z) => -26 * Math.sin(z / 17 + 1.0), 22, 18),
+      helixPoints(-34, 14, 12, 1.4, 1, -42, 18, 27),
+      helixPoints(34, -34, 12, 1.3, -1, -44, 19, 28, 1.6),
+      helixPoints(-6, -86, 11, 1.3, 1, -26, 20, 29, 2.6),
     ],
     [
-      weavePoints(52, -112, (z) => -4 + 14 * Math.sin(z / 12 + 1.2), 27, 31),
-      helixPoints(-10, 10, 13, 1.6, -1, -50, 26, 36, 0.6),
-      helixPoints(-18, -45, 11, 1.4, 1, -30, 28, 38, 3.4),
-      helixPoints(2, -80, 10, 1.5, -1, -25, 27, 37, 2.0),
-      weavePoints(42, -100, (z) => -20 + 9 * Math.cos(z / 10), 35, 29),
+      // Bypass 3: higher, wider, and more of it, out over both rows of shophouses again
+      weavePoints(56, -116, (z) => -38 * Math.sin(z / 26 + 0.4), 30, 36),
+      weavePoints(40, -104, (z) => 34 * Math.cos(z / 15), 38, 32),
+      helixPoints(36, 20, 13, 1.5, 1, -52, 29, 40, 0.8),
+      helixPoints(-38, -36, 13, 1.5, -1, -46, 31, 42, 3.1),
+      helixPoints(2, -64, 12, 1.6, 1, -34, 30, 41, 1.9),
+      helixPoints(40, -92, 10, 1.4, -1, -22, 31, 40, 4.0),
     ],
   ];
 
@@ -614,7 +619,8 @@ export function createManifestoScene() {
       })
     },
     merdeka118: {
-      body: new THREE.MeshStandardMaterial({ color: 0xd4dce6, roughness: 0.30, metalness: 0.72 }),
+      // frame and glass in the same blue family, so the lattice reads as one tower rather than patches
+      body: new THREE.MeshStandardMaterial({ color: 0x9db8d6, roughness: 0.30, metalness: 0.6 }),
       glass: new THREE.MeshStandardMaterial({
         color: 0x3e7ab8,
         emissive: 0x1a426e,
@@ -642,7 +648,7 @@ export function createManifestoScene() {
     glass.polygonOffsetUnits = -2;
   });
 
-  const LANDMARK_SCALE = 86 / 444.138;
+  const LANDMARK_SCALE = MODEL_SCALE;
   function loadPortfolioModel(url, x, y, z, rotY, matPair) {
     fetch(url)
       .then((res) => {
@@ -685,13 +691,21 @@ export function createManifestoScene() {
   loadPortfolioModel('./assets/city/exchange106.json', 72, 0, -198, 0.22, LANDMARK_MATERIALS.exchange106);
   world.add(klGroup);
 
-  // Background skyline: rule-placed buildings (src/city/skylineLayout.js proves none sits on a road).
-  // 2026 drab grey -> 2036 warm colours through the same material colour morph as before.
+  // Background skyline: the real KL building fabric (OpenStreetMap, from the portfolio repo), filtered so
+  // nothing sits on a road, ramp, landmark plot or the shop corridor (src/city/osmCity.js, checked by
+  // tools/check-city.mjs). 2026 drab grey -> 2036 warm colours through the same material colour morph.
   const uglyTowerCol = new THREE.Color(0x8a9096);
   const colorfulTowerMats = [];
-  const skyline = buildSkyline(uglyTowerCol);
-  world.add(skyline.group);
-  skyline.mats.forEach((m) => colorfulTowerMats.push(m));
+  fetch('./assets/city/kl_city.json')
+    .then((res) => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+    .then((raw) => {
+      const { pos, ix } = placeCity(raw);
+      const city = selectBuildings(pos, ix);
+      const skyline = buildSkyline(uglyTowerCol, pos, city.indices, city.palettes);
+      world.add(skyline.group);
+      skyline.mats.forEach((m) => colorfulTowerMats.push(m));
+    })
+    .catch(() => {});
 
   // =========================================================================
   // 6. Hero Blender .glb Assets (Vehicles, Viaduct Greenery, Shelters, Trees)
@@ -703,6 +717,8 @@ export function createManifestoScene() {
   world.add(heroBus);
 
   const jamCars = [];
+  const shopMats = [];
+  const SHOP_DEAD = new THREE.Color(0x77726a);
   const highwayCars = [];
   const corridorBuses = [];
   const busShelters = [];
@@ -813,7 +829,7 @@ export function createManifestoScene() {
             dir < 0 ? Math.PI : 0
           );
           car.position.set(lx, 0.12, z + (carIdx % 3) * 0.6);
-          car.userData = { dir, speed: 8.5 + (carIdx % 3) * 1.4, keepIn2036: carIdx % 5 === 0 };
+          car.userData = { dir, speed: 8.5 + (carIdx % 3) * 1.4, keepIn2036: carIdx % 5 === 0, rank: (carIdx * 0.6180339) % 1 };
           world.add(car);
           jamCars.push(car);
           carIdx++;
@@ -846,6 +862,16 @@ export function createManifestoScene() {
     }
 
     if (shoplotScene) {
+      // remember each shopfront material so the simulator can drain the life out of them
+      const seen = new Set();
+      shoplotScene.traverse((o) => {
+        if (!o.isMesh) return;
+        [].concat(o.material).forEach((m) => {
+          if (!m || seen.has(m) || !m.color) return;
+          seen.add(m);
+          shopMats.push({ m, col: m.color.clone(), em: m.emissive ? m.emissiveIntensity : 0 });
+        });
+      });
       [44, 16, -28, -56, -112, -140, -168, -204].forEach((sz) => {
         const leftShop = prepGLB(shoplotScene, 24.0, 0);
         leftShop.position.set(-27.2, 0.0, sz);
@@ -949,6 +975,9 @@ export function createManifestoScene() {
   let simKey = null; // 'base' | 'bypass2' | 'bypass3' | 'rail' while the simulator is on screen
   let simBlend = 0;
   let hwyFill = 0;
+  let deadGround = 0;       // 0..1 share of ground cars that have moved up to the flyovers
+  let shopDead = 0;         // 0..1 how shuttered the shophouses look
+  let shopDeadApplied = 0;
   // Simulator camera: high and to the right of the stack, looking down the corridor,
   // so every deck's traffic is visible between the title card and the control panel.
   const simPos = new THREE.Vector3(32, 44, 92);
@@ -1084,6 +1113,19 @@ export function createManifestoScene() {
       });
       if (t.built !== prev) stackMoving = true;
     });
+    // Consequences of the flyovers: regular roads empty out and the shoplots beside them die.
+    const wantDeadGround = jamMode ? (simKey === 'bypass3' ? 1 : simKey === 'bypass2' ? 0.6 : 0) : 0;
+    const wantShopDead = jamMode ? (simKey === 'bypass3' ? 1 : simKey === 'bypass2' ? 0.5 : 0) : 0;
+    const deathRate = reducedMotion ? 1 : 1 - Math.exp(-0.9 * wallDt);
+    deadGround = lerp(deadGround, wantDeadGround, deathRate);
+    shopDead = lerp(shopDead, wantShopDead, deathRate);
+    if (shopMats.length && Math.abs(shopDead - shopDeadApplied) > 0.003) {
+      shopDeadApplied = shopDead;
+      shopMats.forEach((s) => {
+        s.m.color.copy(s.col).lerp(SHOP_DEAD, shopDead * 0.78);
+        if (s.m.emissive) s.m.emissiveIntensity = s.em * (1 - shopDead);
+      });
+    }
     hwyFill = lerp(hwyFill, jamMode ? 1 : 0, jamMode ? fillRate : 1);
     hwyJam.setFill(hwyFill > 0.01 ? hwyFill : 0);
     if (stackMoving) sunLight.shadow.needsUpdate = true;
@@ -1156,7 +1198,7 @@ export function createManifestoScene() {
     jamCars.forEach((car) => {
       const carVis = car.userData.keepIn2036 ? 1 : clamp(1 - morphFactor * 1.4, 0.001, 1);
       car.scale.setScalar(carVis);
-      car.visible = carVis > 0.03;
+      car.visible = carVis > 0.03 && car.userData.rank >= deadGround; // flyovers exist: nobody uses the regular roads
       if (car.visible && trafficFlow > 0.02) {
         car.position.z += car.userData.dir * car.userData.speed * 2.4 * trafficFlow * dt * speedMult;
         if (car.position.z < -245) car.position.z = 58;

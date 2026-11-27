@@ -840,3 +840,5 @@ mark.hl--green { background: var(--green-soft); color: var(--green); }
 /* Keep floating chrome off the simulator panel */
 .is-sim .back-to-top,
 .is-sim .corner-copy { opacity: 0; pointer-events: none; }
+
+.attrib { margin: 18px 0 0; font-size: 0.74rem; color: var(--muted); }

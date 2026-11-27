@@ -8,7 +8,6 @@
  */
 import * as THREE from 'three';
 import { LANDMARKS } from '../city/layout.js';
-import { BUILDINGS } from '../city/skylineLayout.js';
 
 const lm = Object.fromEntries(LANDMARKS.map(([id, x, z]) => [id, [x, z]]));
 
@@ -91,7 +90,7 @@ export function turnStats(poseFn, steps = 600) {
 const LANDMARK_BODY = { klcc: [24, 95], menara_kl: [8, 80], merdeka118: [16, 105], exchange106: [16, 95] };
 
 /** Does the camera ever pass through a building, a landmark, the highway deck or the ground? */
-export function collisions(steps = 800) {
+export function collisions(obstacles = [], steps = 800) {
   const found = [];
   const pos = new THREE.Vector3(), look = new THREE.Vector3();
   for (let i = 0; i <= steps; i++) {
@@ -106,20 +105,19 @@ export function collisions(steps = 800) {
       const [r, top] = LANDMARK_BODY[id];
       if (Math.hypot(pos.x - lx, pos.z - lz) < r + 10 && pos.y < top + 8) found.push(`${tag}: too near ${id}`);
     });
-    BUILDINGS.forEach((b, k) => {
-      const top = b.h * (1 + (b.crown ? b.crown * 1.5 : 0));
-      if (Math.abs(pos.x - b.x) < b.w / 2 + 6 && Math.abs(pos.z - b.z) < b.d / 2 + 6 && pos.y < top + 6) found.push(`${tag}: too near building ${k}`);
+    obstacles.forEach((b, k) => {
+      if (Math.abs(pos.x - b.x) < b.w / 2 + 6 && Math.abs(pos.z - b.z) < b.d / 2 + 6 && pos.y < b.h + 6) found.push(`${tag}: too near building ${k}`);
     });
   }
   return [...new Set(found)].slice(0, 8);
 }
 
-export function validate() {
+export function validate(obstacles = []) {
   const problems = [];
   const st = turnStats(cameraPose);
   if (st.maxRate > 420) problems.push(`view turns too fast: ${st.maxRate.toFixed(0)} deg per unit scroll (limit 420)`);
   if (st.maxAccel > 14000) problems.push(`view direction changes too abruptly: ${st.maxAccel.toFixed(0)} (limit 14000)`);
   if (st.reversals) problems.push(`camera moves backwards along the corridor in ${st.reversals} steps`);
-  problems.push(...collisions());
+  problems.push(...collisions(obstacles));
   return problems;
 }
