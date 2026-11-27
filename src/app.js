@@ -243,6 +243,63 @@ export function initApp(ManifestoScene) {
     });
   }
 
+  // ── Rail-map connectors between the phase cards ────────────────────────
+  // Drawn from the cards' real positions, so the lines stay joined to both cards at any width.
+  const LINE_CLASS = { blue: 'rl-blue', red: 'rl-red', green: 'rl-green' };
+  function drawRailLinks() {
+    document.querySelectorAll('.rail-link').forEach((link) => {
+      const prev = link.previousElementSibling, next = link.nextElementSibling;
+      if (!prev || !next) return;
+      const box = link.getBoundingClientRect();
+      const a = prev.getBoundingClientRect(), b = next.getBoundingClientRect();
+      const w = box.width, h = box.height;
+      const ax = a.left + a.width / 2 - box.left, bx = b.left + b.width / 2 - box.left;
+      const r = Math.min(26, h * 0.18);
+      const dot = (x, y, c) => `<circle cx="${x}" cy="${y}" r="8" class="${c}"/>`;
+      let svg = '';
+      if (link.classList.contains('rail-link--fan')) {
+        // three lines (one per phase colour) leave the last phase and arrive down both sides of 2036
+        const cols = ['rl-blue', 'rl-red', 'rl-green'];
+        const left = b.left - box.left, right = b.right - box.left;
+        const narrow = b.width > w - 8 || left < 70;
+        cols.forEach((c, i) => {
+          const sx = ax + (i - 1) * 11;
+          const targets = narrow ? [bx + (i - 1) * 11] : [left - 43 + i * 12, right + 19 + i * 12];
+          targets.forEach((tx) => {
+            const yTurn = h * 0.42;
+            const dir = Math.sign(tx - sx) || 1;
+            const rr = Math.min(r, Math.abs(tx - sx) / 2);
+            svg += `<path class="${c}" d="M${sx} 0 V${yTurn - rr} Q${sx} ${yTurn} ${sx + dir * rr} ${yTurn} H${tx - dir * rr} Q${tx} ${yTurn} ${tx} ${yTurn + rr} V${h}"/>`;
+          });
+          svg += dot(sx, 0, c);
+        });
+      } else {
+        const c = LINE_CLASS[link.dataset.from] || 'rl-blue';
+        const nc = link.nextElementSibling && link.nextElementSibling.id === 'phase-3' ? 'rl-green' : 'rl-red';
+        const yMid = h / 2;
+        if (Math.abs(ax - bx) < 4) {
+          svg = `<path class="${c}" d="M${ax} 0 V${h}"/>`;
+        } else {
+          const dir = Math.sign(bx - ax);
+          const rr = Math.min(r, Math.abs(bx - ax) / 2);
+          svg = `<path class="${c}" d="M${ax} 0 V${yMid - rr} Q${ax} ${yMid} ${ax + dir * rr} ${yMid} H${bx - dir * rr} Q${bx} ${yMid} ${bx} ${yMid + rr} V${h}"/>`;
+        }
+        svg += dot(ax, 0, c) + dot(bx, h, nc);
+      }
+      link.innerHTML = `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="presentation">${svg}</svg>`;
+    });
+  }
+  let railQueued = false;
+  const queueRails = () => {
+    if (railQueued) return;
+    railQueued = true;
+    requestAnimationFrame(() => { railQueued = false; drawRailLinks(); });
+  };
+  drawRailLinks();
+  window.addEventListener('resize', queueRails, { passive: true });
+  window.addEventListener('load', queueRails);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(queueRails);
+
   // ── Scroll-reveal (animation-on-scroll skill) ──────────────────────────
   // Pauses animation until element enters viewport, then fires once.
   const _scrollRevealIO = new IntersectionObserver((entries) => {

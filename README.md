@@ -22,7 +22,7 @@ If you are an AI agent picking up this repo to polish or extend it, follow these
    - **No early 3D spoiler toggle buttons** in Chapters 01–02 — let the ugliness-to-shared-spaces progression happen naturally as you scroll.
    - **No white footer bar at the bottom** — keep the end-of-scroll Kuala Lumpur city showcase full-bleed 3D with the floating **Before / After** slider (`progress > 88%`), floating **↑ Top** button, and subtle bottom-left copyright badge.
    - **Compact left/right cards** (`max-width: 455px`) with bold scannable headlines (`<mark class="hl">`) and a 6px accent ribbon so text is instantly readable without blocking the center 3D city.
-   - **Logos in Top Bar**: GitHub avatar (`github-avatar.png`) for the brand mark, custom sidewalk/leaf SVG (`kakilima-logo.svg`) for **KakiLima**, and glossy mirror chrome `\7` (`portfolio-logo.svg`) for **Portfolio**.
+   - **Logos in Top Bar**: GitHub avatar (`github-avatar.png`) for the brand mark, custom sidewalk/leaf SVG (`kakilima-logo.svg`) for **KakiLima**, and the portfolio site's own glass `\7` tile (`7ymera-glass-logo-256.png`, copied from `7ymera.github.io/assets/icons/`) for **Portfolio**.
 
 ---
 
@@ -43,6 +43,7 @@ Plain HTML5, Vanilla CSS, Vanilla JS (ES modules) + Three.js `0.128.0` from npm,
 | `src/city/roadMesh.js` | Builds ground roads (lane-marked strips that fade into the haze), curved deck ramps and piers from the network. |
 | `src/city/clearance.js` | How much free space there is around a point (roads, ramps, landmark plots, corridor). Pure data. |
 | `src/city/osmCity.js` | Real KL buildings (OpenStreetMap footprints and heights, from the portfolio's `kl_city.json`): places them around KLCC and removes any building, roof included, that would sit on a road, ramp, landmark or the corridor. Pure, so the checker runs the same code as the browser. |
+| `src/city/community.js` | The pocket park with a RapidKL-blue basketball court and the KL Sentral-style transit hub (vaulted glass roof, sign, bus-bay canopy) that grow in with the transformation, in the gaps between shophouse rows. |
 | `src/city/skyline.js` | The real-KL city as six flat-shaded meshes with window-grid facades, plus the Bukit Nanas hill and canopy. |
 | `src/camera/path.js` | The scroll camera: one forward glide that climbs over KL, with the gaze easing onto each landmark. A pure function of scroll. |
 | `src/post.js` | Desktop post-processing: HDR bloom, filmic tone map, grade, vignette. Falls back automatically on slow machines. |
@@ -52,7 +53,7 @@ Plain HTML5, Vanilla CSS, Vanilla JS (ES modules) + Three.js `0.128.0` from npm,
 | `src/app.js` | `Press to Go` opening handoff, rAF-throttled scroll progress → `ManifestoScene.setScrollProgress()`, sound toggle, skip-link focus handling, **End-of-Scroll Before / After** slider + timelapse (`setCompareRatio`), and local **Witness This 10-Year Pledge** stamp. Smooth scrolling and the timelapse respect `prefers-reduced-motion`. |
 | `vercel.json` | Clean URLs and security headers for static Vercel deployment. |
 | `assets/city/*` | Real 3D Kuala Lumpur landmark JSON models (`klcc.json`, `menara_kl.json`, `merdeka118.json`, `exchange106.json`), terrain textures (`terrain_color.jpg`, `terrain_ao.jpg`, `terrain_h.json`), and building facade textures (`facade_glass.jpg`, `facade_night.jpg`) imported from `7YMERA/7ymera.github.io`. |
-| `assets/icons/*` | `github-avatar.png` (GitHub profile logo), `kakilima-logo.svg` (custom shaded sidewalk + tropical leaf emblem), `portfolio-logo.svg` (glossy mirror chrome `\7` monogram). |
+| `assets/icons/*` | `github-avatar.png` (GitHub profile logo), `kakilima-logo.svg` (custom shaded sidewalk + tropical leaf emblem), `7ymera-glass-logo-256.png` (the portfolio's own logo). |
 
 ---
 
@@ -89,6 +90,7 @@ Plain HTML5, Vanilla CSS, Vanilla JS (ES modules) + Three.js `0.128.0` from npm,
 11. **Induced Demand Test in 3D (2026-11-27)**: The simulator is now a full-bleed section whose stage is the 3D city itself. Each bypass grows as a tangle of looping, crossing flyovers (Malaysian interchange spaghetti, built as curved ribbons with instanced piers) and floods with bumper-to-bumper traffic (instanced cars, 3 draw calls per ribbon); "Mass rail" collapses the stack and plays the existing 2036 transformation. Removed the 2D canvas, the invented "2028/2032" years and the unsourced stats, and corrected the old 48-minute journey to the measured 40.
 12. **Real-KL network, skyline and camera (2026-11-27)**: Roads are now a checked graph: the boulevard joins the KLCC ring through a curved connector, four arterials (Ampang, Tun Razak, Sultan Ismail, Pantai-bound) leave the ring and run off into the haze, cross-streets run to the horizon, both ends of the elevated highway come down and land on roads, and the rail viaduct dives into a tunnel at each end. Grey boxes became a rule-placed CBD skyline with window facades; Bukit Nanas is a real hill with trees. The camera is one forward glide with landmark highlights (old camera: up to 3,446 deg per unit of scroll and backward motion in 224 of 600 steps; new: 238 and none). Desktop gets HDR bloom, filmic grade and vignette.
 13. **Real towers and a dying street (2026-11-27)**: Landmark models are the portfolio's newer exports (Merdeka 118 has twice the triangles of the old copy, which is why it looked patchy). The procedural boxes are gone: the background is real Kuala Lumpur (OpenStreetMap footprints and heights from `7ymera.github.io`, `assets/city/kl_city.json`, credited in the page), about 1,100 buildings kept after clearing roads and the corridor. The bypass flyovers now sweep left and right over the shophouses; with them, the regular roads empty and the shoplots grey out, and the simulator says what that means: noisy, dead, and nobody wants to live, work or do business there.
+14. **Brief audit fixes (2026-11-27)**: cards are compact (455 px) and alternate left and right so the street stays visible, with "destroy highways" on the right; key phrases are bigger and bolder; the highway turns green only when its own chapter arrives (47-62% scroll) and starts jammed and still, flowing only once congestion clears; the bus's rear sign shows `750 / KL SENTRAL` in amber LEDs; phases are flowcharts (nodes, arrows, an interchange node) joined by rail-map lines drawn from the cards' real positions, and three lines fan from Phase 3 down both sides of 2036; the park with a basketball court and the KL Sentral hub exist; Before / After labels; portfolio logo from the portfolio; sound copy now says trees absorb, reflect and disperse noise and buses make streets quieter.
 
 ---
 

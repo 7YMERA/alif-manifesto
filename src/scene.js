@@ -6,6 +6,7 @@ import { BASIN, MODEL_SCALE } from './city/layout.js';
 import { placeCity, selectBuildings } from './city/osmCity.js';
 import { buildSkyline, buildBukitNanas } from './city/skyline.js';
 import { cameraPose } from './camera/path.js';
+import { buildCommunity } from './city/community.js';
 import { createPost } from './post.js';
 
 export function createManifestoScene() {
@@ -707,6 +708,12 @@ export function createManifestoScene() {
     })
     .catch(() => {});
 
+  // Planned community spaces (pocket park with a basketball court; a KL Sentral-style hub) that grow in
+  // with the transformation. They sit in the gaps between shophouse rows, beside the street.
+  const community = buildCommunity();
+  community.setGrowth(0);
+  world.add(community.group);
+
   // =========================================================================
   // 6. Hero Blender .glb Assets (Vehicles, Viaduct Greenery, Shelters, Trees)
   // =========================================================================
@@ -802,7 +809,36 @@ export function createManifestoScene() {
     }
 
     if (busScene) {
-      heroBus.add(prepGLB(busScene, 11.8, 0));
+      const busModel = prepGLB(busScene, 11.8, 0);
+      heroBus.add(busModel);
+
+      // The rear destination sign: amber LED dot matrix, "750 / KL SENTRAL" (the model's panel is blank)
+      heroBus.updateMatrixWorld(true);
+      // find the rear panel's real face (the bounding box includes bumpers that stick out past it)
+      const probe = new THREE.Raycaster(new THREE.Vector3(-2.4, 2.3, 80), new THREE.Vector3(0, 0, -1));
+      const hit = probe.intersectObject(busModel, true)[0];
+      const rearWorldZ = hit ? hit.point.z : new THREE.Box3().setFromObject(busModel).max.z;
+      const rearLocal = heroBus.worldToLocal(new THREE.Vector3(0, 0, rearWorldZ));
+      const led = document.createElement('canvas');
+      led.width = 640; led.height = 256;
+      const lg = led.getContext('2d');
+      lg.fillStyle = '#120a02'; lg.fillRect(0, 0, 640, 256);
+      lg.fillStyle = '#ffb21a'; lg.textBaseline = 'middle';
+      lg.font = '800 150px "JetBrains Mono", monospace'; lg.textAlign = 'left';
+      lg.fillText('750', 24, 128);
+      lg.font = '700 48px "JetBrains Mono", monospace'; lg.textAlign = 'left';
+      lg.fillText('KL', 372, 92); lg.fillText('SENTRAL', 372, 150);
+      lg.fillStyle = 'rgba(8,4,0,0.62)';                       // LED grid
+      for (let gx = 0; gx < 640; gx += 6) lg.fillRect(gx, 0, 1.6, 256);
+      for (let gy = 0; gy < 256; gy += 6) lg.fillRect(0, gy, 640, 1.6);
+      const ledTex = new THREE.CanvasTexture(led);
+      ledTex.anisotropy = 4;
+      const ledMat = new THREE.MeshBasicMaterial({ map: ledTex, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+      ledMat.color.setScalar(1.7);                              // above 1.0 so it glows through the bloom
+      const ledPanel = new THREE.Mesh(new THREE.PlaneGeometry(2.0, 0.8), ledMat);   // the size of the rear window it replaces
+      ledPanel.position.set(0, 2.17, rearLocal.z - 0.03);        // local -z is the rear (the group is turned half a turn)
+      ledPanel.rotation.y = Math.PI;
+      heroBus.add(ledPanel);
       for (let b = 0; b < 6; b++) {
         const dir = b % 2 === 0 ? -1 : 1;
         const eb = prepGLB(busScene, 11.4, dir < 0 ? Math.PI : 0);
@@ -1085,9 +1121,11 @@ export function createManifestoScene() {
     const simOn = simKey !== null && !lockedIntro;
     const simRail = simOn && simKey === 'rail';
     const ratio = simOn ? (simRail ? 1 : 0) : compareRatio;
-    const targetGreen = lockedIntro ? 0 : (ratio !== null ? ratio : smoothstep(0.12, 0.50, s));
-    const targetMorph = lockedIntro ? 0 : (ratio !== null ? ratio : smoothstep(0.15, 0.80, s));
-    const targetPretty = lockedIntro ? 0 : (ratio !== null ? ratio : smoothstep(0.10, 0.82, s));
+    // Pacing against the page: the jam and the stuck bus run to ~30%; the street then transforms;
+    // the highway only turns green once its own chapter (47-52%) arrives.
+    const targetGreen = lockedIntro ? 0 : (ratio !== null ? ratio : smoothstep(0.47, 0.62, s));
+    const targetMorph = lockedIntro ? 0 : (ratio !== null ? ratio : smoothstep(0.30, 0.80, s));
+    const targetPretty = lockedIntro ? 0 : (ratio !== null ? ratio : smoothstep(0.30, 0.82, s));
 
     // Induced-demand stack: each bypass rises, opens, then floods with traffic.
     const jamMode = simOn && !simRail;
@@ -1126,7 +1164,11 @@ export function createManifestoScene() {
         if (s.m.emissive) s.m.emissiveIntensity = s.em * (1 - shopDead);
       });
     }
-    hwyFill = lerp(hwyFill, jamMode ? 1 : 0, jamMode ? fillRate : 1);
+    // Elevated highway: bumper-to-bumper and still while the street is ugly (and in the jam scenarios),
+    // free-flowing once the congestion clears.
+    const hwyWant = jamMode ? 1 : (simOn ? 0 : 1 - smoothstep(0.06, 0.30, morphFactor));
+    hwyFill = lerp(hwyFill, hwyWant, hwyWant > hwyFill ? fillRate : 1);
+    const hwyFlow = jamMode ? 0 : smoothstep(0.18, 0.45, morphFactor);
     hwyJam.setFill(hwyFill > 0.01 ? hwyFill : 0);
     if (stackMoving) sunLight.shadow.needsUpdate = true;
 
@@ -1146,8 +1188,8 @@ export function createManifestoScene() {
     dashMat.opacity = lerp(0.82, 0.20, morphFactor);
 
     highwayCars.forEach((hc) => {
-      hc.visible = hwyFill < 0.02;
-      hc.position.z += hc.userData.dir * hc.userData.speed * dt * speedMult;
+      hc.visible = hwyFill < 0.1;
+      hc.position.z += hc.userData.dir * hc.userData.speed * dt * speedMult * hwyFlow;
       if (hc.position.z < -240) hc.position.z = 74;
       if (hc.position.z > 74) hc.position.z = -240;
     });
@@ -1187,6 +1229,8 @@ export function createManifestoScene() {
       tr.visible = treeGrowth > 0.02;
       if (tr.visible) tr.scale.setScalar(Math.max(0.001, treeGrowth));
     });
+
+    community.setGrowth(smoothstep(0.32, 0.70, morphFactor));
 
     if (sharedPlaza) {
       const plazaGrowth = smoothstep(0.32, 0.70, morphFactor);
