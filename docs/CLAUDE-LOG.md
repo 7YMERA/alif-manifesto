@@ -2,6 +2,16 @@
 
 > Read this first alongside `7YMERA/skills/project-skills/alif-manifesto/SKILL.md`. Update it in the same commit as any change. Keep under ~200 lines.
 
+## 2026-11-28 · Blender 5.3 Real-World KL OSM Map & Hero Asset Package (`2d5a756`, `d3573b0`)
+
+- **Standalone Real-World KL OSM Map (`2d5a756`):**
+  - `assets/city/kl_real_roads.json` (`151.1 KB`) — OpenStreetMap Overpass geometry (`roads.motorway` 317, `primary` 146, `secondary` 765, `roundabout` 27, `river` 18, `rail` 106, `parks` 13) projected into the exact `+Y`-up scene frame (`scale = 0.065937`, `rot = -3.56°`, aligned to KLCC `(18, 0, -295)`, Menara KL `(-62, 10, -262)`, Merdeka 118 `(-66, 0, -186)`, Exchange 106 `(72, 0, -198)`).
+  - `assets/models/kl_city_map.glb` (`997.7 KB`, `440m × 8.23m × 570m`) — 13 batched Golden Hour PBR meshes (`KL_Terrain`, `KL_River_SungaiKlang`, `KL_Parks`, curved `KL_Roads_*`, `KL_Roads_BusLanes`, `KL_Rail_ViaductDeck`, `KL_Rail_Corridors`); source in `blender/kl_city_map.blend`.
+  - `assets/models/road_paths.json` — exact 3D centerline splines (`bus_routes` 6 corridors, `car_lanes` 8 arteries) + `plaza_anchors` (`shared_spaces` 6, `bus_shelters` 8, `tree_clusters` 24) + `viaduct_anchors` (10).
+- **11 Sculpted Blender 5.3 Hero `.glb` Assets (`d3573b0`, source in `blender/alif_mirage_assets.blend`):**
+  - `rapidkl_750_bus.glb`, `lrt_train.glb`, `kl_sedan.glb`, `kl_bus_shelter.glb`, `kl_shoplot_row.glb`, `kl_covered_walkway.glb`, `kl_jejantas_bridge.glb`, `green_viaduct_module.glb`, `roadside_flower_planter.glb`, `shared_space_plaza.glb`, `tropical_tree_cluster.glb`.
+  - Full dimensions, pivots (`+Y` up, `y=0`, `+Z` forward), and material slots documented in `assets/models/CATALOG.md`.
+
 ## Current state (2026-11-27)
 
 - **Branch / deploy**: `main` builds with Vite (`npm run build` → `dist/`, split `three` `524.20 kB` + `motion` `93.92 kB` vendor chunks) and deploys automatically to Vercel with immutable `/assets/*` caching and hardened security headers (`vercel.json`).
