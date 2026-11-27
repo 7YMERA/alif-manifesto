@@ -14,11 +14,12 @@ export function initApp(ManifestoScene) {
   const compareAfter = document.getElementById('compare-after');
   const timelapseBtn = document.getElementById('timelapse-play');
 
+  const reducedQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const scrollBehavior = () => (reducedQuery.matches ? 'auto' : 'smooth');
+
   function syncSoundBtn(on) {
     if (!soundBtn) return;
     soundBtn.setAttribute('aria-pressed', String(!!on));
-    const label = soundBtn.querySelector('span');
-    if (label) label.textContent = on ? 'Sound On' : 'Sound Off';
   }
 
   if (soundBtn) {
@@ -48,7 +49,8 @@ export function initApp(ManifestoScene) {
 
   if (busTrigger) busTrigger.addEventListener('click', startFromBus);
   window.addEventListener('keydown', (e) => {
-    if (document.body.classList.contains('is-gated') && (e.key === 'Enter' || e.key === ' ')) {
+    const onControl = e.target instanceof Element && e.target.closest('button, a, input, select, textarea');
+    if (document.body.classList.contains('is-gated') && !onControl && (e.key === 'Enter' || e.key === ' ')) {
       e.preventDefault();
       startFromBus();
     }
@@ -60,13 +62,15 @@ export function initApp(ManifestoScene) {
       const targetEl = document.getElementById(targetId);
       if (!targetEl) return;
       e.preventDefault();
-      targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      targetEl.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
+      if (!targetEl.hasAttribute('tabindex')) targetEl.setAttribute('tabindex', '-1');
+      targetEl.focus({ preventScroll: true });
     });
   });
 
   if (backToTopBtn) {
     backToTopBtn.addEventListener('click', () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: scrollBehavior() });
     });
   }
 
@@ -79,7 +83,7 @@ export function initApp(ManifestoScene) {
     timelapsePlaying = false;
     cancelAnimationFrame(timelapseRaf);
     if (timelapseBtn) {
-      timelapseBtn.setAttribute('aria-pressed', 'false');
+      timelapseBtn.classList.remove('is-playing');
       const label = timelapseBtn.querySelector('span');
       if (label) label.textContent = 'Play Timelapse';
     }
@@ -121,8 +125,12 @@ export function initApp(ManifestoScene) {
         stopTimelapse();
         return;
       }
+      if (reducedQuery.matches) {
+        applyCompareUI(compareSlider && compareSlider.value === '100' ? 0 : 1);
+        return;
+      }
       timelapsePlaying = true;
-      timelapseBtn.setAttribute('aria-pressed', 'true');
+      timelapseBtn.classList.add('is-playing');
       const label = timelapseBtn.querySelector('span');
       if (label) label.textContent = 'Pause Timelapse';
 
@@ -197,8 +205,17 @@ export function initApp(ManifestoScene) {
     }
   }
 
-  window.addEventListener('scroll', updateScroll, { passive: true });
-  window.addEventListener('resize', updateScroll, { passive: true });
+  let scrollQueued = false;
+  const queueUpdate = () => {
+    if (scrollQueued) return;
+    scrollQueued = true;
+    requestAnimationFrame(() => {
+      scrollQueued = false;
+      updateScroll();
+    });
+  };
+  window.addEventListener('scroll', queueUpdate, { passive: true });
+  window.addEventListener('resize', queueUpdate, { passive: true });
   updateScroll();
 
   const pledgeBtn = document.getElementById('pledge-btn');
@@ -210,7 +227,6 @@ export function initApp(ManifestoScene) {
 
     function renderStamp() {
       pledgeBtn.classList.toggle('is-stamped', stamped);
-      pledgeBtn.setAttribute('aria-pressed', String(stamped));
       pledgeBtn.textContent = stamped
         ? '✓ Witnessed · Hold Me To This in 2036'
         : 'Witness This 10-Year Pledge';

@@ -5,4 +5,4 @@ import { initSimulator } from './simulator.js';
 
 const ManifestoScene = createManifestoScene();
 initApp(ManifestoScene);
-initSimulator();
+initSimulator(ManifestoScene);
