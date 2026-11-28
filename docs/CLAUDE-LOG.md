@@ -12,6 +12,24 @@
   - `rapidkl_750_bus.glb`, `lrt_train.glb`, `kl_sedan.glb`, `kl_bus_shelter.glb`, `kl_shoplot_row.glb`, `kl_covered_walkway.glb`, `kl_jejantas_bridge.glb`, `green_viaduct_module.glb`, `roadside_flower_planter.glb`, `shared_space_plaza.glb`, `tropical_tree_cluster.glb`.
   - Full dimensions, pivots (`+Y` up, `y=0`, `+Z` forward), and material slots documented in `assets/models/CATALOG.md`.
 
+## 2026-11-28 · Claude handoff: real landmark colours, drone-HUD simulator, road-widening step (branch `claude/optimistic-allen-qal8zv`, not yet on `main`)
+
+**Done this session (all on the branch, unmerged; owner said "merge" only for earlier work):**
+- Pulled Gemini's 7 commits (Lenis, GSAP, route drawer, whimsy, OSM map package). `npm run check`, `node --check`, `npm run build` all pass on top of them.
+- Landmark colours set from sources (stainless steel + laminated glass for Petronas; crystalline glass for Merdeka 118; metallic-coated glass, clear low-iron crown, **no gold** for Exchange 106; white concrete shaft for Menara KL). Menara's bronze pod is a guess (no source). Sources: Otis, Pelli write-ups, CIDB, Fender Katsalidis. Owner has not yet seen the new colours.
+- Simulator rebuilt as a drone-HUD (as in `7ymera.github.io`): corner brackets, numbered step list left, live readout right with "vs today" chips, caption bottom, tags pinned to the 3D city (`ManifestoScene.project`), "Play the story" autoplay (7.5 s/step). Phone/tablet (<=980 px): one stacked panel, no pins.
+- New step 2 **Widen the road**: shophouses demolish, 8 new lanes grow out and fill with cars. Order now: base, widen, bypass2, bypass3, rail.
+
+**Open / next (in priority order):**
+1. Check the widen step and HUD on a real laptop (900 px high) and a phone; the footnote is hidden under 900 px high. Tag pins on widen were re-anchored but not re-screenshotted.
+2. Merge when the owner says so. Commit as `git -c user.name=Claude -c user.email=noreply@anthropic.com`. Run `git pull` first (Gemini pushes to `main`).
+3. Gemini's `assets/models/kl_city_map.glb` and `kl_real_roads.json` (real OSM roads) are **not wired into the scene**. Decide: replace `src/city/network.js` roads with them, or leave.
+4. Merdeka 118 glass still looks patchy up close (flipped faces); TRX has faint triangle marks on its glass.
+5. Replace SKILL.md in `7YMERA/skills` (`alif-manifesto/SKILL.md` still describes the old 2D simulator and camera). Not edited yet.
+6. KakiLima merge question (owner asked my opinion; see chat): recommendation is **keep separate repos, link them**; KakiLima's own log says 3D effects were rejected for slow phones and it is Next.js 16 with four languages.
+
+**Gotchas added:** road-widen group scales on x about the road edge (x = +-8.8); sidewalks and shop rows are hidden/scaled by `widenT` in `animate()`; tag anchors live in `SCENARIOS[*].tags` in `src/simulator.js`.
+
 ## Current state (2026-11-27)
 
 - **Branch / deploy**: `main` builds with Vite (`npm run build` → `dist/`, split `three` `524.20 kB` + `motion` `93.92 kB` vendor chunks) and deploys automatically to Vercel with immutable `/assets/*` caching and hardened security headers (`vercel.json`).

@@ -761,7 +761,8 @@ mark.hl--green { background: var(--green-soft); color: var(--green); }
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   INDUCED DEMAND TEST — full-bleed stage; the live 3D city is the visual
+   INDUCED DEMAND TEST: the live 3D city is the stage, with a drone-HUD style frame around it
+   (corner brackets, a step list on the left, a live readout on the right, tags pinned to the city)
    ═══════════════════════════════════════════════════════════════ */
 
 .jam-sim {
@@ -775,50 +776,144 @@ mark.hl--green { background: var(--green-soft); color: var(--green); }
   top: 0;
   height: 100vh;
   height: 100svh;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 78px max(14px, env(safe-area-inset-right)) 14px max(14px, env(safe-area-inset-left));
+  display: grid;
+  grid-template-columns: minmax(270px, 310px) minmax(0, 1fr) minmax(270px, 310px);
+  grid-template-rows: auto 1fr auto;
+  column-gap: 18px;
+  row-gap: 12px;
+  padding: 80px max(24px, env(safe-area-inset-right)) 22px max(24px, env(safe-area-inset-left));
 }
 
-.jam-sim__top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
+/* Corner brackets, like the drone HUD */
+.sim-corner { position: absolute; width: 34px; height: 34px; border: 0 solid var(--blue); pointer-events: none; opacity: 0.9; }
+.sim-corner.tl { left: 12px; top: 72px; border-left-width: 3px; border-top-width: 3px; }
+.sim-corner.tr { right: 12px; top: 72px; border-right-width: 3px; border-top-width: 3px; }
+.sim-corner.bl { left: 12px; bottom: 12px; border-left-width: 3px; border-bottom-width: 3px; }
+.sim-corner.br { right: 12px; bottom: 12px; border-right-width: 3px; border-bottom-width: 3px; }
 
-.jam-sim__chip,
-.jam-sim__legend,
-.jam-sim__panel {
+/* Opaque panels with a hard offset shadow: unmistakably UI, never mistaken for the 3D scene */
+.sim-panel,
+.sim-title {
   pointer-events: auto;
-  background: rgba(252, 249, 243, 0.90);
-  border: 1px solid rgba(16, 25, 38, 0.14);
-  border-radius: 16px;
-  box-shadow: var(--shadow-card);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: #fbf8f1;
+  border: 2px solid var(--blue);
+  border-radius: 12px;
+  box-shadow: 5px 5px 0 rgba(0, 71, 171, 0.92);
+  padding: 14px 16px 16px;
 }
 
-.jam-sim__chip { max-width: 400px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; }
-.jam-sim__title { font-size: clamp(1.3rem, 3vw, 1.9rem); font-weight: 800; line-height: 1.15; margin: 0; }
-.jam-sim__sub { margin: 0; font-size: 0.9rem; color: var(--muted); }
+.sim-hdr {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 10px;
+  padding-bottom: 8px;
+  border-bottom: 1.5px dashed rgba(0, 71, 171, 0.35);
+  font-family: var(--f-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--blue);
+}
+.sim-hdr b { font-weight: 700; color: var(--ink); }
+
+/* Title bar, top centre */
+.sim-title { grid-column: 1 / -1; justify-self: center; max-width: 660px; text-align: center; padding: 10px 20px 12px; display: grid; gap: 3px; }
+.jam-sim__title { font-size: clamp(1.3rem, 2.4vw, 1.8rem); font-weight: 800; line-height: 1.15; margin: 0; }
+.jam-sim__sub { margin: 0; font-size: 0.82rem; line-height: 1.4; color: var(--muted); }
 .jam-sim__sub strong { color: var(--ink); }
 
-.jam-sim__legend { list-style: none; margin: 0; padding: 8px; display: grid; gap: 4px; min-width: 210px; }
+.sim-steps { grid-column: 1; grid-row: 2; align-self: start; }
+.sim-readout { grid-column: 3; grid-row: 2; align-self: start; }
+.sim-caption { grid-column: 1 / span 2; grid-row: 3; max-width: 640px; align-self: end; display: grid; gap: 6px; }
+
+/* Step progress: four segments */
+.sim-progress { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin: -2px 0 12px; }
+.sim-progress i { height: 6px; border-radius: 3px; background: rgba(16, 25, 38, 0.14); transition: background 0.25s; }
+.sim-progress i.is-on { background: var(--blue); }
+.sim-progress i.is-bad { background: var(--red); }
+
+/* Big, obvious step buttons */
+.jam-sim__controls { display: grid; gap: 8px; }
+.sim-btn {
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: 38px 1fr 26px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px 8px 8px;
+  border-radius: 10px;
+  border: 2px solid var(--line-strong);
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--f-body);
+  transition: border-color 0.18s, background 0.18s, color 0.18s, transform 0.18s;
+}
+.sim-btn:hover { border-color: var(--ink); transform: translateX(2px); }
+.sim-btn__num {
+  display: grid;
+  place-items: center;
+  height: 38px;
+  border-radius: 8px;
+  background: rgba(16, 25, 38, 0.08);
+  font-family: var(--f-mono);
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+.sim-btn__text { display: grid; gap: 1px; min-width: 0; }
+.sim-btn__label { font-weight: 800; font-size: 0.98rem; line-height: 1.2; }
+.sim-btn__sub { font-size: 0.76rem; color: var(--muted); line-height: 1.25; }
+.sim-btn__icon { display: inline-flex; width: 24px; height: 24px; opacity: 0.75; }
+.sim-btn__icon svg { width: 100%; height: 100%; }
+.sim-btn--active { border-color: var(--ink); background: var(--ink); color: #fff; }
+.sim-btn--active .sim-btn__num { background: rgba(255, 255, 255, 0.18); }
+.sim-btn--active .sim-btn__sub { color: rgba(255, 255, 255, 0.8); }
+.sim-btn--active .sim-btn__icon { opacity: 1; }
+.sim-btn--bad.sim-btn--active { border-color: var(--red); background: var(--red); }
+.sim-btn--good.sim-btn--active { border-color: var(--blue); background: var(--blue); }
+
+/* The big, obvious "play" */
+.sim-play {
+  margin-top: 12px;
+  width: 100%;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 2px solid var(--blue);
+  border-radius: 10px;
+  background: var(--blue);
+  color: #fff;
+  font-family: var(--f-body);
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 rgba(16, 25, 38, 0.85);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.sim-play svg { width: 16px; height: 16px; }
+.sim-play:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 rgba(16, 25, 38, 0.85); }
+.sim-play[aria-pressed="true"] { background: #fff; color: var(--blue); }
+
+/* Live readout */
+.jam-sim__legend { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 5px; }
 .sim-legend__row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
+  gap: 12px;
   padding: 6px 10px;
-  border-radius: 10px;
-  font-size: 0.82rem;
-  border-left: 4px solid var(--line-strong);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-left: 5px solid var(--line-strong);
 }
-.sim-legend__row b { font-family: var(--f-mono); font-size: 0.74rem; font-weight: 600; }
-.sim-legend__row--bad  { border-left-color: var(--red);  background: var(--red-soft);  }
+.sim-legend__row b { font-family: var(--f-mono); font-size: 0.74rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; }
+.sim-legend__row--bad  { border-left-color: var(--red);  background: var(--red-soft); }
 .sim-legend__row--bad b { color: var(--red-text); }
 .sim-legend__row--ok   { border-left-color: #0e7c59; background: rgba(14, 124, 89, 0.10); }
 .sim-legend__row--ok b { color: #0a5c42; }
@@ -826,85 +921,98 @@ mark.hl--green { background: var(--green-soft); color: var(--green); }
 .sim-legend__row--rail b { color: var(--blue); }
 .sim-legend__row--off  { opacity: 0.7; }
 
-.jam-sim__panel {
-  width: min(760px, 100%);
-  margin: 0 auto;
-  padding: 14px 18px 16px;
+.jam-sim__outcomes { display: grid; gap: 10px; }
+.sim-metric { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "label value" "bar bar" "delta delta"; gap: 3px 8px; align-items: baseline; }
+.sim-metric__label { grid-area: label; font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.sim-metric__value { grid-area: value; font-family: var(--f-mono); font-weight: 800; font-size: 1.35rem; text-align: right; line-height: 1; }
+.sim-metric__track { grid-area: bar; height: 6px; border-radius: 3px; background: rgba(16, 25, 38, 0.10); overflow: hidden; }
+.sim-metric__fill { height: 100%; border-radius: 3px; width: 0; }
+.sim-metric__delta { grid-area: delta; min-height: 1em; font-family: var(--f-mono); font-size: 0.72rem; font-weight: 700; color: var(--muted); }
+.sim-metric__delta.is-good { color: #0a7a4d; }
+.sim-metric__delta.is-bad { color: var(--red-text); }
+
+/* Caption, bottom left */
+.sim-caption__step { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 0; }
+.sim-caption__step b { font-family: var(--f-mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; background: var(--blue); padding: 3px 9px; border-radius: 6px; }
+.jam-sim__year { margin: 0; font-family: var(--f-display); font-weight: 800; font-size: 1.1rem; color: var(--ink); }
+.jam-sim__insight { margin: 0; font-size: 0.95rem; line-height: 1.55; min-height: 4.4em; }
+.jam-sim__note { margin: 0; font-size: 0.72rem; color: var(--muted); }
+
+/* Tags pinned to things in the 3D city (desktop) */
+.sim-tags { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.sim-tag { position: absolute; left: 0; top: 0; will-change: transform; transition: opacity 0.25s; }
+.sim-tag::before { content: ""; position: absolute; left: -6px; top: -6px; width: 12px; height: 12px; transform: rotate(45deg); background: #fff; border: 3px solid var(--tag, var(--blue)); }
+.sim-tag__line { position: absolute; left: 0; top: 0; width: 40px; height: 3px; background: var(--tag, var(--blue)); transform-origin: 0 50%; transform: rotate(-45deg); }
+.sim-tag__box {
+  position: absolute;
+  left: 26px;
+  bottom: 24px;
   display: grid;
-  gap: 12px;
+  gap: 1px;
+  padding: 5px 10px 6px;
+  white-space: nowrap;
+  background: #fff;
+  border: 2px solid var(--tag, var(--blue));
+  box-shadow: 3px 3px 0 var(--tag, var(--blue));
+  border-radius: 6px;
 }
+.sim-tag__box b { font-size: 0.82rem; font-weight: 800; color: var(--ink); }
+.sim-tag__box span { font-family: var(--f-mono); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--tag, var(--blue)); }
+.sim-tag--bad { --tag: var(--red); }
+.sim-tag--ok { --tag: #0e7c59; }
+.sim-tag--rail { --tag: var(--blue); }
+.sim-tag--off { --tag: #6b7685; }
+.sim-tag.is-hidden { opacity: 0; }
+.sim-tag.flip .sim-tag__box { left: auto; right: 26px; }
+.sim-tag.flip .sim-tag__line { transform: rotate(-135deg); }
 
-.jam-sim__year {
-  margin: 0;
-  font-family: var(--f-mono);
-  font-size: 0.76rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--red-text);
-}
-
-.jam-sim__controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-
-.sim-btn {
-  min-height: 56px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  border-radius: 12px;
-  border: 1.5px solid var(--line-strong);
-  background: rgba(16, 25, 38, 0.03);
-  color: var(--ink);
-  cursor: pointer;
-  text-align: left;
-  font-family: var(--f-body);
-  transition: border-color 0.2s, background 0.2s;
-}
-.sim-btn:hover { background: rgba(16, 25, 38, 0.07); }
-.sim-btn--active { border-color: var(--ink); background: rgba(16, 25, 38, 0.08); }
-.sim-btn--bad.sim-btn--active  { border-color: var(--red);  background: var(--red-soft); }
-.sim-btn--good.sim-btn--active { border-color: var(--blue); background: var(--blue-soft); }
-
-.sim-btn__icon { display: inline-flex; flex: none; width: 24px; height: 24px; }
-.sim-btn__icon svg { width: 100%; height: 100%; }
-.sim-btn__text { display: grid; gap: 1px; min-width: 0; }
-.sim-btn__label { font-weight: 700; font-size: 0.92rem; line-height: 1.2; }
-.sim-btn__sub { font-size: 0.74rem; color: var(--muted); line-height: 1.25; }
-
-.jam-sim__outcomes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px 18px; }
-.sim-metric { display: grid; grid-template-columns: 1fr auto; gap: 3px 6px; align-items: center; }
-.sim-metric__label { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
-.sim-metric__value { font-family: var(--f-mono); font-weight: 600; font-size: 0.82rem; text-align: right; }
-.sim-metric__track { grid-column: 1 / -1; height: 5px; border-radius: 3px; background: rgba(16, 25, 38, 0.10); overflow: hidden; }
-.sim-metric__fill { height: 100%; border-radius: 3px; width: 0; transition: background 0.2s; }
-
-.jam-sim__insight {
-  margin: 0;
-  font-size: 0.92rem;
-  line-height: 1.6;
-  min-height: 4.8em;
-  border-left: 3px solid var(--line-strong);
-  padding-left: 12px;
-}
-.jam-sim__note { margin: 0; font-size: 0.74rem; color: var(--muted); }
-
-@media (max-width: 720px) {
-  .jam-sim__sticky { padding-top: 74px; gap: 8px; }
-  .jam-sim__top { flex-direction: column; align-items: stretch; gap: 8px; }
-  .jam-sim__chip { max-width: none; padding: 10px 14px; }
-  .jam-sim__sub { font-size: 0.8rem; line-height: 1.35; }
-  .jam-sim__legend { min-width: 0; padding: 6px; grid-template-columns: 1fr 1fr; }
-  .sim-legend__row { padding: 4px 8px; font-size: 0.74rem; gap: 6px; }
-  .jam-sim__panel { padding: 10px 14px 12px; gap: 8px; }
-  .jam-sim__controls { grid-template-columns: 1fr 1fr; gap: 6px; }
-  .sim-btn { min-height: 48px; padding: 6px 10px; }
+/* Laptop heights: tighten so the bottom caption never runs off the screen */
+@media (max-height: 900px) and (min-width: 981px) {
+  .jam-sim__note { display: none; }
+  .jam-sim__sub { display: none; }
+  .jam-sim__sticky { padding-top: 76px; row-gap: 10px; }
+  .sim-title { padding: 6px 18px 8px; }
+  .sim-btn { min-height: 46px; padding-top: 5px; padding-bottom: 5px; }
+  .sim-btn__num { height: 32px; }
   .sim-btn__sub { display: none; }
+  .sim-play { margin-top: 10px; min-height: 44px; }
+  .jam-sim__outcomes { gap: 7px; }
+  .jam-sim__insight { min-height: 3.2em; font-size: 0.9rem; }
+}
+@media (max-height: 780px) and (min-width: 981px) {
+  .jam-sim__note { display: none; }
+  .sim-metric__delta { display: none; }
+}
+
+/* Tablet and phone: one stack at the bottom, nothing pinned to the city */
+@media (max-width: 980px) {
+  .jam-sim__sticky { display: flex; flex-direction: column; gap: 8px; padding: 74px 12px 10px; }
+  .sim-corner, .sim-tags { display: none; }
+  .sim-panel, .sim-title { box-shadow: 3px 3px 0 rgba(0, 71, 171, 0.92); padding: 10px 12px 12px; }
+  .sim-title { width: 100%; max-width: none; padding: 8px 12px; text-align: left; }
+  .jam-sim__sub { display: none; }
+  .sim-readout { order: 2; margin-top: auto; }
+  .sim-steps { order: 3; }
+  .sim-caption { order: 4; max-width: none; }
+  .sim-hdr { margin-bottom: 6px; padding-bottom: 5px; }
+  .jam-sim__legend { grid-template-columns: 1fr 1fr; margin-bottom: 8px; gap: 4px; }
+  .sim-legend__row { padding: 4px 8px; font-size: 0.74rem; gap: 6px; }
   .jam-sim__outcomes { grid-template-columns: 1fr 1fr; gap: 8px 14px; }
-  .jam-sim__insight { font-size: 0.82rem; line-height: 1.5; min-height: 0; }
+  .sim-metric__value { font-size: 1.05rem; }
+  .sim-metric__delta { display: none; }
+  .sim-progress { margin-bottom: 8px; }
+  .jam-sim__controls { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .jam-sim__controls .sim-btn:last-child { grid-column: 1 / -1; }
+  .sim-btn { min-height: 46px; grid-template-columns: 30px 1fr; padding: 5px 8px 5px 5px; gap: 8px; }
+  .sim-btn__num { height: 30px; font-size: 0.8rem; }
+  .sim-btn__icon, .sim-btn__sub { display: none; }
+  .sim-btn__label { font-size: 0.84rem; }
+  .sim-play { margin-top: 8px; min-height: 44px; }
+  .jam-sim__insight { font-size: 0.82rem; line-height: 1.45; min-height: 0; }
+  .jam-sim__year { font-size: 0.95rem; }
   .jam-sim__note { display: none; }
 }
-[data-theme="light"] .sim-metric__track { background: rgba(0,0,0,0.08); }
-[data-theme="light"] .jam-sim__insight  { border-color: rgba(0,0,0,0.12); }
+
 /* ── Scroll-reveal (animation-on-scroll + cinematic-scroll-storytelling) ─── */
 .animate-on-scroll {
   opacity: 0;
@@ -1546,9 +1654,8 @@ mark.hl.hl--green.is-lit {
   .compare-dock,
   .year-hud,
   .route-drawer,
-  .jam-sim__chip,
-  .jam-sim__legend,
-  .jam-sim__panel {
+  .sim-title,
+  .sim-panel {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
@@ -1560,10 +1667,7 @@ mark.hl.hl--green.is-lit {
   .route-drawer {
     background: var(--surface-solid);
   }
-  .blog-section,
-  .jam-sim__chip,
-  .jam-sim__legend,
-  .jam-sim__panel {
+  .blog-section {
     background: rgba(252, 249, 243, 0.96);
   }
 }

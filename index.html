@@ -271,50 +271,70 @@
     </article>
 
 
-    <!-- INDUCED DEMAND TEST: the 3D city behind the page is the simulator's stage -->
+    <!-- INDUCED DEMAND TEST: the 3D city behind the page is the simulator's stage, with a HUD around it -->
     <section class="jam-sim" id="jam-simulator" aria-labelledby="sim-title">
       <div class="jam-sim__sticky">
-        <div class="jam-sim__top">
-          <header class="jam-sim__chip">
-            <span class="eyebrow eyebrow--red">Interactive Simulator</span>
-            <h2 class="jam-sim__title" id="sim-title">The <mark class="hl hl--red">Induced Demand</mark> Test</h2>
-            <p class="jam-sim__sub"><strong>People do not cause congestion. Cars do.</strong> Pick a scenario and watch the city behind this panel.</p>
-          </header>
-          <ul class="jam-sim__legend" id="sim-legend" aria-label="Road status in the 3D view"></ul>
-        </div>
+        <i class="sim-corner tl" aria-hidden="true"></i><i class="sim-corner tr" aria-hidden="true"></i><i class="sim-corner bl" aria-hidden="true"></i><i class="sim-corner br" aria-hidden="true"></i>
+        <div class="sim-tags" id="sim-tags" aria-hidden="true"></div>
 
-        <div class="jam-sim__panel">
-          <p class="jam-sim__year" id="sim-year" role="status">Today &middot; status quo</p>
+        <header class="sim-title">
+          <span class="eyebrow eyebrow--red">Interactive Simulator &middot; 5 steps</span>
+          <h2 class="jam-sim__title" id="sim-title">The <mark class="hl hl--red">Induced Demand</mark> Test</h2>
+          <p class="jam-sim__sub"><strong>People do not cause congestion. Cars do.</strong> Pick a step on the left, or press play. The labels on the city and the numbers on the right show what changes.</p>
+        </header>
 
-          <div class="jam-sim__controls" role="group" aria-label="Choose a scenario">
+        <aside class="sim-steps sim-panel" aria-label="Simulator steps">
+          <p class="sim-hdr"><span>The test</span><b id="sim-stepnum">Step 1 / 5</b></p>
+          <div class="sim-progress" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="jam-sim__controls" role="group" aria-label="Choose a step">
             <button type="button" class="sim-btn" id="sim-btn-base" data-scenario="base">
+              <span class="sim-btn__num" aria-hidden="true">01</span>
+              <span class="sim-btn__text"><span class="sim-btn__label">Today&#x2019;s jam</span><span class="sim-btn__sub">What we have now</span></span>
               <span class="sim-btn__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="20" rx="3"/><circle cx="12" cy="7" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="17" r="1.4"/></svg></span>
-              <span class="sim-btn__text"><span class="sim-btn__label">Today&#x2019;s jam</span><span class="sim-btn__sub">Status quo</span></span>
+            </button>
+            <button type="button" class="sim-btn sim-btn--bad" id="sim-btn-widen" data-scenario="widen">
+              <span class="sim-btn__num" aria-hidden="true">02</span>
+              <span class="sim-btn__text"><span class="sim-btn__label">Widen the road</span><span class="sim-btn__sub">Demolish shops, add lanes</span></span>
+              <span class="sim-btn__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18M7 8l-4 4 4 4M17 8l4 4-4 4"/></svg></span>
             </button>
             <button type="button" class="sim-btn sim-btn--bad" id="sim-btn-bypass2" data-scenario="bypass2">
+              <span class="sim-btn__num" aria-hidden="true">03</span>
+              <span class="sim-btn__text"><span class="sim-btn__label">Add Bypass 2</span><span class="sim-btn__sub">Flyovers over the shops</span></span>
               <span class="sim-btn__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9h18M3 17h18M7 9v8M12 9v8M17 9v8"/></svg></span>
-              <span class="sim-btn__text"><span class="sim-btn__label">Bypass 2</span><span class="sim-btn__sub">Flyovers over the shops</span></span>
             </button>
             <button type="button" class="sim-btn sim-btn--bad" id="sim-btn-bypass3" data-scenario="bypass3">
+              <span class="sim-btn__num" aria-hidden="true">04</span>
+              <span class="sim-btn__text"><span class="sim-btn__label">Add Bypass 3</span><span class="sim-btn__sub">Even more flyovers</span></span>
               <span class="sim-btn__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18M7 6v12M12 6v12M17 6v12"/></svg></span>
-              <span class="sim-btn__text"><span class="sim-btn__label">Bypass 3</span><span class="sim-btn__sub">Even more flyovers</span></span>
             </button>
             <button type="button" class="sim-btn sim-btn--good" id="sim-btn-rail" data-scenario="rail">
+              <span class="sim-btn__num" aria-hidden="true">05</span>
+              <span class="sim-btn__text"><span class="sim-btn__label">Build mass rail</span><span class="sim-btn__sub">Instead of bypasses</span></span>
               <span class="sim-btn__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 11h14M8 21l2-4M16 21l-2-4"/><circle cx="9" cy="14" r="0.9"/><circle cx="15" cy="14" r="0.9"/></svg></span>
-              <span class="sim-btn__text"><span class="sim-btn__label">Mass rail</span><span class="sim-btn__sub">Instead of bypasses</span></span>
             </button>
           </div>
+          <button type="button" class="sim-play" id="sim-play" aria-pressed="false">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+            <span>Play the story</span>
+          </button>
+        </aside>
 
+        <aside class="sim-readout sim-panel" aria-label="Live readout">
+          <p class="sim-hdr"><span>Live readout</span><b>vs today</b></p>
+          <ul class="jam-sim__legend" id="sim-legend" aria-label="Road status in the 3D view"></ul>
           <div class="jam-sim__outcomes" role="group" aria-label="Outcome metrics">
-            <div class="sim-metric"><span class="sim-metric__label">People moved / hr</span><div class="sim-metric__track"><div class="sim-metric__fill" id="sim-b-pph"></div></div><span class="sim-metric__value" id="sim-m-pph">1,800</span></div>
-            <div class="sim-metric"><span class="sim-metric__label">Journey time</span><div class="sim-metric__track"><div class="sim-metric__fill" id="sim-b-journey"></div></div><span class="sim-metric__value" id="sim-m-journey">40 min</span></div>
-            <div class="sim-metric"><span class="sim-metric__label">Noise level</span><div class="sim-metric__track"><div class="sim-metric__fill" id="sim-b-noise"></div></div><span class="sim-metric__value" id="sim-m-noise">82 dB</span></div>
-            <div class="sim-metric"><span class="sim-metric__label">Shops open</span><div class="sim-metric__track"><div class="sim-metric__fill" id="sim-b-shops"></div></div><span class="sim-metric__value" id="sim-m-shops">70%</span></div>
+              <div class="sim-metric"><span class="sim-metric__label">People moved / hr</span><span class="sim-metric__value" id="sim-m-pph">1,800</span><div class="sim-metric__track"><div class="sim-metric__fill" id="sim-b-pph"></div></div><span class="sim-metric__delta" id="sim-d-pph"></span></div>
+              <div class="sim-metric"><span class="sim-metric__label">Journey time</span><span class="sim-metric__value" id="sim-m-journey">40 min</span><div class="sim-metric__track"><div class="sim-metric__fill" id="sim-b-journey"></div></div><span class="sim-metric__delta" id="sim-d-journey"></span></div>
+              <div class="sim-metric"><span class="sim-metric__label">Noise level</span><span class="sim-metric__value" id="sim-m-noise">82 dB</span><div class="sim-metric__track"><div class="sim-metric__fill" id="sim-b-noise"></div></div><span class="sim-metric__delta" id="sim-d-noise"></span></div>
+              <div class="sim-metric"><span class="sim-metric__label">Shops open</span><span class="sim-metric__value" id="sim-m-shops">70%</span><div class="sim-metric__track"><div class="sim-metric__fill" id="sim-b-shops"></div></div><span class="sim-metric__delta" id="sim-d-shops"></span></div>
           </div>
+        </aside>
 
+        <section class="sim-caption sim-panel" aria-label="What you are seeing">
+          <p class="sim-caption__step"><b id="sim-step-label">Step 1 / 5</b><span class="jam-sim__year" id="sim-year" role="status">Today &middot; status quo</span></p>
           <p class="jam-sim__insight" id="sim-insight" aria-live="polite"></p>
           <p class="jam-sim__note">Illustrative model, not measured data. The only measured figure here is the RapidKL 750 audit: 18 km in 40 minutes.</p>
-        </div>
+        </section>
       </div>
     </section>
 

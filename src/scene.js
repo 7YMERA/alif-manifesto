@@ -234,8 +234,10 @@ export function createManifestoScene() {
   const prettySidewalkCol = new THREE.Color(0xe6d8c0);
   const sidewalkMat = new THREE.MeshStandardMaterial({ color: uglySidewalkCol.clone(), roughness: 0.86 });
 
+  const sidewalkMeshes = [];
   [-11.2, 11.2].forEach((sx) => {
     const sw = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.24, 562), sidewalkMat);
+    sidewalkMeshes.push(sw);
     sw.position.set(sx, 0.14, 49); // z 330 to -232
     sw.receiveShadow = true;
     world.add(sw);
@@ -402,6 +404,59 @@ export function createManifestoScene() {
   }
 
   const hwyJam = makeJamTraffic(highwayGroup, 7.81, 0);
+
+  // ── Road widening: the other classic induced-demand move. Knock down the shophouses beside the road,
+  //    add lanes; the new lanes fill up too. Only shown by the simulator's 'widen' step.
+  const WIDEN_LANES = [1.8, 5.0, 8.2, 11.4];   // lane centres, metres out from the boulevard edge (x = 8.8)
+  const WIDEN_Z_FROM = 54, WIDEN_Z_TO = -232, WIDEN_STEP = 6.2;
+  function makeLaneJam(parent, laneXs, flip, seed) {
+    const rows = Math.floor((WIDEN_Z_FROM - WIDEN_Z_TO) / WIDEN_STEP) + 1;
+    const n = rows * laneXs.length;
+    const body = new THREE.InstancedMesh(jamBodyGeo, jamBodyMat, n);
+    const cabin = new THREE.InstancedMesh(jamCabinGeo, jamCabinMat, n);
+    const tail = new THREE.InstancedMesh(jamTailGeo, jamTailMat, n);
+    let i = 0;
+    for (let row = 0; row < rows; row++) {
+      laneXs.forEach((lx, lane) => {
+        const z = WIDEN_Z_FROM - row * WIDEN_STEP + ((row * 5 + lane * 3 + seed) % 4) * 0.15;
+        jamTmp.rotation.set(0, 0, 0);
+        jamTmp.position.set(lx, 0.62, z); jamTmp.updateMatrix(); body.setMatrixAt(i, jamTmp.matrix);
+        jamTmp.position.set(lx, 1.25, z - 0.1 * flip); jamTmp.updateMatrix(); cabin.setMatrixAt(i, jamTmp.matrix);
+        jamTmp.position.set(lx, 0.7, z + 2.06 * flip); jamTmp.updateMatrix(); tail.setMatrixAt(i, jamTmp.matrix);
+        jamCol.setHex(SEDAN_COLORS[(i * 3 + seed) % SEDAN_COLORS.length]);
+        body.setColorAt(i, jamCol);
+        cabin.setColorAt(i, jamCol.multiplyScalar(0.62));
+        i++;
+      });
+    }
+    [body, cabin, tail].forEach((m) => { m.instanceMatrix.needsUpdate = true; m.frustumCulled = false; m.count = 0; parent.add(m); });
+    body.instanceColor.needsUpdate = true;
+    cabin.instanceColor.needsUpdate = true;
+    return { setFill(f) { const c = Math.floor(n * clamp(f, 0, 1)); body.count = cabin.count = tail.count = c; body.visible = cabin.visible = tail.visible = c > 0; } };
+  }
+  const dashGeo = new THREE.PlaneGeometry(0.16, 3.2);
+  dashGeo.rotateX(-Math.PI / 2);
+  const widenDashMat = new THREE.MeshBasicMaterial({ color: 0xe3dfd5 });
+  const widenSides = [-1, 1].map((sd, k) => {
+    const g = new THREE.Group();
+    g.position.set(sd * 8.8, 0, 0);               // scaled in x about the old road edge, so the lanes grow outward
+    const road = new THREE.Mesh(new THREE.BoxGeometry(13.2, 0.12, 300), asphaltMat);
+    road.position.set(sd * 6.6, 0.06, -90);
+    road.receiveShadow = true;
+    g.add(road);
+    const marks = [];
+    [3.4, 6.6, 9.8].forEach((bx) => { for (let z = 56; z >= -236; z -= 8) marks.push([sd * bx, z]); });
+    const dashes = new THREE.InstancedMesh(dashGeo, widenDashMat, marks.length);
+    marks.forEach(([mx, mz], i) => { jamTmp.position.set(mx, 0.131, mz); jamTmp.rotation.set(0, 0, 0); jamTmp.updateMatrix(); dashes.setMatrixAt(i, jamTmp.matrix); });
+    dashes.instanceMatrix.needsUpdate = true;
+    dashes.frustumCulled = false;
+    g.add(dashes);
+    const jam = makeLaneJam(g, WIDEN_LANES.map((l) => sd * l), sd < 0 ? 1 : -1, k * 7);
+    g.visible = false;
+    g.scale.x = 0.001;
+    world.add(g);
+    return { g, jam };
+  });
 
   // Malaysian-style interchange spaghetti: flyovers that loop, cross and stack for no
   // visible reason. Each ribbon is a curved elevated road with piers and its own jam.
@@ -642,48 +697,20 @@ export function createManifestoScene() {
   const klGroup = new THREE.Group();
   klGroup.add(buildBukitNanas(-62, -262));
 
+  // Real-world finishes (sources: Pelli Clarke Pelli / Otis / CIDB / Fender Katsalidis write-ups):
+  // Petronas = stainless steel and laminated glass; Merdeka 118 = a crystalline diamond-faceted glass skin;
+  // The Exchange 106 = metallic-coated glass with a clear, colourless low-iron glass crown in satin stainless framing
+  // (no gold); Menara KL = an all-concrete tower. Nothing here is saturated: the real towers read silver, glass and white.
+  const stainless = (hex) => new THREE.MeshStandardMaterial({ color: hex, roughness: 0.28, metalness: 0.85 });
+  const glassOf = (hex, em = 0x000000) => new THREE.MeshStandardMaterial({ color: hex, emissive: em, emissiveIntensity: 0.05, roughness: 0.14, metalness: 0.65 });
   const LANDMARK_MATERIALS = {
-    klcc: {
-      body: new THREE.MeshStandardMaterial({ color: 0xe6edf5, roughness: 0.24, metalness: 0.88 }),
-      glass: new THREE.MeshStandardMaterial({
-        color: 0x3b8ea5,
-        emissive: 0x164a5c,
-        emissiveIntensity: 0.24,
-        roughness: 0.16,
-        metalness: 0.72
-      })
-    },
+    klcc: { body: stainless(0xd0d4d7), glass: glassOf(0x8aa4b2) },
     menara_kl: {
-      body: new THREE.MeshStandardMaterial({ color: 0xf4efe6, roughness: 0.42, metalness: 0.24 }),
-      glass: new THREE.MeshStandardMaterial({
-        color: 0xd4a24c,
-        emissive: 0x704e18,
-        emissiveIntensity: 0.28,
-        roughness: 0.24,
-        metalness: 0.75
-      })
+      body: new THREE.MeshStandardMaterial({ color: 0xece8df, roughness: 0.82, metalness: 0.02 }),   // white concrete shaft
+      glass: new THREE.MeshStandardMaterial({ color: 0xb9a070, roughness: 0.3, metalness: 0.5 })      // pod: warm bronze glass (finish not confirmed by sources)
     },
-    merdeka118: {
-      // frame and glass in the same blue family, so the lattice reads as one tower rather than patches
-      body: new THREE.MeshStandardMaterial({ color: 0x9db8d6, roughness: 0.30, metalness: 0.6 }),
-      glass: new THREE.MeshStandardMaterial({
-        color: 0x3e7ab8,
-        emissive: 0x1a426e,
-        emissiveIntensity: 0.26,
-        roughness: 0.18,
-        metalness: 0.80
-      })
-    },
-    exchange106: {
-      body: new THREE.MeshStandardMaterial({ color: 0xdfb86c, roughness: 0.28, metalness: 0.78 }),
-      glass: new THREE.MeshStandardMaterial({
-        color: 0x245694,
-        emissive: 0x14335c,
-        emissiveIntensity: 0.28,
-        roughness: 0.16,
-        metalness: 0.82
-      })
-    }
+    merdeka118: { body: stainless(0xc7cdd3), glass: glassOf(0x7ea3b8) },
+    exchange106: { body: stainless(0xc9ced2), glass: glassOf(0x6f91a8) }
   };
 
   // The SketchUp exports have inconsistent face winding, so single-sided materials drop random faces and the towers
@@ -778,6 +805,7 @@ export function createManifestoScene() {
 
   const jamCars = [];
   const shopMats = [];
+  const shopRowMeshes = [];   // every shophouse row, so the road-widening step can knock them down
   const SHOP_DEAD = new THREE.Color(0x77726a);
   const highwayCars = [];
   const corridorBuses = [];
@@ -965,10 +993,12 @@ export function createManifestoScene() {
         const leftShop = prepGLB(shoplotScene, 24.0, 0);
         leftShop.position.set(-27.2, 0.0, sz);
         world.add(leftShop);
+        shopRowMeshes.push(leftShop);
 
         const rightShop = prepGLB(shoplotScene, 24.0, Math.PI);
         rightShop.position.set(27.2, 0.0, sz);
         world.add(rightShop);
+        shopRowMeshes.push(rightShop);
       });
     }
 
@@ -1064,6 +1094,8 @@ export function createManifestoScene() {
   let simKey = null; // 'base' | 'bypass2' | 'bypass3' | 'rail' while the simulator is on screen
   let simBlend = 0;
   let hwyFill = 0;
+  let widenT = 0;           // 0..1 the road widened, shophouses demolished (simulator 'widen' step)
+  let widenFill = 0;
   let deadGround = 0;       // 0..1 share of ground cars that have moved up to the flyovers
   let shopDead = 0;         // 0..1 how shuttered the shophouses look
   let shopDeadApplied = 0;
@@ -1116,12 +1148,22 @@ export function createManifestoScene() {
     window.__stage = { scene, camera, renderer, setCam: (a) => { debugCam = a; } };
   }
 
+  const projTmp = new THREE.Vector3();
   const api = {
     setScrollProgress(p) {
       scrollProgress = clamp(p, 0, 1);
     },
     setCompareRatio(val) {
       compareRatio = val === null ? null : clamp(val, 0, 1);
+    },
+    /** Screen position of a world point, for HUD labels pinned to things in the city. */
+    project(x, y, z) {
+      projTmp.set(x, y, z).project(camera);
+      return {
+        x: (projTmp.x * 0.5 + 0.5) * window.innerWidth,
+        y: (-projTmp.y * 0.5 + 0.5) * window.innerHeight,
+        ok: projTmp.z > -1 && projTmp.z < 1,
+      };
     },
     setSimScenario(key) {
       simKey = key || null;
@@ -1244,6 +1286,25 @@ export function createManifestoScene() {
       });
       if (t.built !== prev) stackMoving = true;
     });
+    // Widening: lanes grow out over the sidewalks, the shophouses beside the road are demolished, the new lanes fill up.
+    const wantWiden = jamMode && simKey === 'widen' ? 1 : 0;
+    const widenStep = reducedMotion ? 1 : wallDt * (wantWiden ? 0.45 : 0.9);
+    const prevWiden = widenT;
+    widenT = widenT < wantWiden ? Math.min(wantWiden, widenT + widenStep) : Math.max(wantWiden, widenT - widenStep);
+    widenFill = lerp(widenFill, wantWiden && widenT >= 1 ? 1 : 0, wantWiden ? fillRate : 1);
+    widenSides.forEach((w) => {
+      w.g.visible = widenT > 0.001;
+      w.g.scale.x = Math.max(0.001, smoothstep(0, 1, widenT));
+      w.jam.setFill(widenFill > 0.01 ? widenFill : 0);
+    });
+    sidewalkMeshes.forEach((m) => { m.visible = widenT < 0.35; });
+    const demolished = smoothstep(0.15, 0.75, widenT);
+    shopRowMeshes.forEach((m) => {
+      m.scale.y = Math.max(0.001, 1 - demolished);
+      m.visible = demolished < 0.99;
+    });
+    if (widenT !== prevWiden) sunLight.shadow.needsUpdate = true;
+
     // Consequences of the flyovers: regular roads empty out and the shoplots beside them die.
     const wantDeadGround = jamMode ? (simKey === 'bypass3' ? 1 : simKey === 'bypass2' ? 0.6 : 0) : 0;
     const wantShopDead = jamMode ? (simKey === 'bypass3' ? 1 : simKey === 'bypass2' ? 0.5 : 0) : 0;
